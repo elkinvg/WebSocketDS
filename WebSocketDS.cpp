@@ -405,7 +405,8 @@ void WebSocketDS::update_data()
 			if (isJsonAttribute.at(i))
 				json <<  processor.process_device_attribute_json(att);
 			else
-				json << processor.process_attribute(att);
+				//json << processor.process_attribute(att);
+				json << processor.process_attribute_t(att);
 			
 		}
 		json << "]";

@@ -7,7 +7,16 @@ namespace WebSocketDS_ns
 	class tango_processor
 	{
 	public:
-		std::string process_attribute(Tango::DeviceAttribute att);
+		// elkin begin
+		std::string process_attribute_t(Tango::DeviceAttribute att);
+		std::string devTypeToStr(Tango::DeviceAttribute *attr);
+		template <typename T>
+		std::string dataToString(T& data, Tango::DeviceAttribute *attr);
+		template <typename T>
+		void dataToJson(T& data, std::stringstream& ss);
+		Tango::DeviceAttribute getStateInString(Tango::DeviceAttribute *attr);
+		// elkin end
+		
 		std::string process_device_data(Tango::DeviceData data);
 		std::string process_device_data_json(Tango::DeviceData data);
 		std::string process_device_attribute_json(Tango::DeviceAttribute data);
@@ -19,7 +28,7 @@ namespace WebSocketDS_ns
 
 		// Encoded
 		std::string devEncodedToStr(Tango::DeviceData *data);
-		std::string devEncodedScalarToStr(Tango::DeviceAttribute *attr);
+		//std::string devEncodedScalarToStr(Tango::DeviceAttribute *attr);
 		std::string devEncodedSpectrumToStr(Tango::DeviceAttribute *attr);
 		std::string devEncodedImageToStr(Tango::DeviceAttribute *attr);
 
@@ -31,9 +40,6 @@ namespace WebSocketDS_ns
 
 		// State
 		std::string devStateToStr(Tango::DeviceData *data);
-		std::string devStateScalarToStr(Tango::DeviceAttribute *attr);
-		std::string devStateSpectrumToStr(Tango::DeviceAttribute *attr);
-		std::string devStateImageToStr(Tango::DeviceAttribute *attr);
 
 		Tango::DeviceData strToDevStateData(std::string data);
 
@@ -44,16 +50,16 @@ namespace WebSocketDS_ns
 		Tango::DeviceData strToDevCharArrayData(std::string data);
 
 		// UChar
-		std::string devUCharScalarToStr(Tango::DeviceAttribute *attr);
-		std::string devUCharSpectrumToStr(Tango::DeviceAttribute *attr);
-		std::string devUCharImageToStr(Tango::DeviceAttribute *attr);
+		//std::string devUCharScalarToStr(Tango::DeviceAttribute *attr);
+		//std::string devUCharSpectrumToStr(Tango::DeviceAttribute *attr);
+		//std::string devUCharImageToStr(Tango::DeviceAttribute *attr);
 
 		// Boolean
 		std::string devBooleanToStr(Tango::DeviceData *data);
 		std::string devBooleanArrayToStr(Tango::DeviceData *data);
-		std::string devBooleanScalarToStr(Tango::DeviceAttribute *attr);
-		std::string devBooleanSpectrumToStr(Tango::DeviceAttribute *attr);
-		std::string devBooleanImageToStr(Tango::DeviceAttribute *attr);
+		//std::string devBooleanScalarToStr(Tango::DeviceAttribute *attr);
+		//std::string devBooleanSpectrumToStr(Tango::DeviceAttribute *attr);
+		//std::string devBooleanImageToStr(Tango::DeviceAttribute *attr);
 
 		Tango::DeviceData strToDevBooleanData(std::string data);
 		Tango::DeviceData strToDevBooleanArrayData(std::string data);
@@ -64,9 +70,9 @@ namespace WebSocketDS_ns
 		// String
 		std::string devStringToStr(Tango::DeviceData *data);
 		std::string devStringArrayToStr(Tango::DeviceData *data);
-		std::string devStringScalarToStr(Tango::DeviceAttribute *attr);
-		std::string devStringSpectrumToStr(Tango::DeviceAttribute *attr);
-		std::string devStringImageToStr(Tango::DeviceAttribute *attr);
+		//std::string devStringScalarToStr(Tango::DeviceAttribute *attr);
+		//std::string devStringSpectrumToStr(Tango::DeviceAttribute *attr);
+		//std::string devStringImageToStr(Tango::DeviceAttribute *attr);
 
 		Tango::DeviceData strToDevStringData(std::string data);
 		Tango::DeviceData strToDevStringArrayData(std::string data);
@@ -77,9 +83,9 @@ namespace WebSocketDS_ns
 		// Short
 		std::string devShortToStr(Tango::DeviceData *data);
 		std::string devShortArrayToStr(Tango::DeviceData *data);
-		std::string devShortScalarToStr(Tango::DeviceAttribute *attr);
-		std::string devShortSpectrumToStr(Tango::DeviceAttribute *attr);
-		std::string devShortImageToStr(Tango::DeviceAttribute *attr);
+		//std::string devShortScalarToStr(Tango::DeviceAttribute *attr);
+		//std::string devShortSpectrumToStr(Tango::DeviceAttribute *attr);
+		//std::string devShortImageToStr(Tango::DeviceAttribute *attr);
 
 		Tango::DeviceData strToDevShortData(std::string data);
 		Tango::DeviceData strToDevShortArrayData(std::string data);
@@ -90,9 +96,9 @@ namespace WebSocketDS_ns
 		// UShort
 		std::string devUShortToStr(Tango::DeviceData *data);
 		std::string devUShortArrayToStr(Tango::DeviceData *data);
-		std::string devUShortScalarToStr(Tango::DeviceAttribute *attr);
-		std::string devUShortSpectrumToStr(Tango::DeviceAttribute *attr);
-		std::string devUShortImageToStr(Tango::DeviceAttribute *attr);
+		//std::string devUShortScalarToStr(Tango::DeviceAttribute *attr);
+		//std::string devUShortSpectrumToStr(Tango::DeviceAttribute *attr);
+		//std::string devUShortImageToStr(Tango::DeviceAttribute *attr);
 
 		Tango::DeviceData strToDevUShortData(std::string data);
 		Tango::DeviceData strToDevUShortArrayData(std::string data);
@@ -103,9 +109,9 @@ namespace WebSocketDS_ns
 		// Long
 		std::string devLongToStr(Tango::DeviceData *data);
 		std::string devLongArrayToStr(Tango::DeviceData *data);
-		std::string devLongScalarToStr(Tango::DeviceAttribute *attr);
-		std::string devLongSpectrumToStr(Tango::DeviceAttribute *attr);
-		std::string devLongImageToStr(Tango::DeviceAttribute *attr);
+		//std::string devLongScalarToStr(Tango::DeviceAttribute *attr);
+		//std::string devLongSpectrumToStr(Tango::DeviceAttribute *attr);
+		//std::string devLongImageToStr(Tango::DeviceAttribute *attr);
 
 		Tango::DeviceData strToDevLongData(std::string data);
 		Tango::DeviceData strToDevLongArrayData(std::string data);
@@ -116,9 +122,9 @@ namespace WebSocketDS_ns
 		// ULong
 		std::string devULongToStr(Tango::DeviceData *data);
 		std::string devULongArrayToStr(Tango::DeviceData *data);
-		std::string devULongScalarToStr(Tango::DeviceAttribute *attr);
-		std::string devULongSpectrumToStr(Tango::DeviceAttribute *attr);
-		std::string devULongImageToStr(Tango::DeviceAttribute *attr);
+		//std::string devULongScalarToStr(Tango::DeviceAttribute *attr);
+		//std::string devULongSpectrumToStr(Tango::DeviceAttribute *attr);
+		//std::string devULongImageToStr(Tango::DeviceAttribute *attr);
 
 		Tango::DeviceData strToDevULongData(std::string data);
 		Tango::DeviceData strToDevULongArrayData(std::string data);
@@ -129,9 +135,9 @@ namespace WebSocketDS_ns
 		// Long64
 		std::string devLong64ToStr(Tango::DeviceData *data);
 		std::string devLong64ArrayToStr(Tango::DeviceData *data);
-		std::string devLong64ScalarToStr(Tango::DeviceAttribute *attr);
-		std::string devLong64SpectrumToStr(Tango::DeviceAttribute *attr);
-		std::string devLong64ImageToStr(Tango::DeviceAttribute *attr);
+		//std::string devLong64ScalarToStr(Tango::DeviceAttribute *attr);
+		//std::string devLong64SpectrumToStr(Tango::DeviceAttribute *attr);
+		//std::string devLong64ImageToStr(Tango::DeviceAttribute *attr);
 
 		Tango::DeviceData strToDevLong64Data(std::string data);
 		Tango::DeviceData strToDevLong64ArrayData(std::string data);
@@ -142,9 +148,9 @@ namespace WebSocketDS_ns
 		// ULong64
 		std::string devULong64ToStr(Tango::DeviceData *data);
 		std::string devULong64ArrayToStr(Tango::DeviceData *data);
-		std::string devULong64ScalarToStr(Tango::DeviceAttribute *attr);
-		std::string devULong64SpectrumToStr(Tango::DeviceAttribute *attr);
-		std::string devULong64ImageToStr(Tango::DeviceAttribute *attr);
+		//std::string devULong64ScalarToStr(Tango::DeviceAttribute *attr);
+		//std::string devULong64SpectrumToStr(Tango::DeviceAttribute *attr);
+		//std::string devULong64ImageToStr(Tango::DeviceAttribute *attr);
 
 		Tango::DeviceData strToDevULong64Data(std::string data);
 		Tango::DeviceData strToDevULong64ArrayData(std::string data);
@@ -155,9 +161,9 @@ namespace WebSocketDS_ns
 		// Float
 		std::string devFloatToStr(Tango::DeviceData *data);
 		std::string devFloatArrayToStr(Tango::DeviceData *data);
-		std::string devFloatScalarToStr(Tango::DeviceAttribute *attr);
-		std::string devFloatSpectrumToStr(Tango::DeviceAttribute *attr);
-		std::string devFloatImageToStr(Tango::DeviceAttribute *attr);
+		//std::string devFloatScalarToStr(Tango::DeviceAttribute *attr);
+		//std::string devFloatSpectrumToStr(Tango::DeviceAttribute *attr);
+		//std::string devFloatImageToStr(Tango::DeviceAttribute *attr);
 
 		Tango::DeviceData strToDevFloatData(std::string data);
 		Tango::DeviceData strToDevFloatArrayData(std::string data);
@@ -168,9 +174,9 @@ namespace WebSocketDS_ns
 		// Double
 		std::string devDoubleToStr(Tango::DeviceData *data);
 		std::string devDoubleArrayToStr(Tango::DeviceData *data);
-		std::string devDoubleScalarToStr(Tango::DeviceAttribute *attr);
-		std::string devDoubleSpectrumToStr(Tango::DeviceAttribute *attr);
-		std::string devDoubleImageToStr(Tango::DeviceAttribute *attr);
+		//std::string devDoubleScalarToStr(Tango::DeviceAttribute *attr);
+		//std::string devDoubleSpectrumToStr(Tango::DeviceAttribute *attr);
+		//std::string devDoubleImageToStr(Tango::DeviceAttribute *attr);
 
 		Tango::DeviceData strToDevDoubleData(std::string data);
 		Tango::DeviceData strToDevDoubleArrayData(std::string data);
