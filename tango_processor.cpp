@@ -30,14 +30,6 @@ namespace WebSocketDS_ns
 		return json.str();
 	}
 
-	Tango::DeviceAttribute tango_processor::getStateInString(Tango::DeviceAttribute *attr) {
-		Tango::AttrDataFormat format = attr->get_data_format();
-		if (format == Tango::AttrDataFormat::SCALAR) {
-			Tango::DeviceAttribute outAttr;
-			return outAttr;
-		}
-	}
-
 	template <typename T>
 	std::string  tango_processor::dataToString(T& data, Tango::DeviceAttribute *attr) {
 		Tango::AttrDataFormat format = attr->get_data_format();

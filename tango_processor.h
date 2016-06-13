@@ -14,7 +14,6 @@ namespace WebSocketDS_ns
 		std::string dataToString(T& data, Tango::DeviceAttribute *attr);
 		template <typename T>
 		void dataToJson(T& data, std::stringstream& ss);
-		Tango::DeviceAttribute getStateInString(Tango::DeviceAttribute *attr);
 		// elkin end
 		
 		std::string process_device_data(Tango::DeviceData data);
