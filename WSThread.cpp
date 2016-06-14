@@ -15,7 +15,7 @@ void *WSThread::run_undetached(void *ptr)
 	cache = "";
 	print_server.set_open_handler(websocketpp::lib::bind(&WSThread::on_open,this,websocketpp::lib::placeholders::_1));
     print_server.set_close_handler(websocketpp::lib::bind(&WSThread::on_close,this,websocketpp::lib::placeholders::_1));
-	print_server.set_message_handler(websocketpp::lib::bind(&WSThread::on_message,this,websocketpp::lib::placeholders::_1,websocketpp::lib::placeholders::_2));
+    print_server.set_message_handler(websocketpp::lib::bind(&WSThread::on_message,this,websocketpp::lib::placeholders::_1,websocketpp::lib::placeholders::_2));
     
 	// this will turn off console output for frame header and payload
 	print_server.clear_access_channels(websocketpp::log::alevel::frame_header | websocketpp::log::alevel::frame_payload); 
@@ -38,6 +38,7 @@ void *WSThread::run_undetached(void *ptr)
 
 void WSThread::on_message(websocketpp::connection_hdl hdl, server::message_ptr msg) {
     DEBUG_STREAM << msg->get_payload() << endl;
+    string data_from_client = msg->get_payload();
 }
 
 void WSThread::on_open(websocketpp::connection_hdl hdl) {

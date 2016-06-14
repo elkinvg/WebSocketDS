@@ -25,13 +25,13 @@ namespace WebSocketDS_ns
 		json << "\"time\": " << att.time.tv_sec << ", ";
 
 		Tango::AttrDataFormat format = att.get_data_format();
-		json << devTypeToStr(&att);
+        json << devAttrToStr(&att);
 		json << "}";
 		return json.str();
 	}
 
 	template <typename T>
-	std::string  tango_processor::dataToString(T& data, Tango::DeviceAttribute *attr) {
+    std::string  tango_processor::attrsToString(T& data, Tango::DeviceAttribute *attr) {
 		Tango::AttrDataFormat format = attr->get_data_format();
 		int type = attr->get_type();
 		std::vector<T> dataVector;
@@ -50,11 +50,11 @@ namespace WebSocketDS_ns
 			if (type == Tango::DEV_STATE) {
 				(*attr) >> stateIn;
 				stateStr = SwitchTangoState(stateIn);
-				dataToJson(stateStr, ss);
+                dataFromAttrsToJson(stateStr, ss);
 			}				
 			else {
 				(*attr) >> data;
-				dataToJson(data, ss);
+                dataFromAttrsToJson(data, ss);
 			}				
 		}
 		else			
@@ -62,10 +62,10 @@ namespace WebSocketDS_ns
 			(*attr) >> dataVector;
 			ss << "[";
 			bool begin = true;
-			for (auto& fromData : dataVector) {
+            for (const auto& fromData : dataVector) {
 				if (!begin) ss << ", ";
 				else begin = false;
-				dataToJson(fromData, ss);
+                dataFromAttrsToJson(fromData, ss);
 			}
 			ss << "]";
 		}
@@ -73,14 +73,14 @@ namespace WebSocketDS_ns
 	}
 
 	template <typename T>
-	void tango_processor::dataToJson(T& data, std::stringstream& ss) {
+    void tango_processor::dataFromAttrsToJson(T& data, std::stringstream& ss) {
 		if (is_floating_point<T>::value) ss << std::setprecision(5) << data;
 		else if (std::is_same<T, bool>::value) ss << std::boolalpha << data;
 		else if (std::is_same<T, std::string>::value) ss << "\"" << data << "\"";
 		else ss << data;
 	}
 
-	std::string tango_processor::devTypeToStr(Tango::DeviceAttribute *attr) {
+    std::string tango_processor::devAttrToStr(Tango::DeviceAttribute *attr) {
 		int type = attr->get_type();
 		Tango::AttrDataFormat format = attr->get_data_format();
 		std::string out;
@@ -88,74 +88,74 @@ namespace WebSocketDS_ns
 		case Tango::DEV_BOOLEAN:
 		{
 			Tango::DevBoolean inp;
-			out = dataToString(inp, attr);
+            out = attrsToString(inp, attr);
 		}
 		break;
 		case Tango::DEV_SHORT:
 		{
 			Tango::DevShort inp;
-			out = dataToString(inp, attr);
+            out = attrsToString(inp, attr);
 		}
 		break;
 		case Tango::DEV_LONG:
 		{
 			Tango::DevLong inp;
-			out = dataToString(inp, attr);
+            out = attrsToString(inp, attr);
 		}
 		break;
 		case Tango::DEV_LONG64:
 		{
 			Tango::DevLong64 inp;
-			out = dataToString(inp, attr);
+            out = attrsToString(inp, attr);
 		}
 		break;
 		case Tango::DEV_FLOAT:
 		{
 			Tango::DevFloat inp;
-			out = dataToString(inp, attr);
+            out = attrsToString(inp, attr);
 		}
 		break;
 		case Tango::DEV_DOUBLE:
 		{
 			Tango::DevDouble inp;
-			out = dataToString(inp, attr);
+            out = attrsToString(inp, attr);
 		}
 		break;
 		case Tango::DEV_UCHAR:
 		{
 			Tango::DevUChar inp;
-			out = dataToString(inp, attr);
+            out = attrsToString(inp, attr);
 		}
 		break;
 		case Tango::DEV_USHORT:
 		{
 			Tango::DevUShort inp;
-			out = dataToString(inp, attr);
+            out = attrsToString(inp, attr);
 		}
 		break;
 		case Tango::DEV_ULONG:
 		{
 			Tango::DevULong inp;
-			out = dataToString(inp, attr);
+            out = attrsToString(inp, attr);
 		}
 		break;
 		case Tango::DEV_ULONG64:
 		{
 			Tango::DevULong64 inp;
-			out = dataToString(inp, attr);
+            out = attrsToString(inp, attr);
 		}
 		break;
 		case Tango::DEV_STRING:
 		{
 			//Tango::DevString inp;
 			std::string inp;
-			out = dataToString(inp, attr);
+            out = attrsToString(inp, attr);
 		}
 		break;
 		case Tango::DEV_STATE:
 		{
 			Tango::DevState inp;
-			out = dataToString(inp, attr);
+            out = attrsToString(inp, attr);
 		}
 		break;
 		case Tango::DEV_ENCODED:
@@ -167,6 +167,138 @@ namespace WebSocketDS_ns
 		return out;
 	}
 
+    std::string tango_processor::process_device_data_t(Tango::DeviceData& deviceData) {
+        std::stringstream json;
+        json << "{";
+        json << "\"argout\": ";
+        json << "}";
+        return json.str();
+    }
+
+    std::string tango_processor::devDataToString(Tango::DeviceData* deviceData) {
+        int type = deviceData->get_type();
+        std::string out;
+
+        switch (type) {
+        case Tango::DEV_VOID:
+            break;
+        case Tango::DEV_BOOLEAN:
+            break;
+         case Tango::DEV_SHORT:
+            Tango::DevShort inp;
+            out = dataToString(inp,deviceData);
+            break;
+        default:
+            break;
+        }
+    }
+
+    tango_processor::TYPE_OF_DEVICE_DATA tango_processor::getTypeOfData(int tangoType)
+    {
+        switch (tangoType)
+        {
+        case Tango::DEV_VOID:
+            return TYPE_OF_DEVICE_DATA::VOID;
+        case Tango::DEV_BOOLEAN:
+            return TYPE_OF_DEVICE_DATA::DATA;
+        case Tango::DEV_SHORT:
+            return TYPE_OF_DEVICE_DATA::DATA;
+        case Tango::DEV_LONG:
+            return TYPE_OF_DEVICE_DATA::DATA;
+        case Tango::DEV_FLOAT:
+            return TYPE_OF_DEVICE_DATA::DATA;
+        case Tango::DEV_DOUBLE:
+            return TYPE_OF_DEVICE_DATA::DATA;
+        case Tango::DEV_USHORT:
+            return TYPE_OF_DEVICE_DATA::DATA;
+        case Tango::DEV_ULONG:
+            return TYPE_OF_DEVICE_DATA::DATA;
+        case Tango::DEV_STRING:
+            return TYPE_OF_DEVICE_DATA::DATA;
+        case Tango::DEVVAR_CHARARRAY:
+            return TYPE_OF_DEVICE_DATA::ARRAY;
+        case Tango::DEVVAR_SHORTARRAY:
+            return TYPE_OF_DEVICE_DATA::ARRAY;
+        case Tango::DEVVAR_LONGARRAY:
+            return TYPE_OF_DEVICE_DATA::ARRAY;
+        case Tango::DEVVAR_FLOATARRAY:
+            return TYPE_OF_DEVICE_DATA::ARRAY;
+        case Tango::DEVVAR_DOUBLEARRAY:
+            return TYPE_OF_DEVICE_DATA::ARRAY;
+        case Tango::DEVVAR_USHORTARRAY:
+            return TYPE_OF_DEVICE_DATA::ARRAY;
+        case Tango::DEVVAR_ULONGARRAY:
+            return TYPE_OF_DEVICE_DATA::ARRAY;
+        case Tango::DEVVAR_STRINGARRAY:
+            return TYPE_OF_DEVICE_DATA::ARRAY;
+        case Tango::DEVVAR_LONGSTRINGARRAY:
+            return TYPE_OF_DEVICE_DATA::ARRAY;
+        case Tango::DEVVAR_DOUBLESTRINGARRAY:
+            return TYPE_OF_DEVICE_DATA::ARRAY;
+//        case Tango::DEV_STATE:
+//            json << devStateToStr(&data);
+//            break;
+//        case Tango::CONST_DEV_STRING:
+//            json << devConstStringToStr(&data);
+//            break;
+        case Tango::DEVVAR_BOOLEANARRAY:
+            return TYPE_OF_DEVICE_DATA::ARRAY;
+        case Tango::DEV_UCHAR:
+            return TYPE_OF_DEVICE_DATA::DATA;
+        case Tango::DEV_LONG64:
+            return TYPE_OF_DEVICE_DATA::DATA;
+        case Tango::DEV_ULONG64:
+            return TYPE_OF_DEVICE_DATA::DATA;
+        case Tango::DEVVAR_LONG64ARRAY:
+            return TYPE_OF_DEVICE_DATA::ARRAY;
+        case Tango::DEVVAR_ULONG64ARRAY:
+            return TYPE_OF_DEVICE_DATA::ARRAY;
+        case Tango::DEV_INT:
+            return TYPE_OF_DEVICE_DATA::DATA;
+//        case Tango::DEV_ENCODED:
+//            json << devEncodedToStr(&data);
+//            break;
+        default:
+            break;
+        }
+    }
+
+    Tango::DeviceData tango_processor::gettingJsonStrToDevData(string jsonData, int format)
+    {
+        Tango::DeviceData d;
+        boost::property_tree::ptree pt;
+        std::stringstream ss;
+        boost::property_tree::read_json(ss, pt);
+        bool parsed = pt.get<bool>("argin");
+        d << parsed;
+        return d;
+    }
+
+    template <typename T>
+    std::string  tango_processor::dataToString(T& data, Tango::DeviceData *devData) {
+        int type = devData->get_type();
+        std::vector<T> dataVector;
+
+        std::stringstream ss;
+        ss << "\"argout\": ";
+        if (getTypeOfData(type)==TYPE_OF_DEVICE_DATA::DATA) {
+            (*devData) >> data;
+            dataFromAttrsToJson(data,ss);
+        }
+        if (getTypeOfData(type)==TYPE_OF_DEVICE_DATA::ARRAY) {
+            (*devData) >> dataVector;
+            ss << "[";
+            bool begin = true;
+            for (const auto& fromData : dataVector) {
+                if (!begin) ss << ", ";
+                else begin = false;
+                dataFromAttrsToJson(fromData, ss);
+            }
+            ss << "]";
+        }
+        return ss.str();
+    }
+
 	std::string tango_processor::process_device_data(Tango::DeviceData data)
 	{
 		std::stringstream json;
@@ -174,7 +306,7 @@ namespace WebSocketDS_ns
 
 		json << "{";
 
-		int type = data.get_type();
+        int type = data.get_type();
 
 		switch (type)
 		{

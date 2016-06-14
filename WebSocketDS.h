@@ -224,8 +224,12 @@ public:
 
 /*----- PROTECTED REGION ID(WebSocketDS::Additional Method prototypes) ENABLED START -----*/
 
+    //elkin test begin
+    void Test() {
+        cout << "COUT WORKING!!!!" << endl;
+    }
 
-
+    //elkin test end
 /*----- PROTECTED REGION END -----*/	//	WebSocketDS::Additional Method prototypes
 };
 
@@ -264,7 +268,7 @@ private:
 	WebSocketDS *ds;
 	bool local_th_exit;
 	server print_server;
-	void on_message(websocketpp::connection_hdl hdl, server::message_ptr msg);
+    void on_message(websocketpp::connection_hdl hdl, server::message_ptr msg);
 	void on_open(websocketpp::connection_hdl hdl);
 	void on_close(websocketpp::connection_hdl hdl);
 };

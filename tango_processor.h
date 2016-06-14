@@ -9,11 +9,22 @@ namespace WebSocketDS_ns
 	public:
 		// elkin begin
 		std::string process_attribute_t(Tango::DeviceAttribute att);
-		std::string devTypeToStr(Tango::DeviceAttribute *attr);
+        std::string devAttrToStr(Tango::DeviceAttribute *attr);
 		template <typename T>
-		std::string dataToString(T& data, Tango::DeviceAttribute *attr);
+		std::string attrsToString(T& data, Tango::DeviceAttribute *attr);
 		template <typename T>
-		void dataToJson(T& data, std::stringstream& ss);
+        void dataFromAttrsToJson(T& data, std::stringstream& ss);
+
+        std::string process_device_data_t(Tango::DeviceData &deviceData);
+        enum class TYPE_OF_DEVICE_DATA {VOID=0, DATA=1 ,ARRAY=2};
+
+        std::string devDataToString(Tango::DeviceData* deviceData);
+
+        template <typename T>
+        std::string dataToString(T& data, Tango::DeviceData *devData);
+        TYPE_OF_DEVICE_DATA getTypeOfData(int tangoType);
+
+        Tango::DeviceData gettingJsonStrToDevData(std::string jsonData, int format);
 		// elkin end
 		
 		std::string process_device_data(Tango::DeviceData data);
