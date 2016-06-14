@@ -92,6 +92,7 @@ private:
 	Tango::DeviceProxy *device;
 	tango_processor processor;
 	std::vector<bool>  isJsonAttribute;
+    std::map<std::string, Tango::CommandInfo> accessibleCommandInfo;
 /*----- PROTECTED REGION END -----*/	//	WebSocketDS::Data Members
 
 //	Device property data members
@@ -102,6 +103,8 @@ public:
 	string	deviceServer;
 	//	Attributes:	Attributes list
 	vector<string>	attributes;
+	//	Commands:	Commandes list
+	vector<string>	commands;
 
 //	Attribute data members
 public:

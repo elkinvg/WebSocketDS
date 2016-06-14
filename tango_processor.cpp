@@ -191,6 +191,7 @@ namespace WebSocketDS_ns
         default:
             break;
         }
+        return out;
     }
 
     tango_processor::TYPE_OF_DEVICE_DATA tango_processor::getTypeOfData(int tangoType)
@@ -198,7 +199,7 @@ namespace WebSocketDS_ns
         switch (tangoType)
         {
         case Tango::DEV_VOID:
-            return TYPE_OF_DEVICE_DATA::VOID;
+            return TYPE_OF_DEVICE_DATA::VOID_D;
         case Tango::DEV_BOOLEAN:
             return TYPE_OF_DEVICE_DATA::DATA;
         case Tango::DEV_SHORT:
@@ -263,11 +264,16 @@ namespace WebSocketDS_ns
         }
     }
 
-    Tango::DeviceData tango_processor::gettingJsonStrToDevData(string jsonData, int format)
+    Tango::DeviceData tango_processor::gettingJsonStrToDevData(string jsonData)
     {
         Tango::DeviceData d;
         boost::property_tree::ptree pt;
         std::stringstream ss;
+        std::string command;
+
+        ss << jsonData;
+        command = pt.get<std::string>("command");
+
         boost::property_tree::read_json(ss, pt);
         bool parsed = pt.get<bool>("argin");
         d << parsed;

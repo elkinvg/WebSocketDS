@@ -39,6 +39,7 @@ void *WSThread::run_undetached(void *ptr)
 void WSThread::on_message(websocketpp::connection_hdl hdl, server::message_ptr msg) {
     DEBUG_STREAM << msg->get_payload() << endl;
     string data_from_client = msg->get_payload();
+    send(hdl, "from on_message");
 }
 
 void WSThread::on_open(websocketpp::connection_hdl hdl) {

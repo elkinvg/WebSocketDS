@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="ASCII"?>
 <pogoDsl:PogoSystem xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:pogoDsl="http://www.esrf.fr/tango/pogo/PogoDsl">
   <classes name="WebSocketDS" pogoRevision="9.1">
-    <description description="WebSocket access to tango device-server attributes.&#xA;&#xA;Configuration should be done via properties:&#xA;&#xA;Port - port to listen incoming ws connections;&#xA;DeviceServer - tango id of a required device server;&#xA;Attributes - list of required DS attributes, you wish to read via WS;&#xA;Then you should set polling to the UpdateData command. (1000 means that all connected clients would read attributes once per second).&#xA;&#xA;Data format: JSON string with array of attrubute objects {atrrtibute name, attribute value, quality, timestamp};" title="WebSocket access to tango device-server attributes" sourcePath="D:\coding\Tango\DeviceServers\WebSocketDS" language="Cpp" filestogenerate="XMI   file,Code files,VC12 Project,Protected Regions" license="GPL" hasMandatoryProperty="false" hasConcreteProperty="true" hasAbstractCommand="false" hasAbstractAttribute="false">
+    <description description="WebSocket access to tango device-server attributes.&#xA;&#xA;Configuration should be done via properties:&#xA;&#xA;Port - port to listen incoming ws connections;&#xA;DeviceServer - tango id of a required device server;&#xA;Attributes - list of required DS attributes, you wish to read via WS;&#xA;Then you should set polling to the UpdateData command. (1000 means that all connected clients would read attributes once per second).&#xA;&#xA;Data format: JSON string with array of attrubute objects {atrrtibute name, attribute value, quality, timestamp};" title="WebSocket access to tango device-server attributes" sourcePath="D:\progrdir\vs12_2013\fortango\WebSocketDS" language="Cpp" filestogenerate="XMI   file,Code files,Protected Regions" license="GPL" hasMandatoryProperty="false" hasConcreteProperty="true" hasAbstractCommand="false" hasAbstractAttribute="false">
       <inheritances classname="Device_Impl" sourcePath=""/>
       <identification contact="at dubna.tk - egor" author="egor" emailDomain="dubna.tk" classFamily="Communication" siteSpecific="" platform="All Platforms" bus="Not Applicable" manufacturer="none" reference=""/>
     </description>
@@ -14,6 +14,10 @@
       <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
     </deviceProperties>
     <deviceProperties name="Attributes" description="Attributes list">
+      <type xsi:type="pogoDsl:StringVectorType"/>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+    </deviceProperties>
+    <deviceProperties name="Commands" description="Commandes list">
       <type xsi:type="pogoDsl:StringVectorType"/>
       <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
     </deviceProperties>

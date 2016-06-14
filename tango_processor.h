@@ -16,7 +16,7 @@ namespace WebSocketDS_ns
         void dataFromAttrsToJson(T& data, std::stringstream& ss);
 
         std::string process_device_data_t(Tango::DeviceData &deviceData);
-        enum class TYPE_OF_DEVICE_DATA {VOID=0, DATA=1 ,ARRAY=2};
+        enum class TYPE_OF_DEVICE_DATA {VOID_D=0, DATA=1 ,ARRAY=2};
 
         std::string devDataToString(Tango::DeviceData* deviceData);
 
@@ -24,7 +24,7 @@ namespace WebSocketDS_ns
         std::string dataToString(T& data, Tango::DeviceData *devData);
         TYPE_OF_DEVICE_DATA getTypeOfData(int tangoType);
 
-        Tango::DeviceData gettingJsonStrToDevData(std::string jsonData, int format);
+        Tango::DeviceData gettingJsonStrToDevData(std::string jsonData);
 		// elkin end
 		
 		std::string process_device_data(Tango::DeviceData data);

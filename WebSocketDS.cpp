@@ -194,6 +194,19 @@ void WebSocketDS::init_device()
 		DEBUG_STREAM << attributes.at(i) << endl;
 	}
 
+    DEBUG_STREAM << "Commands: " << endl;
+    for (auto& com : commands) {
+        try {
+            Tango::CommandInfo info = device->command_query(com);
+            accessibleCommandInfo.insert(std::pair<std::string, Tango::CommandInfo>(com, info));
+            DEBUG_STREAM << com << endl;
+        }
+        catch (Tango::DevFailed &e)
+        {
+            ERROR_STREAM << "command " << com << " not found" << endl;
+        }
+    }
+
 	attr_JSON_read[0] = Tango::string_dup("{\"success\": false}");
 	update_data();
 	/*----- PROTECTED REGION END -----*/	//	WebSocketDS::init_device
@@ -220,6 +233,7 @@ void WebSocketDS::get_device_property()
 	dev_prop.push_back(Tango::DbDatum("Port"));
 	dev_prop.push_back(Tango::DbDatum("DeviceServer"));
 	dev_prop.push_back(Tango::DbDatum("Attributes"));
+	dev_prop.push_back(Tango::DbDatum("Commands"));
 
 	//	is there at least one property to be read ?
 	if (dev_prop.size()>0)
@@ -266,6 +280,17 @@ void WebSocketDS::get_device_property()
 		}
 		//	And try to extract Attributes value from database
 		if (dev_prop[i].is_empty()==false)	dev_prop[i]  >>  attributes;
+
+		//	Try to initialize Commands from class property
+		cl_prop = ds_class->get_class_property(dev_prop[++i].name);
+		if (cl_prop.is_empty()==false)	cl_prop  >>  commands;
+		else {
+			//	Try to initialize Commands from default device value
+			def_prop = ds_class->get_default_device_property(dev_prop[i].name);
+			if (def_prop.is_empty()==false)	def_prop  >>  commands;
+		}
+		//	And try to extract Commands value from database
+		if (dev_prop[i].is_empty()==false)	dev_prop[i]  >>  commands;
 
 	}
 
@@ -440,7 +465,25 @@ void WebSocketDS::add_dynamic_commands()
 }
 
 /*----- PROTECTED REGION ID(WebSocketDS::namespace_ending) ENABLED START -----*/
-
+//void WebSocketDS::testFromJson(std::string& input) {
+//    boost::property_tree::ptree pt;
+//    std::stringstream ss;
+//    ss << input;
+//    boost::property_tree::read_json(ss, pt);
+//    //pt.get_child("argin");
+//    //auto tmp1 = pt.get<std::string>("argin");
+//    for (boost::property_tree::ptree::value_type &v : pt.get_child("argin"))
+//    {
+//        // fruit.first contain the string ""
+//        cout << "SD: " << v.second.data() << " | ";
+//        //fruits.push_back(fruit.second.data());
+//    }
+//    cout << endl;
+//    auto ii = device->command_list_query();
+//    auto aa = device->command_query("DevVarShortArray");
+//    //vector<short> parsed = pt.get<short>("argin");
+//    auto ttt = pt;
+//}
 // //--------------------------------------------------------
 // /**
 //  *	Read attribute MyAttr related method
