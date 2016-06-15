@@ -12,6 +12,7 @@ obj/*
 *.tmp
 bin/*
 lib/*
+bck/*
 vc10_proj/*
 vc12_proj/*.user
 vc12_proj/*.sdf
