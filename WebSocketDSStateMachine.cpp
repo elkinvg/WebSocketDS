@@ -37,7 +37,7 @@ static const char *RcsId = "$Id:  $";
 
 #include <WebSocketDS.h>
 
-/*----- PROTECTED REGION END -----*/	//	WebSocketDS::WebSocketDSStateMachine.cpp
+/*----- PROTECTED REGION END -----*/    //    WebSocketDS::WebSocketDSStateMachine.cpp
 
 //================================================================
 //  States  |  Description
@@ -50,93 +50,93 @@ static const char *RcsId = "$Id:  $";
 namespace WebSocketDS_ns
 {
 //=================================================
-//		Attributes Allowed Methods
+//        Attributes Allowed Methods
 //=================================================
 
 //--------------------------------------------------------
 /**
- *	Method      : WebSocketDS::is_JSON_allowed()
- *	Description : Execution allowed for JSON attribute
+ *    Method      : WebSocketDS::is_JSON_allowed()
+ *    Description : Execution allowed for JSON attribute
  */
 //--------------------------------------------------------
 bool WebSocketDS::is_JSON_allowed(TANGO_UNUSED(Tango::AttReqType type))
 {
 
-	//	Not any excluded states for JSON attribute in read access.
-	/*----- PROTECTED REGION ID(WebSocketDS::JSONStateAllowed_READ) ENABLED START -----*/
-	
-	/*----- PROTECTED REGION END -----*/	//	WebSocketDS::JSONStateAllowed_READ
-	return true;
+    //    Not any excluded states for JSON attribute in read access.
+    /*----- PROTECTED REGION ID(WebSocketDS::JSONStateAllowed_READ) ENABLED START -----*/
+    
+    /*----- PROTECTED REGION END -----*/    //    WebSocketDS::JSONStateAllowed_READ
+    return true;
 }
 
 
 //=================================================
-//		Commands Allowed Methods
+//        Commands Allowed Methods
 //=================================================
 
 //--------------------------------------------------------
 /**
- *	Method      : WebSocketDS::is_On_allowed()
- *	Description : Execution allowed for On attribute
+ *    Method      : WebSocketDS::is_On_allowed()
+ *    Description : Execution allowed for On attribute
  */
 //--------------------------------------------------------
 bool WebSocketDS::is_On_allowed(TANGO_UNUSED(const CORBA::Any &any))
 {
-	//	Compare device state with not allowed states.
-	if (get_state()==Tango::ON)
-	{
-	/*----- PROTECTED REGION ID(WebSocketDS::OnStateAllowed) ENABLED START -----*/
-	
-	/*----- PROTECTED REGION END -----*/	//	WebSocketDS::OnStateAllowed
-		return false;
-	}
-	return true;
+    //    Compare device state with not allowed states.
+    if (get_state()==Tango::ON)
+    {
+    /*----- PROTECTED REGION ID(WebSocketDS::OnStateAllowed) ENABLED START -----*/
+    
+    /*----- PROTECTED REGION END -----*/    //    WebSocketDS::OnStateAllowed
+        return false;
+    }
+    return true;
 }
 
 //--------------------------------------------------------
 /**
- *	Method      : WebSocketDS::is_Off_allowed()
- *	Description : Execution allowed for Off attribute
+ *    Method      : WebSocketDS::is_Off_allowed()
+ *    Description : Execution allowed for Off attribute
  */
 //--------------------------------------------------------
 bool WebSocketDS::is_Off_allowed(TANGO_UNUSED(const CORBA::Any &any))
 {
-	//	Compare device state with not allowed states.
-	if (get_state()==Tango::OFF)
-	{
-	/*----- PROTECTED REGION ID(WebSocketDS::OffStateAllowed) ENABLED START -----*/
-	
-	/*----- PROTECTED REGION END -----*/	//	WebSocketDS::OffStateAllowed
-		return false;
-	}
-	return true;
+    //    Compare device state with not allowed states.
+    if (get_state()==Tango::OFF)
+    {
+    /*----- PROTECTED REGION ID(WebSocketDS::OffStateAllowed) ENABLED START -----*/
+    
+    /*----- PROTECTED REGION END -----*/    //    WebSocketDS::OffStateAllowed
+        return false;
+    }
+    return true;
 }
 
 //--------------------------------------------------------
 /**
- *	Method      : WebSocketDS::is_UpdateData_allowed()
- *	Description : Execution allowed for UpdateData attribute
+ *    Method      : WebSocketDS::is_UpdateData_allowed()
+ *    Description : Execution allowed for UpdateData attribute
  */
 //--------------------------------------------------------
 bool WebSocketDS::is_UpdateData_allowed(TANGO_UNUSED(const CORBA::Any &any))
 {
-	//	Compare device state with not allowed states.
-	if (get_state()==Tango::OFF ||
-		get_state()==Tango::FAULT)
-	{
-	/*----- PROTECTED REGION ID(WebSocketDS::UpdateDataStateAllowed) ENABLED START -----*/
-	
-	/*----- PROTECTED REGION END -----*/	//	WebSocketDS::UpdateDataStateAllowed
-		return false;
-	}
-	return true;
+    //    Compare device state with not allowed states.
+    if (get_state()==Tango::OFF ||
+        get_state()==Tango::FAULT)
+    {
+    /*----- PROTECTED REGION ID(WebSocketDS::UpdateDataStateAllowed) ENABLED START -----*/
+    
+    /*----- PROTECTED REGION END -----*/    //    WebSocketDS::UpdateDataStateAllowed
+        return false;
+    }
+    return true;
 }
 
 
 /*----- PROTECTED REGION ID(WebSocketDS::WebSocketDSStateAllowed.AdditionalMethods) ENABLED START -----*/
 
-//	Additional Methods
+//    Additional Methods
 
-/*----- PROTECTED REGION END -----*/	//	WebSocketDS::WebSocketDSStateAllowed.AdditionalMethods
+/*----- PROTECTED REGION END -----*/    //    WebSocketDS::WebSocketDSStateAllowed.AdditionalMethods
 
-}	//	End of namespace
+}    //    End of namespace

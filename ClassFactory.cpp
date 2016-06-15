@@ -41,16 +41,16 @@ static const char *RcsId = "$Id:  $";
 #include <tango.h>
 #include <WebSocketDSClass.h>
 
-//	Add class header files if needed
+//    Add class header files if needed
 
 
 /**
- *	Create WebSocketDS Class singleton and store it in DServer object.
+ *    Create WebSocketDS Class singleton and store it in DServer object.
  */
 
 void Tango::DServer::class_factory()
 {
-	//	Add method class init if needed
-	add_class(WebSocketDS_ns::WebSocketDSClass::init("WebSocketDS"));
+    //    Add method class init if needed
+    add_class(WebSocketDS_ns::WebSocketDSClass::init("WebSocketDS"));
 }
-/*----- PROTECTED REGION END -----*/	//	WebSocketDS::ClassFactory.cpp
+/*----- PROTECTED REGION END -----*/    //    WebSocketDS::ClassFactory.cpp
