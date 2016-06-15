@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="ASCII"?>
 <pogoDsl:PogoSystem xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:pogoDsl="http://www.esrf.fr/tango/pogo/PogoDsl">
   <classes name="WebSocketDS" pogoRevision="9.1">
-    <description description="WebSocket access to tango device-server attributes.&#xA;&#xA;Configuration should be done via properties:&#xA;&#xA;Port - port to listen incoming ws connections;&#xA;DeviceServer - tango id of a required device server;&#xA;Attributes - list of required DS attributes, you wish to read via WS;&#xA;Then you should set polling to the UpdateData command. (1000 means that all connected clients would read attributes once per second).&#xA;&#xA;Data format: JSON string with array of attrubute objects {atrrtibute name, attribute value, quality, timestamp};" title="WebSocket access to tango device-server attributes" sourcePath="D:\progrdir\vs12_2013\fortango\WebSocketDS" language="Cpp" filestogenerate="XMI   file,Code files,Protected Regions" license="GPL" hasMandatoryProperty="false" hasConcreteProperty="true" hasAbstractCommand="false" hasAbstractAttribute="false">
+    <description description="WebSocket access to tango device-server attributes.&#xA;&#xA;Configuration should be done via properties:&#xA;&#xA;Port - port to listen incoming ws connections;&#xA;DeviceServer - tango id of a required device server;&#xA;Attributes - list of required DS attributes, you wish to read via WS;&#xA;Then you should set polling to the UpdateData command. (1000 means that all connected clients would read attributes once per second).&#xA;&#xA;Data format: JSON string with array of attrubute objects {atrrtibute name, attribute value, quality, timestamp};" title="WebSocket access to tango device-server attributes" sourcePath="/home/elkin/tempwork/tangoservs/WebSocketDS" language="Cpp" filestogenerate="XMI   file,Code files,Protected Regions" license="GPL" hasMandatoryProperty="false" hasConcreteProperty="true" hasAbstractCommand="false" hasAbstractAttribute="false">
       <inheritances classname="Device_Impl" sourcePath=""/>
       <identification contact="at dubna.tk - egor" author="egor" emailDomain="dubna.tk" classFamily="Communication" siteSpecific="" platform="All Platforms" bus="Not Applicable" manufacturer="none" reference=""/>
     </description>
@@ -70,6 +70,15 @@
       <excludedStates>OFF</excludedStates>
       <excludedStates>FAULT</excludedStates>
     </commands>
+    <commands name="SendCommandToDevice" description="" execMethod="send_command_to_device" displayLevel="OPERATOR" polledPeriod="0" isDynamic="false">
+      <argin description="input argument must be in JSON. Command must be included to device property ``Commands``&#xA;{``command`` : ``nameOfCommand``, ``args`` : [``1``,``2``,``3``]}&#xA;OR&#xA;{``command`` : ``nameOfCommand``, ``args`` : ``1``}">
+        <type xsi:type="pogoDsl:StringType"/>
+      </argin>
+      <argout description="">
+        <type xsi:type="pogoDsl:VoidType"/>
+      </argout>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+    </commands>
     <attributes name="JSON" attType="Scalar" rwType="READ" displayLevel="OPERATOR" polledPeriod="0" maxX="" maxY="" allocReadMember="true" isDynamic="false">
       <dataType xsi:type="pogoDsl:StringType"/>
       <changeEvent fire="false" libCheckCriteria="false"/>
@@ -87,7 +96,7 @@
     <states name="FAULT" description="">
       <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
     </states>
-    <preferences docHome="./doc_html" makefileHome="/home/taurel/tmp/tango_install/share/pogo/preferences"/>
+    <preferences docHome="./doc_html" makefileHome="/usr/local/share/pogo/preferences"/>
     <additionalFiles name="WSThread" path="D:\coding\Tango\DeviceServers\WebSocketDS\WSThread.cpp"/>
   </classes>
 </pogoDsl:PogoSystem>

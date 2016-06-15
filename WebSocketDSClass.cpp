@@ -212,6 +212,26 @@ CORBA::Any *UpdateDataClass::execute(Tango::DeviceImpl *device, TANGO_UNUSED(con
     return new CORBA::Any();
 }
 
+//--------------------------------------------------------
+/**
+ * method :         SendCommandToDeviceClass::execute()
+ * description :     method to trigger the execution of the command.
+ *
+ * @param    device    The device on which the command must be executed
+ * @param    in_any    The command input data
+ *
+ *    returns The command output data (packed in the Any object)
+ */
+//--------------------------------------------------------
+CORBA::Any *SendCommandToDeviceClass::execute(Tango::DeviceImpl *device, const CORBA::Any &in_any)
+{
+    cout2 << "SendCommandToDeviceClass::execute(): arrived" << endl;
+    Tango::DevString argin;
+    extract(in_any, argin);
+    ((static_cast<WebSocketDS *>(device))->send_command_to_device(argin));
+    return new CORBA::Any();
+}
+
 
 //===================================================================
 //    Properties management
@@ -642,6 +662,15 @@ void WebSocketDSClass::command_factory()
             Tango::OPERATOR);
     pUpdateDataCmd->set_polling_period(3000);
     command_list.push_back(pUpdateDataCmd);
+
+    //    Command SendCommandToDevice
+    SendCommandToDeviceClass    *pSendCommandToDeviceCmd =
+        new SendCommandToDeviceClass("SendCommandToDevice",
+            Tango::DEV_STRING, Tango::DEV_VOID,
+            "input argument must be in JSON. Command must be included to device property ``Commands``\n{``command`` : ``nameOfCommand``, ``args`` : [``1``,``2``,``3``]}\nOR\n{``command`` : ``nameOfCommand``, ``args`` : ``1``}",
+            "",
+            Tango::OPERATOR);
+    command_list.push_back(pSendCommandToDeviceCmd);
 
     /*----- PROTECTED REGION ID(WebSocketDSClass::command_factory_after) ENABLED START -----*/
     

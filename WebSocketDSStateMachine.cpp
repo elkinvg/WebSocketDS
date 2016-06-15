@@ -132,6 +132,21 @@ bool WebSocketDS::is_UpdateData_allowed(TANGO_UNUSED(const CORBA::Any &any))
     return true;
 }
 
+//--------------------------------------------------------
+/**
+ *    Method      : WebSocketDS::is_SendCommandToDevice_allowed()
+ *    Description : Execution allowed for SendCommandToDevice attribute
+ */
+//--------------------------------------------------------
+bool WebSocketDS::is_SendCommandToDevice_allowed(TANGO_UNUSED(const CORBA::Any &any))
+{
+    //    Not any excluded states for SendCommandToDevice command.
+    /*----- PROTECTED REGION ID(WebSocketDS::SendCommandToDeviceStateAllowed) ENABLED START -----*/
+    
+    /*----- PROTECTED REGION END -----*/    //    WebSocketDS::SendCommandToDeviceStateAllowed
+    return true;
+}
+
 
 /*----- PROTECTED REGION ID(WebSocketDS::WebSocketDSStateAllowed.AdditionalMethods) ENABLED START -----*/
 

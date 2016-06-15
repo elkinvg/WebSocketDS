@@ -15,16 +15,26 @@ namespace WebSocketDS_ns
         template <typename T>
         void dataFromAttrsToJson(T& data, std::stringstream& ss);
 
-        std::string process_device_data_t(Tango::DeviceData &deviceData);
-        enum class TYPE_OF_DEVICE_DATA {VOID_D=0, DATA=1 ,ARRAY=2};
-
-        std::string devDataToString(Tango::DeviceData* deviceData);
+        bool checkCommand(const string &jsonInput, const std::map<string, Tango::CommandInfo> &accessibleCommandInfo);
+        std::string process_device_data_json_t(std::string jsonInput, int typeForDeviceData);
+        Tango::DeviceData gettingDevDataFromJsonStr(std::string jsonData, int typeForDeviceData);
 
         template <typename T>
-        std::string dataToString(T& data, Tango::DeviceData *devData);
+        Tango::DeviceData parsingJsonForGenerateData(T& devData, std::string jsonData, int typeForDeviceData);
+
+
+        //TMP BEGIN
+        //std::string process_device_data_t(Tango::DeviceData &deviceData);
+        enum class TYPE_OF_DEVICE_DATA {VOID_D=0, DATA=1 ,ARRAY=2};
         TYPE_OF_DEVICE_DATA getTypeOfData(int tangoType);
 
-        Tango::DeviceData gettingJsonStrToDevData(std::string jsonData);
+//        std::string devDataToString(Tango::DeviceData* deviceData);
+
+//        template <typename T>
+//        std::string dataToString(T& data, Tango::DeviceData *devData);
+
+
+        //TMP END
         // elkin end
 
         std::string process_device_data(Tango::DeviceData data);

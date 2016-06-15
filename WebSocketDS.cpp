@@ -68,13 +68,14 @@ static const char *RcsId = "$Id:  $";
 //  The following table gives the correspondence
 //  between command and method names.
 //
-//  Command name  |  Method name
+//  Command name         |  Method name
 //================================================================
-//  State         |  Inherited (no method)
-//  Status        |  Inherited (no method)
-//  On            |  on
-//  Off           |  off
-//  UpdateData    |  update_data
+//  State                |  Inherited (no method)
+//  Status               |  Inherited (no method)
+//  On                   |  on
+//  Off                  |  off
+//  UpdateData           |  update_data
+//  SendCommandToDevice  |  send_command_to_device
 //================================================================
 
 //================================================================
@@ -447,6 +448,42 @@ void WebSocketDS::update_data()
         set_status("Couldn't read attribute from device: " + deviceServer);
     }
     /*----- PROTECTED REGION END -----*/    //    WebSocketDS::update_data
+}
+//--------------------------------------------------------
+/**
+ *    Command SendCommandToDevice related method
+ *    Description:
+ *
+ *    @param argin input argument must be in JSON. Command must be included to device property ``Commands``
+ *               {``command`` : ``nameOfCommand``, ``args`` : [``1``,``2``,``3``]}
+ *               OR
+ *               {``command`` : ``nameOfCommand``, ``args`` : ``1``}
+ */
+//--------------------------------------------------------
+void WebSocketDS::send_command_to_device(Tango::DevString argin)
+{
+    DEBUG_STREAM << "WebSocketDS::SendCommandToDevice()  - " << device_name << endl;
+    /*----- PROTECTED REGION ID(WebSocketDS::send_command_to_device) ENABLED START -----*/
+
+    //    Add your own code
+    try
+    {
+        bool isCommandAccessible = processor.checkCommand(argin,accessibleCommandInfo);
+
+        if (isCommandAccessible) {
+            Tango::CommandInfo comInfo = accessibleCommandInfo[argin];
+            int type = comInfo.in_type;
+            Tango::DeviceData deviceData = processor.gettingDevDataFromJsonStr(argin,type);
+            device->command_inout(argin,deviceData);
+
+        }
+    }
+    catch (Tango::DevFailed &e) {
+        Tango::Except::print_exception(e);
+        // ADD MESSAGE ????
+    }
+
+    /*----- PROTECTED REGION END -----*/    //    WebSocketDS::send_command_to_device
 }
 //--------------------------------------------------------
 /**

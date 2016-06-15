@@ -92,6 +92,7 @@ private:
     Tango::DeviceProxy *device;
     tango_processor processor;
     std::vector<bool>  isJsonAttribute;
+public:
     std::map<std::string, Tango::CommandInfo> accessibleCommandInfo;
 /*----- PROTECTED REGION END -----*/    //    WebSocketDS::Data Members
 
@@ -215,6 +216,17 @@ public:
      */
     virtual void update_data();
     virtual bool is_UpdateData_allowed(const CORBA::Any &any);
+    /**
+     *    Command SendCommandToDevice related method
+     *    Description:
+     *
+     *    @param argin input argument must be in JSON. Command must be included to device property ``Commands``
+     *               {``command`` : ``nameOfCommand``, ``args`` : [``1``,``2``,``3``]}
+     *               OR
+     *               {``command`` : ``nameOfCommand``, ``args`` : ``1``}
+     */
+    virtual void send_command_to_device(Tango::DevString argin);
+    virtual bool is_SendCommandToDevice_allowed(const CORBA::Any &any);
 
 
     //--------------------------------------------------------

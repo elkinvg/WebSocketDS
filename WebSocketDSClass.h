@@ -145,6 +145,29 @@ public:
     {return (static_cast<WebSocketDS *>(dev))->is_UpdateData_allowed(any);}
 };
 
+//    Command SendCommandToDevice class definition
+class SendCommandToDeviceClass : public Tango::Command
+{
+public:
+    SendCommandToDeviceClass(const char   *name,
+                   Tango::CmdArgType in,
+                   Tango::CmdArgType out,
+                   const char        *in_desc,
+                   const char        *out_desc,
+                   Tango::DispLevel  level)
+    :Command(name,in,out,in_desc,out_desc, level)    {};
+
+    SendCommandToDeviceClass(const char   *name,
+                   Tango::CmdArgType in,
+                   Tango::CmdArgType out)
+    :Command(name,in,out)    {};
+    ~SendCommandToDeviceClass() {};
+    
+    virtual CORBA::Any *execute (Tango::DeviceImpl *dev, const CORBA::Any &any);
+    virtual bool is_allowed (Tango::DeviceImpl *dev, const CORBA::Any &any)
+    {return (static_cast<WebSocketDS *>(dev))->is_SendCommandToDevice_allowed(any);}
+};
+
 
 /**
  *    The WebSocketDSClass singleton definition
