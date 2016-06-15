@@ -58,7 +58,7 @@
 
 typedef websocketpp::server<websocketpp::config::asio> server;
 
-/*----- PROTECTED REGION END -----*/	//	WebSocketDS.h
+/*----- PROTECTED REGION END -----*/    //    WebSocketDS.h
 
 /**
  *  WebSocketDS class description:
@@ -79,151 +79,151 @@ namespace WebSocketDS_ns
 /*----- PROTECTED REGION ID(WebSocketDS::Additional Class Declarations) ENABLED START -----*/
 
 class WSThread;
-/*----- PROTECTED REGION END -----*/	//	WebSocketDS::Additional Class Declarations
+/*----- PROTECTED REGION END -----*/    //    WebSocketDS::Additional Class Declarations
 
 class WebSocketDS : public TANGO_BASE_CLASS
 {
 
 /*----- PROTECTED REGION ID(WebSocketDS::Data Members) ENABLED START -----*/
 
-//	Add your own data members
+//    Add your own data members
 private:
-	WSThread *wsThread;
-	Tango::DeviceProxy *device;
-	tango_processor processor;
-	std::vector<bool>  isJsonAttribute;
+    WSThread *wsThread;
+    Tango::DeviceProxy *device;
+    tango_processor processor;
+    std::vector<bool>  isJsonAttribute;
     std::map<std::string, Tango::CommandInfo> accessibleCommandInfo;
-/*----- PROTECTED REGION END -----*/	//	WebSocketDS::Data Members
+/*----- PROTECTED REGION END -----*/    //    WebSocketDS::Data Members
 
-//	Device property data members
+//    Device property data members
 public:
-	//	Port:	
-	Tango::DevShort	port;
-	//	DeviceServer:	DeviceServer name
-	string	deviceServer;
-	//	Attributes:	Attributes list
-	vector<string>	attributes;
-	//	Commands:	Commandes list
-	vector<string>	commands;
+    //    Port:
+    Tango::DevShort    port;
+    //    DeviceServer:    DeviceServer name
+    string    deviceServer;
+    //    Attributes:    Attributes list
+    vector<string>    attributes;
+    //    Commands:    Commandes list
+    vector<string>    commands;
 
-//	Attribute data members
+//    Attribute data members
 public:
-	Tango::DevString	*attr_JSON_read;
+    Tango::DevString    *attr_JSON_read;
 
-//	Constructors and destructors
+//    Constructors and destructors
 public:
-	/**
-	 * Constructs a newly device object.
-	 *
-	 *	@param cl	Class.
-	 *	@param s 	Device Name
-	 */
-	WebSocketDS(Tango::DeviceClass *cl,string &s);
-	/**
-	 * Constructs a newly device object.
-	 *
-	 *	@param cl	Class.
-	 *	@param s 	Device Name
-	 */
-	WebSocketDS(Tango::DeviceClass *cl,const char *s);
-	/**
-	 * Constructs a newly device object.
-	 *
-	 *	@param cl	Class.
-	 *	@param s 	Device name
-	 *	@param d	Device description.
-	 */
-	WebSocketDS(Tango::DeviceClass *cl,const char *s,const char *d);
-	/**
-	 * The device object destructor.
-	 */
-	~WebSocketDS() {delete_device();};
+    /**
+     * Constructs a newly device object.
+     *
+     *    @param cl    Class.
+     *    @param s     Device Name
+     */
+    WebSocketDS(Tango::DeviceClass *cl,string &s);
+    /**
+     * Constructs a newly device object.
+     *
+     *    @param cl    Class.
+     *    @param s     Device Name
+     */
+    WebSocketDS(Tango::DeviceClass *cl,const char *s);
+    /**
+     * Constructs a newly device object.
+     *
+     *    @param cl    Class.
+     *    @param s     Device name
+     *    @param d    Device description.
+     */
+    WebSocketDS(Tango::DeviceClass *cl,const char *s,const char *d);
+    /**
+     * The device object destructor.
+     */
+    ~WebSocketDS() {delete_device();};
 
 
-//	Miscellaneous methods
+//    Miscellaneous methods
 public:
-	/*
-	 *	will be called at device destruction or at init command.
-	 */
-	void delete_device();
-	/*
-	 *	Initialize the device
-	 */
-	virtual void init_device();
-	/*
-	 *	Read the device properties from database
-	 */
-	void get_device_property();
-	/*
-	 *	Always executed method before execution command method.
-	 */
-	virtual void always_executed_hook();
+    /*
+     *    will be called at device destruction or at init command.
+     */
+    void delete_device();
+    /*
+     *    Initialize the device
+     */
+    virtual void init_device();
+    /*
+     *    Read the device properties from database
+     */
+    void get_device_property();
+    /*
+     *    Always executed method before execution command method.
+     */
+    virtual void always_executed_hook();
 
 
-//	Attribute methods
+//    Attribute methods
 public:
-	//--------------------------------------------------------
-	/*
-	 *	Method      : WebSocketDS::read_attr_hardware()
-	 *	Description : Hardware acquisition for attributes.
-	 */
-	//--------------------------------------------------------
-	virtual void read_attr_hardware(vector<long> &attr_list);
+    //--------------------------------------------------------
+    /*
+     *    Method      : WebSocketDS::read_attr_hardware()
+     *    Description : Hardware acquisition for attributes.
+     */
+    //--------------------------------------------------------
+    virtual void read_attr_hardware(vector<long> &attr_list);
 
 /**
- *	Attribute JSON related methods
- *	Description: 
+ *    Attribute JSON related methods
+ *    Description:
  *
- *	Data type:	Tango::DevString
- *	Attr type:	Scalar
+ *    Data type:    Tango::DevString
+ *    Attr type:    Scalar
  */
-	virtual void read_JSON(Tango::Attribute &attr);
-	virtual bool is_JSON_allowed(Tango::AttReqType type);
+    virtual void read_JSON(Tango::Attribute &attr);
+    virtual bool is_JSON_allowed(Tango::AttReqType type);
 
 
-	//--------------------------------------------------------
-	/**
-	 *	Method      : WebSocketDS::add_dynamic_attributes()
-	 *	Description : Add dynamic attributes if any.
-	 */
-	//--------------------------------------------------------
-	void add_dynamic_attributes();
+    //--------------------------------------------------------
+    /**
+     *    Method      : WebSocketDS::add_dynamic_attributes()
+     *    Description : Add dynamic attributes if any.
+     */
+    //--------------------------------------------------------
+    void add_dynamic_attributes();
 
 
 
 
-//	Command related methods
+//    Command related methods
 public:
-	/**
-	 *	Command On related method
-	 *	Description: 
-	 *
-	 */
-	virtual void on();
-	virtual bool is_On_allowed(const CORBA::Any &any);
-	/**
-	 *	Command Off related method
-	 *	Description: 
-	 *
-	 */
-	virtual void off();
-	virtual bool is_Off_allowed(const CORBA::Any &any);
-	/**
-	 *	Command UpdateData related method
-	 *	Description: 
-	 *
-	 */
-	virtual void update_data();
-	virtual bool is_UpdateData_allowed(const CORBA::Any &any);
+    /**
+     *    Command On related method
+     *    Description:
+     *
+     */
+    virtual void on();
+    virtual bool is_On_allowed(const CORBA::Any &any);
+    /**
+     *    Command Off related method
+     *    Description:
+     *
+     */
+    virtual void off();
+    virtual bool is_Off_allowed(const CORBA::Any &any);
+    /**
+     *    Command UpdateData related method
+     *    Description:
+     *
+     */
+    virtual void update_data();
+    virtual bool is_UpdateData_allowed(const CORBA::Any &any);
 
 
-	//--------------------------------------------------------
-	/**
-	 *	Method      : WebSocketDS::add_dynamic_commands()
-	 *	Description : Add dynamic commands if any.
-	 */
-	//--------------------------------------------------------
-	void add_dynamic_commands();
+    //--------------------------------------------------------
+    /**
+     *    Method      : WebSocketDS::add_dynamic_commands()
+     *    Description : Add dynamic commands if any.
+     */
+    //--------------------------------------------------------
+    void add_dynamic_commands();
 
 /*----- PROTECTED REGION ID(WebSocketDS::Additional Method prototypes) ENABLED START -----*/
 
@@ -233,51 +233,51 @@ public:
     }
 
     //elkin test end
-/*----- PROTECTED REGION END -----*/	//	WebSocketDS::Additional Method prototypes
+/*----- PROTECTED REGION END -----*/    //    WebSocketDS::Additional Method prototypes
 };
 
 /*----- PROTECTED REGION ID(WebSocketDS::Additional Classes Definitions) ENABLED START -----*/
 
-//	Additional Classes Definitions
+//    Additional Classes Definitions
 
 class WSThread: public omni_thread, public Tango::LogAdapter
 {
 public:
-	WSThread(WebSocketDS *dev, std::string hostName,int portNumber):
+    WSThread(WebSocketDS *dev, std::string hostName,int portNumber):
     omni_thread(),Tango::LogAdapter(dev)
     {
-		host = hostName;
-		port = portNumber;
+        host = hostName;
+        port = portNumber;
         ds = dev;
-		start_undetached();  
-	}
+        start_undetached();
+    }
 
     ~WSThread();
     void *run_undetached(void *);
     void stop();
-	void send_all(std::string msg);
-	void send(websocketpp::connection_hdl hdl, std::string msg);
+    void send_all(std::string msg);
+    void send(websocketpp::connection_hdl hdl, std::string msg);
 private:
-	typedef std::set<websocketpp::connection_hdl,std::owner_less<websocketpp::connection_hdl> > con_list;
+    typedef std::set<websocketpp::connection_hdl,std::owner_less<websocketpp::connection_hdl> > con_list;
 
     server m_server;
     con_list m_connections;
-	int port;
-	std::string host;
-	std::string cache;
+    int port;
+    std::string host;
+    std::string cache;
     websocketpp::lib::mutex m_action_lock;
     websocketpp::lib::mutex m_connection_lock;
     websocketpp::lib::condition_variable m_action_cond;
-	WebSocketDS *ds;
-	bool local_th_exit;
-	server print_server;
+    WebSocketDS *ds;
+    bool local_th_exit;
+    server print_server;
     void on_message(websocketpp::connection_hdl hdl, server::message_ptr msg);
-	void on_open(websocketpp::connection_hdl hdl);
-	void on_close(websocketpp::connection_hdl hdl);
+    void on_open(websocketpp::connection_hdl hdl);
+    void on_close(websocketpp::connection_hdl hdl);
 };
 
-/*----- PROTECTED REGION END -----*/	//	WebSocketDS::Additional Classes Definitions
+/*----- PROTECTED REGION END -----*/    //    WebSocketDS::Additional Classes Definitions
 
-}	//	End of namespace
+}    //    End of namespace
 
-#endif   //	WebSocketDS_H
+#endif   //    WebSocketDS_H

@@ -48,7 +48,7 @@ static const char *RcsId = "$Id:  $";
 
 
 
-/*----- PROTECTED REGION END -----*/	//	WebSocketDS.cpp
+/*----- PROTECTED REGION END -----*/    //    WebSocketDS.cpp
 
 /**
  *  WebSocketDS class description:
@@ -80,119 +80,119 @@ static const char *RcsId = "$Id:  $";
 //================================================================
 //  Attributes managed is:
 //================================================================
-//  JSON  |  Tango::DevString	Scalar
+//  JSON  |  Tango::DevString    Scalar
 //================================================================
 
 namespace WebSocketDS_ns
 {
 /*----- PROTECTED REGION ID(WebSocketDS::namespace_starting) ENABLED START -----*/
 
-//	static initializations
+//    static initializations
 
-/*----- PROTECTED REGION END -----*/	//	WebSocketDS::namespace_starting
+/*----- PROTECTED REGION END -----*/    //    WebSocketDS::namespace_starting
 
 //--------------------------------------------------------
 /**
- *	Method      : WebSocketDS::WebSocketDS()
- *	Description : Constructors for a Tango device
+ *    Method      : WebSocketDS::WebSocketDS()
+ *    Description : Constructors for a Tango device
  *                implementing the classWebSocketDS
  */
 //--------------------------------------------------------
 WebSocketDS::WebSocketDS(Tango::DeviceClass *cl, string &s)
  : TANGO_BASE_CLASS(cl, s.c_str())
 {
-	/*----- PROTECTED REGION ID(WebSocketDS::constructor_1) ENABLED START -----*/
-	init_device();
-	
-	/*----- PROTECTED REGION END -----*/	//	WebSocketDS::constructor_1
+    /*----- PROTECTED REGION ID(WebSocketDS::constructor_1) ENABLED START -----*/
+    init_device();
+
+    /*----- PROTECTED REGION END -----*/    //    WebSocketDS::constructor_1
 }
 //--------------------------------------------------------
 WebSocketDS::WebSocketDS(Tango::DeviceClass *cl, const char *s)
  : TANGO_BASE_CLASS(cl, s)
 {
-	/*----- PROTECTED REGION ID(WebSocketDS::constructor_2) ENABLED START -----*/
-	init_device();
-	
-	/*----- PROTECTED REGION END -----*/	//	WebSocketDS::constructor_2
+    /*----- PROTECTED REGION ID(WebSocketDS::constructor_2) ENABLED START -----*/
+    init_device();
+
+    /*----- PROTECTED REGION END -----*/    //    WebSocketDS::constructor_2
 }
 //--------------------------------------------------------
 WebSocketDS::WebSocketDS(Tango::DeviceClass *cl, const char *s, const char *d)
  : TANGO_BASE_CLASS(cl, s, d)
 {
-	/*----- PROTECTED REGION ID(WebSocketDS::constructor_3) ENABLED START -----*/
-	init_device();
-	
-	/*----- PROTECTED REGION END -----*/	//	WebSocketDS::constructor_3
+    /*----- PROTECTED REGION ID(WebSocketDS::constructor_3) ENABLED START -----*/
+    init_device();
+
+    /*----- PROTECTED REGION END -----*/    //    WebSocketDS::constructor_3
 }
 
 //--------------------------------------------------------
 /**
- *	Method      : WebSocketDS::delete_device()
- *	Description : will be called at device destruction or at init command
+ *    Method      : WebSocketDS::delete_device()
+ *    Description : will be called at device destruction or at init command
  */
 //--------------------------------------------------------
 void WebSocketDS::delete_device()
 {
-	DEBUG_STREAM << "WebSocketDS::delete_device() " << device_name << endl;
-	/*----- PROTECTED REGION ID(WebSocketDS::delete_device) ENABLED START -----*/
-	
-	//	Delete device allocated objects
-	wsThread->stop();
+    DEBUG_STREAM << "WebSocketDS::delete_device() " << device_name << endl;
+    /*----- PROTECTED REGION ID(WebSocketDS::delete_device) ENABLED START -----*/
+
+    //    Delete device allocated objects
+    wsThread->stop();
     void *ptr;
     DEBUG_STREAM << "Waiting for the thread to exit" << endl;
     wsThread->join(&ptr);
 
-	CORBA::string_free(*attr_JSON_read);
+    CORBA::string_free(*attr_JSON_read);
 
-	/*----- PROTECTED REGION END -----*/	//	WebSocketDS::delete_device
-	delete[] attr_JSON_read;
+    /*----- PROTECTED REGION END -----*/    //    WebSocketDS::delete_device
+    delete[] attr_JSON_read;
 }
 
 //--------------------------------------------------------
 /**
- *	Method      : WebSocketDS::init_device()
- *	Description : will be called at device initialization.
+ *    Method      : WebSocketDS::init_device()
+ *    Description : will be called at device initialization.
  */
 //--------------------------------------------------------
 void WebSocketDS::init_device()
 {
-	DEBUG_STREAM << "WebSocketDS::init_device() create device " << device_name << endl;
-	/*----- PROTECTED REGION ID(WebSocketDS::init_device_before) ENABLED START -----*/
-	
-	//	Initialization before get_device_property() call
-	
-	/*----- PROTECTED REGION END -----*/	//	WebSocketDS::init_device_before
-	
+    DEBUG_STREAM << "WebSocketDS::init_device() create device " << device_name << endl;
+    /*----- PROTECTED REGION ID(WebSocketDS::init_device_before) ENABLED START -----*/
 
-	//	Get the device properties from database
-	get_device_property();
-	
-	attr_JSON_read = new Tango::DevString[1];
-	/*----- PROTECTED REGION ID(WebSocketDS::init_device) ENABLED START -----*/
-	
-	try
-	{
-		wsThread = new WSThread(this, "",port);
-		set_state(Tango::ON);
-		set_status("Device is On");
-		device = new Tango::DeviceProxy(deviceServer);
-	}
-	catch (Tango::DevFailed &e) 
-	{
-		Tango::Except::print_exception(e);
-		set_state(Tango::FAULT);
-		set_status("Couldn't connect to device: " + deviceServer);
-	}
+    //    Initialization before get_device_property() call
+
+    /*----- PROTECTED REGION END -----*/    //    WebSocketDS::init_device_before
 
 
-	DEBUG_STREAM << "Attributes: " << endl;
-	for (int i = 0; i < attributes.size(); i++)
-	{
-		std::string at = attributes.at(i);
-		boost::to_lower(at);
-		isJsonAttribute.push_back(at.find("json") != std::string::npos);
-		DEBUG_STREAM << attributes.at(i) << endl;
-	}
+    //    Get the device properties from database
+    get_device_property();
+
+    attr_JSON_read = new Tango::DevString[1];
+    /*----- PROTECTED REGION ID(WebSocketDS::init_device) ENABLED START -----*/
+
+    try
+    {
+        wsThread = new WSThread(this, "",port);
+        set_state(Tango::ON);
+        set_status("Device is On");
+        device = new Tango::DeviceProxy(deviceServer);
+    }
+    catch (Tango::DevFailed &e)
+    {
+        Tango::Except::print_exception(e);
+        set_state(Tango::FAULT);
+        set_status("Couldn't connect to device: " + deviceServer);
+    }
+
+
+    DEBUG_STREAM << "Attributes: " << endl;
+    for (int i = 0; i < attributes.size(); i++)
+    {
+        std::string at = attributes.at(i);
+        boost::to_lower(at);
+        isJsonAttribute.push_back(at.find("json") != std::string::npos);
+        DEBUG_STREAM << attributes.at(i) << endl;
+    }
 
     DEBUG_STREAM << "Commands: " << endl;
     for (auto& com : commands) {
@@ -207,261 +207,261 @@ void WebSocketDS::init_device()
         }
     }
 
-	attr_JSON_read[0] = Tango::string_dup("{\"success\": false}");
-	update_data();
-	/*----- PROTECTED REGION END -----*/	//	WebSocketDS::init_device
+    attr_JSON_read[0] = Tango::string_dup("{\"success\": false}");
+    update_data();
+    /*----- PROTECTED REGION END -----*/    //    WebSocketDS::init_device
 }
 
 //--------------------------------------------------------
 /**
- *	Method      : WebSocketDS::get_device_property()
- *	Description : Read database to initialize property data members.
+ *    Method      : WebSocketDS::get_device_property()
+ *    Description : Read database to initialize property data members.
  */
 //--------------------------------------------------------
 void WebSocketDS::get_device_property()
 {
-	/*----- PROTECTED REGION ID(WebSocketDS::get_device_property_before) ENABLED START -----*/
-	
-	//	Initialize property data members
-	port = 9002;
-	
-	/*----- PROTECTED REGION END -----*/	//	WebSocketDS::get_device_property_before
+    /*----- PROTECTED REGION ID(WebSocketDS::get_device_property_before) ENABLED START -----*/
+
+    //    Initialize property data members
+    port = 9002;
+
+    /*----- PROTECTED REGION END -----*/    //    WebSocketDS::get_device_property_before
 
 
-	//	Read device properties from database.
-	Tango::DbData	dev_prop;
-	dev_prop.push_back(Tango::DbDatum("Port"));
-	dev_prop.push_back(Tango::DbDatum("DeviceServer"));
-	dev_prop.push_back(Tango::DbDatum("Attributes"));
-	dev_prop.push_back(Tango::DbDatum("Commands"));
+    //    Read device properties from database.
+    Tango::DbData    dev_prop;
+    dev_prop.push_back(Tango::DbDatum("Port"));
+    dev_prop.push_back(Tango::DbDatum("DeviceServer"));
+    dev_prop.push_back(Tango::DbDatum("Attributes"));
+    dev_prop.push_back(Tango::DbDatum("Commands"));
 
-	//	is there at least one property to be read ?
-	if (dev_prop.size()>0)
-	{
-		//	Call database and extract values
-		if (Tango::Util::instance()->_UseDb==true)
-			get_db_device()->get_property(dev_prop);
-	
-		//	get instance on WebSocketDSClass to get class property
-		Tango::DbDatum	def_prop, cl_prop;
-		WebSocketDSClass	*ds_class =
-			(static_cast<WebSocketDSClass *>(get_device_class()));
-		int	i = -1;
+    //    is there at least one property to be read ?
+    if (dev_prop.size()>0)
+    {
+        //    Call database and extract values
+        if (Tango::Util::instance()->_UseDb==true)
+            get_db_device()->get_property(dev_prop);
 
-		//	Try to initialize Port from class property
-		cl_prop = ds_class->get_class_property(dev_prop[++i].name);
-		if (cl_prop.is_empty()==false)	cl_prop  >>  port;
-		else {
-			//	Try to initialize Port from default device value
-			def_prop = ds_class->get_default_device_property(dev_prop[i].name);
-			if (def_prop.is_empty()==false)	def_prop  >>  port;
-		}
-		//	And try to extract Port value from database
-		if (dev_prop[i].is_empty()==false)	dev_prop[i]  >>  port;
+        //    get instance on WebSocketDSClass to get class property
+        Tango::DbDatum    def_prop, cl_prop;
+        WebSocketDSClass    *ds_class =
+            (static_cast<WebSocketDSClass *>(get_device_class()));
+        int    i = -1;
 
-		//	Try to initialize DeviceServer from class property
-		cl_prop = ds_class->get_class_property(dev_prop[++i].name);
-		if (cl_prop.is_empty()==false)	cl_prop  >>  deviceServer;
-		else {
-			//	Try to initialize DeviceServer from default device value
-			def_prop = ds_class->get_default_device_property(dev_prop[i].name);
-			if (def_prop.is_empty()==false)	def_prop  >>  deviceServer;
-		}
-		//	And try to extract DeviceServer value from database
-		if (dev_prop[i].is_empty()==false)	dev_prop[i]  >>  deviceServer;
+        //    Try to initialize Port from class property
+        cl_prop = ds_class->get_class_property(dev_prop[++i].name);
+        if (cl_prop.is_empty()==false)    cl_prop  >>  port;
+        else {
+            //    Try to initialize Port from default device value
+            def_prop = ds_class->get_default_device_property(dev_prop[i].name);
+            if (def_prop.is_empty()==false)    def_prop  >>  port;
+        }
+        //    And try to extract Port value from database
+        if (dev_prop[i].is_empty()==false)    dev_prop[i]  >>  port;
 
-		//	Try to initialize Attributes from class property
-		cl_prop = ds_class->get_class_property(dev_prop[++i].name);
-		if (cl_prop.is_empty()==false)	cl_prop  >>  attributes;
-		else {
-			//	Try to initialize Attributes from default device value
-			def_prop = ds_class->get_default_device_property(dev_prop[i].name);
-			if (def_prop.is_empty()==false)	def_prop  >>  attributes;
-		}
-		//	And try to extract Attributes value from database
-		if (dev_prop[i].is_empty()==false)	dev_prop[i]  >>  attributes;
+        //    Try to initialize DeviceServer from class property
+        cl_prop = ds_class->get_class_property(dev_prop[++i].name);
+        if (cl_prop.is_empty()==false)    cl_prop  >>  deviceServer;
+        else {
+            //    Try to initialize DeviceServer from default device value
+            def_prop = ds_class->get_default_device_property(dev_prop[i].name);
+            if (def_prop.is_empty()==false)    def_prop  >>  deviceServer;
+        }
+        //    And try to extract DeviceServer value from database
+        if (dev_prop[i].is_empty()==false)    dev_prop[i]  >>  deviceServer;
 
-		//	Try to initialize Commands from class property
-		cl_prop = ds_class->get_class_property(dev_prop[++i].name);
-		if (cl_prop.is_empty()==false)	cl_prop  >>  commands;
-		else {
-			//	Try to initialize Commands from default device value
-			def_prop = ds_class->get_default_device_property(dev_prop[i].name);
-			if (def_prop.is_empty()==false)	def_prop  >>  commands;
-		}
-		//	And try to extract Commands value from database
-		if (dev_prop[i].is_empty()==false)	dev_prop[i]  >>  commands;
+        //    Try to initialize Attributes from class property
+        cl_prop = ds_class->get_class_property(dev_prop[++i].name);
+        if (cl_prop.is_empty()==false)    cl_prop  >>  attributes;
+        else {
+            //    Try to initialize Attributes from default device value
+            def_prop = ds_class->get_default_device_property(dev_prop[i].name);
+            if (def_prop.is_empty()==false)    def_prop  >>  attributes;
+        }
+        //    And try to extract Attributes value from database
+        if (dev_prop[i].is_empty()==false)    dev_prop[i]  >>  attributes;
 
-	}
+        //    Try to initialize Commands from class property
+        cl_prop = ds_class->get_class_property(dev_prop[++i].name);
+        if (cl_prop.is_empty()==false)    cl_prop  >>  commands;
+        else {
+            //    Try to initialize Commands from default device value
+            def_prop = ds_class->get_default_device_property(dev_prop[i].name);
+            if (def_prop.is_empty()==false)    def_prop  >>  commands;
+        }
+        //    And try to extract Commands value from database
+        if (dev_prop[i].is_empty()==false)    dev_prop[i]  >>  commands;
 
-	/*----- PROTECTED REGION ID(WebSocketDS::get_device_property_after) ENABLED START -----*/
-	
-	//	Check device property data members init
-	
-	/*----- PROTECTED REGION END -----*/	//	WebSocketDS::get_device_property_after
+    }
+
+    /*----- PROTECTED REGION ID(WebSocketDS::get_device_property_after) ENABLED START -----*/
+
+    //    Check device property data members init
+
+    /*----- PROTECTED REGION END -----*/    //    WebSocketDS::get_device_property_after
 }
 
 //--------------------------------------------------------
 /**
- *	Method      : WebSocketDS::always_executed_hook()
- *	Description : method always executed before any command is executed
+ *    Method      : WebSocketDS::always_executed_hook()
+ *    Description : method always executed before any command is executed
  */
 //--------------------------------------------------------
 void WebSocketDS::always_executed_hook()
 {
-	DEBUG_STREAM << "WebSocketDS::always_executed_hook()  " << device_name << endl;
-	/*----- PROTECTED REGION ID(WebSocketDS::always_executed_hook) ENABLED START -----*/
-	
-	//	code always executed before all requests
-	
-	/*----- PROTECTED REGION END -----*/	//	WebSocketDS::always_executed_hook
+    DEBUG_STREAM << "WebSocketDS::always_executed_hook()  " << device_name << endl;
+    /*----- PROTECTED REGION ID(WebSocketDS::always_executed_hook) ENABLED START -----*/
+
+    //    code always executed before all requests
+
+    /*----- PROTECTED REGION END -----*/    //    WebSocketDS::always_executed_hook
 }
 
 //--------------------------------------------------------
 /**
- *	Method      : WebSocketDS::read_attr_hardware()
- *	Description : Hardware acquisition for attributes
+ *    Method      : WebSocketDS::read_attr_hardware()
+ *    Description : Hardware acquisition for attributes
  */
 //--------------------------------------------------------
 void WebSocketDS::read_attr_hardware(TANGO_UNUSED(vector<long> &attr_list))
 {
-	DEBUG_STREAM << "WebSocketDS::read_attr_hardware(vector<long> &attr_list) entering... " << endl;
-	/*----- PROTECTED REGION ID(WebSocketDS::read_attr_hardware) ENABLED START -----*/
-	
-	//	Add your own code
-	
-	/*----- PROTECTED REGION END -----*/	//	WebSocketDS::read_attr_hardware
+    DEBUG_STREAM << "WebSocketDS::read_attr_hardware(vector<long> &attr_list) entering... " << endl;
+    /*----- PROTECTED REGION ID(WebSocketDS::read_attr_hardware) ENABLED START -----*/
+
+    //    Add your own code
+
+    /*----- PROTECTED REGION END -----*/    //    WebSocketDS::read_attr_hardware
 }
 
 //--------------------------------------------------------
 /**
- *	Read attribute JSON related method
- *	Description: 
+ *    Read attribute JSON related method
+ *    Description:
  *
- *	Data type:	Tango::DevString
- *	Attr type:	Scalar
+ *    Data type:    Tango::DevString
+ *    Attr type:    Scalar
  */
 //--------------------------------------------------------
 void WebSocketDS::read_JSON(Tango::Attribute &attr)
 {
-	DEBUG_STREAM << "WebSocketDS::read_JSON(Tango::Attribute &attr) entering... " << endl;
-	/*----- PROTECTED REGION ID(WebSocketDS::read_JSON) ENABLED START -----*/
-	//	Set the attribute value
-	attr.set_value(attr_JSON_read);
-	
-	/*----- PROTECTED REGION END -----*/	//	WebSocketDS::read_JSON
+    DEBUG_STREAM << "WebSocketDS::read_JSON(Tango::Attribute &attr) entering... " << endl;
+    /*----- PROTECTED REGION ID(WebSocketDS::read_JSON) ENABLED START -----*/
+    //    Set the attribute value
+    attr.set_value(attr_JSON_read);
+
+    /*----- PROTECTED REGION END -----*/    //    WebSocketDS::read_JSON
 }
 
 //--------------------------------------------------------
 /**
- *	Method      : WebSocketDS::add_dynamic_attributes()
- *	Description : Create the dynamic attributes if any
+ *    Method      : WebSocketDS::add_dynamic_attributes()
+ *    Description : Create the dynamic attributes if any
  *                for specified device.
  */
 //--------------------------------------------------------
 void WebSocketDS::add_dynamic_attributes()
 {
-	/*----- PROTECTED REGION ID(WebSocketDS::add_dynamic_attributes) ENABLED START -----*/
-	
-	//	Add your own code to create and add dynamic attributes if any
-	
-	/*----- PROTECTED REGION END -----*/	//	WebSocketDS::add_dynamic_attributes
+    /*----- PROTECTED REGION ID(WebSocketDS::add_dynamic_attributes) ENABLED START -----*/
+
+    //    Add your own code to create and add dynamic attributes if any
+
+    /*----- PROTECTED REGION END -----*/    //    WebSocketDS::add_dynamic_attributes
 }
 
 //--------------------------------------------------------
 /**
- *	Command On related method
- *	Description: 
+ *    Command On related method
+ *    Description:
  *
  */
 //--------------------------------------------------------
 void WebSocketDS::on()
 {
-	DEBUG_STREAM << "WebSocketDS::On()  - " << device_name << endl;
-	/*----- PROTECTED REGION ID(WebSocketDS::on) ENABLED START -----*/
-	
-	set_state(Tango::ON);
-	set_status("Device is On");
+    DEBUG_STREAM << "WebSocketDS::On()  - " << device_name << endl;
+    /*----- PROTECTED REGION ID(WebSocketDS::on) ENABLED START -----*/
 
-	
-	/*----- PROTECTED REGION END -----*/	//	WebSocketDS::on
+    set_state(Tango::ON);
+    set_status("Device is On");
+
+
+    /*----- PROTECTED REGION END -----*/    //    WebSocketDS::on
 }
 //--------------------------------------------------------
 /**
- *	Command Off related method
- *	Description: 
+ *    Command Off related method
+ *    Description:
  *
  */
 //--------------------------------------------------------
 void WebSocketDS::off()
 {
-	DEBUG_STREAM << "WebSocketDS::Off()  - " << device_name << endl;
-	/*----- PROTECTED REGION ID(WebSocketDS::off) ENABLED START -----*/
-	
-	set_state(Tango::OFF);
-	set_status("Device is Off");
-	
-	/*----- PROTECTED REGION END -----*/	//	WebSocketDS::off
+    DEBUG_STREAM << "WebSocketDS::Off()  - " << device_name << endl;
+    /*----- PROTECTED REGION ID(WebSocketDS::off) ENABLED START -----*/
+
+    set_state(Tango::OFF);
+    set_status("Device is Off");
+
+    /*----- PROTECTED REGION END -----*/    //    WebSocketDS::off
 }
 //--------------------------------------------------------
 /**
- *	Command UpdateData related method
- *	Description: 
+ *    Command UpdateData related method
+ *    Description:
  *
  */
 //--------------------------------------------------------
 void WebSocketDS::update_data()
 {
-	DEBUG_STREAM << "WebSocketDS::UpdateData()  - " << device_name << endl;
-	/*----- PROTECTED REGION ID(WebSocketDS::update_data) ENABLED START -----*/
-	//double r = rand_float(0,100);
-	//attr_MyAttr_read[0] = r;
+    DEBUG_STREAM << "WebSocketDS::UpdateData()  - " << device_name << endl;
+    /*----- PROTECTED REGION ID(WebSocketDS::update_data) ENABLED START -----*/
+    //double r = rand_float(0,100);
+    //attr_MyAttr_read[0] = r;
 
-	
-	try 
-	{
-		std::vector<Tango::DeviceAttribute> *attrList = device->read_attributes(attributes);
-		std::stringstream json;
-		json << "[";
-		for (int i = 0; i < attributes.size(); i++)
-		{
-			if (i != 0) json << ", ";
-			Tango::DeviceAttribute att = attrList->at(i);
-			if (isJsonAttribute.at(i))
-				json <<  processor.process_device_attribute_json(att);
-			else
-				//json << processor.process_attribute(att);
-				json << processor.process_attribute_t(att);
-			
-		}
-		json << "]";
-		delete attrList;
-		CORBA::string_free(*attr_JSON_read);
-		attr_JSON_read[0] = Tango::string_dup(json.str().c_str());
-		wsThread->send_all(json.str().c_str());
-	}
-	catch (Tango::DevFailed &e)
-	{
-		Tango::Except::print_exception(e);
-		set_state(Tango::FAULT);
-		set_status("Couldn't read attribute from device: " + deviceServer);
-	}
-	/*----- PROTECTED REGION END -----*/	//	WebSocketDS::update_data
+
+    try
+    {
+        std::vector<Tango::DeviceAttribute> *attrList = device->read_attributes(attributes);
+        std::stringstream json;
+        json << "[";
+        for (int i = 0; i < attributes.size(); i++)
+        {
+            if (i != 0) json << ", ";
+            Tango::DeviceAttribute att = attrList->at(i);
+            if (isJsonAttribute.at(i))
+                json <<  processor.process_device_attribute_json(att);
+            else
+                //json << processor.process_attribute(att);
+                json << processor.process_attribute_t(att);
+
+        }
+        json << "]";
+        delete attrList;
+        CORBA::string_free(*attr_JSON_read);
+        attr_JSON_read[0] = Tango::string_dup(json.str().c_str());
+        wsThread->send_all(json.str().c_str());
+    }
+    catch (Tango::DevFailed &e)
+    {
+        Tango::Except::print_exception(e);
+        set_state(Tango::FAULT);
+        set_status("Couldn't read attribute from device: " + deviceServer);
+    }
+    /*----- PROTECTED REGION END -----*/    //    WebSocketDS::update_data
 }
 //--------------------------------------------------------
 /**
- *	Method      : WebSocketDS::add_dynamic_commands()
- *	Description : Create the dynamic commands if any
+ *    Method      : WebSocketDS::add_dynamic_commands()
+ *    Description : Create the dynamic commands if any
  *                for specified device.
  */
 //--------------------------------------------------------
 void WebSocketDS::add_dynamic_commands()
 {
-	/*----- PROTECTED REGION ID(WebSocketDS::add_dynamic_commands) ENABLED START -----*/
-	
-	//	Add your own code to create and add dynamic commands if any
-	
-	/*----- PROTECTED REGION END -----*/	//	WebSocketDS::add_dynamic_commands
+    /*----- PROTECTED REGION ID(WebSocketDS::add_dynamic_commands) ENABLED START -----*/
+
+    //    Add your own code to create and add dynamic commands if any
+
+    /*----- PROTECTED REGION END -----*/    //    WebSocketDS::add_dynamic_commands
 }
 
 /*----- PROTECTED REGION ID(WebSocketDS::namespace_ending) ENABLED START -----*/
@@ -486,38 +486,38 @@ void WebSocketDS::add_dynamic_commands()
 //}
 // //--------------------------------------------------------
 // /**
-//  *	Read attribute MyAttr related method
-//  *	Description: 
+//  *    Read attribute MyAttr related method
+//  *    Description:
 //  *
-//  *	Data type:	Tango::DevDouble
-//  *	Attr type:	Scalar
+//  *    Data type:    Tango::DevDouble
+//  *    Attr type:    Scalar
 //  */
 // //--------------------------------------------------------
 // void WebSocketDS::read_MyAttr(Tango::Attribute &attr)
 // {
-// 	DEBUG_STREAM << "WebSocketDS::read_MyAttr(Tango::Attribute &attr) entering... " << endl;
-// 	//	Set the attribute value
-// 	attr.set_value(attr_MyAttr_read);
-// 	
+//     DEBUG_STREAM << "WebSocketDS::read_MyAttr(Tango::Attribute &attr) entering... " << endl;
+//     //    Set the attribute value
+//     attr.set_value(attr_MyAttr_read);
+//
 // }
 
 // //--------------------------------------------------------
 // /**
-//  *	Read attribute JSONCharts related method
-//  *	Description: 
+//  *    Read attribute JSONCharts related method
+//  *    Description:
 //  *
-//  *	Data type:	Tango::DevString
-//  *	Attr type:	Scalar
+//  *    Data type:    Tango::DevString
+//  *    Attr type:    Scalar
 //  */
 // //--------------------------------------------------------
 // void WebSocketDS::read_JSONCharts(Tango::Attribute &attr)
 // {
-// 	DEBUG_STREAM << "WebSocketDS::read_JSONCharts(Tango::Attribute &attr) entering... " << endl;
-// 	//	Set the attribute value
-// 	attr.set_value(attr_JSONCharts_read);
-// 	
+//     DEBUG_STREAM << "WebSocketDS::read_JSONCharts(Tango::Attribute &attr) entering... " << endl;
+//     //    Set the attribute value
+//     attr.set_value(attr_JSONCharts_read);
+//
 // }
 
 
-/*----- PROTECTED REGION END -----*/	//	WebSocketDS::namespace_ending
-} //	namespace
+/*----- PROTECTED REGION END -----*/    //    WebSocketDS::namespace_ending
+} //    namespace
