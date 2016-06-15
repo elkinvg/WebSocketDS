@@ -8,9 +8,9 @@ namespace WebSocketDS_ns
     {
     public:
         // elkin begin
-        std::string process_attribute_t(Tango::DeviceAttribute att);
+        std::string process_attribute_t(Tango::DeviceAttribute& att);
         bool checkCommand(const string &command, const std::map<string, Tango::CommandInfo> &accessibleCommandInfo);
-        Tango::DeviceData gettingDevDataFromJsonStr(std::string jsonData, int typeForDeviceData);
+        Tango::DeviceData gettingDevDataFromJsonStr(std::string& jsonData, int typeForDeviceData);
         std::string getCommandName(const string& jsonInput);
 
     private:
@@ -22,7 +22,7 @@ namespace WebSocketDS_ns
         void dataFromAttrsToJson(T& data, std::stringstream& ss);
 
         template <typename T>
-        Tango::DeviceData parsingJsonForGenerateData(/*T& devData,*/ std::string jsonData, int typeForDeviceData);
+        Tango::DeviceData parsingJsonForGenerateData(/*T& devData,*/const std::string& jsonData, int typeForDeviceData);
 
         //TMP BEGIN
         //std::string process_device_data_t(Tango::DeviceData &deviceData);
@@ -40,8 +40,8 @@ namespace WebSocketDS_ns
 
         //EGOR
     public:
-        std::string process_device_attribute_json(Tango::DeviceAttribute data);
-        std::string process_device_data_json(Tango::DeviceData data);
+        std::string process_device_attribute_json(Tango::DeviceAttribute& data);
+        std::string process_device_data_json(Tango::DeviceData& data);
     private:
         std::string SwitchAttrQuality(Tango::AttrQuality quality);
         std::string SwitchTangoState(Tango::DevState state);

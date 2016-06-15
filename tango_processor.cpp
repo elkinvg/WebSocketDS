@@ -13,7 +13,7 @@
 
 namespace WebSocketDS_ns
 {
-    std::string tango_processor::process_attribute_t(Tango::DeviceAttribute att) {
+    std::string tango_processor::process_attribute_t(Tango::DeviceAttribute& att) {
         // Генерация JSON из DeviceAttribute
         std::stringstream json;
         json << "";
@@ -143,7 +143,7 @@ namespace WebSocketDS_ns
     //}
 
     template <typename T>
-    Tango::DeviceData tango_processor::parsingJsonForGenerateData(/*T& devData,*/ std::string jsonData, int typeForDeviceData) {
+    Tango::DeviceData tango_processor::parsingJsonForGenerateData(/*T& devData,*/ const std::string& jsonData, int typeForDeviceData) {
 
         boost::property_tree::ptree pt;
         std::stringstream ss;
@@ -254,7 +254,7 @@ namespace WebSocketDS_ns
         return out;
     }
 
-    Tango::DeviceData tango_processor::gettingDevDataFromJsonStr(string jsonData, int typeForDeviceData)
+    Tango::DeviceData tango_processor::gettingDevDataFromJsonStr(string& jsonData, int typeForDeviceData)
     {
         Tango::DeviceData deviceData;
 
@@ -538,14 +538,14 @@ namespace WebSocketDS_ns
     //    }
 
     // EGOR
-    std::string tango_processor::process_device_attribute_json(Tango::DeviceAttribute data)
+    std::string tango_processor::process_device_attribute_json(Tango::DeviceAttribute& data)
     {
         std::string argout;
         (data) >> argout;
         return argout;
     }
 
-    std::string tango_processor::process_device_data_json(Tango::DeviceData data)
+    std::string tango_processor::process_device_data_json(Tango::DeviceData& data)
     {
         std::string argout;
         (data) >> argout;
