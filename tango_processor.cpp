@@ -1,8 +1,9 @@
 #include "tango_processor.h"
 #include <iomanip>  
-#include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/json_parser.hpp>
-#include <boost/foreach.hpp>
+//#include <boost/property_tree/ptree.hpp>
+//#include <boost/property_tree/json_parser.hpp>
+//#include <boost/foreach.hpp>
+//#include <boost/optional/optional.hpp>
 #include <cassert>
 #include <exception>
 #include <iostream>
@@ -85,7 +86,7 @@ namespace WebSocketDS_ns
     void tango_processor::dataFromAttrsToJson(T& data, std::stringstream& ss) {
         if (is_floating_point<T>::value) ss << std::setprecision(5) << data;
         else if (std::is_same<T, bool>::value) ss << std::boolalpha << data;
-        else if (std::is_same<T, std::string>::value) ss << "\"" << data << "\"";
+        else if (std::is_same<T, const std::string>::value || std::is_same<T, std::string>::value) ss << "\"" << data << "\"";
         else ss << data;
     }
 
@@ -99,10 +100,27 @@ namespace WebSocketDS_ns
         ss << jsonInput;
         boost::property_tree::read_json(ss, pt);
 
-        command = pt.get<std::string>("command");
-        id = pt.get<std::string>("id");
-        output.insert(std::pair<std::string,std::string>("command",command));
-        output.insert(std::pair<std::string,std::string>("id",id));
+        //pt.get_value_optional
+        vector<pair<std::string, boost::optional<std::string>>> boostOpt;
+
+        boostOpt.push_back(std::make_pair("command", pt.get_optional<std::string>("command")));
+        boostOpt.push_back(std::make_pair("id", pt.get_optional<std::string>("id")));
+        boostOpt.push_back(std::make_pair("argin", pt.get_optional<std::string>("argin")));
+
+        bool isJsonExact = true;
+        for (auto& v : boostOpt) {
+            if (v.second) {
+                output.insert(std::pair<std::string, std::string>(v.first, v.second.get()));
+            }
+            else {
+                output.insert(std::pair<std::string, std::string>(v.first, "NONE"));
+            }
+        }
+
+        //command = pt.get<std::string>("command");
+        //id = pt.get<std::string>("id");
+        //output.insert(std::pair<std::string,std::string>("command",command));
+        //output.insert(std::pair<std::string,std::string>("id",id));
         return output;
         //return command;
     }
@@ -122,7 +140,7 @@ namespace WebSocketDS_ns
         // ??? check, if inputArgs['arg'] is empty
         json << "{";
         json << "\"command\": " << "\"" << inputArgs["command"] << "\",";
-        json << "\"id\": " << "\"" << inputArgs["id"] << "\",";
+        json << "\"id\": "  << inputArgs["id"] << ",";
 
         switch (type)
         {
@@ -130,10 +148,14 @@ namespace WebSocketDS_ns
             json << "\"agrout\": \"OK\"";
             break;
         case Tango::DEV_BOOLEAN: // ??? not boolean?
-        //{
-        //    //Tango::DevBoolean parsed;
-        //    deviceData = parsingJsonForGenerateData<bool>(devData, json);
-        //}
+        {
+            //Tango::DevBoolean parsed;
+            //generateStringJsonFromDevData<Tango::DevBoolean>(devData, json);
+            Tango::DevBoolean bl;
+            devData >> bl;
+            json << "\"agrout\": ";
+            dataFromAttrsToJson(bl, json);
+        }
         break;
         case Tango::DEV_SHORT:
         {
@@ -365,13 +387,22 @@ namespace WebSocketDS_ns
     //    return dOut;
     //}
 
-    template <typename T>
-    Tango::DeviceData tango_processor::parsingJsonForGenerateData(/*T& devData,*/ const std::string& jsonData, int typeForDeviceData) {
-
+    boost::property_tree::ptree tango_processor::getPTree(const std::string& jsonData) {
         boost::property_tree::ptree pt;
         std::stringstream ss;
         ss << jsonData;
         boost::property_tree::read_json(ss, pt);
+        return pt;
+    }
+
+    template <typename T>
+    Tango::DeviceData tango_processor::parsingJsonForGenerateData(/*T& devData,*/ const std::string& jsonData, int typeForDeviceData) {
+
+        boost::property_tree::ptree pt;
+        pt = getPTree(jsonData);
+        //std::stringstream ss;
+        //ss << jsonData;
+        //boost::property_tree::read_json(ss, pt);
         vector<T> devDataVector;
         Tango::DeviceData dOut;
         T devData;
@@ -486,10 +517,20 @@ namespace WebSocketDS_ns
         case Tango::DEV_VOID:
             break;
         case Tango::DEV_BOOLEAN: // ??? not boolean?
-        //{
-        //    //Tango::DevBoolean parsed;
-        //    deviceData = parsingJsonForGenerateData<bool>(jsonData, typeForDeviceData);
-        //}
+            //{
+            //    //Tango::DevBoolean parsed;
+            //    deviceData = parsingJsonForGenerateData<bool>(jsonData, typeForDeviceData);
+            //}
+        {
+            Tango::DevBoolean bl;
+            boost::property_tree::ptree pt;
+            pt = getPTree(jsonData);
+            bl = pt.get<bool>("argin");
+            deviceData << bl;
+            //devData >> bl;
+            //json << "\"agrout\": ";
+            //dataFromAttrsToJson(bl, json);
+        }
         break;
         case Tango::DEV_SHORT:
         {

@@ -310,7 +310,7 @@ namespace WebSocketDS_ns
     //--------------------------------------------------------
     void WebSocketDS::always_executed_hook()
     {
-        DEBUG_STREAM << "WebSocketDS::always_executed_hook()  " << device_name << endl;
+        //DEBUG_STREAM << "WebSocketDS::always_executed_hook()  " << device_name << endl;
         /*----- PROTECTED REGION ID(WebSocketDS::always_executed_hook) ENABLED START -----*/
 
         //    code always executed before all requests
@@ -451,16 +451,18 @@ namespace WebSocketDS_ns
     //--------------------------------------------------------
     /**
      *    Command SendCommandToDevice related method
-     *    Description:
+     *    Description: Command for sending command to device from property.
      *
      *    @param argin input argument must be in JSON. Command must be included to device property ``Commands``
-     *               {``command`` : ``nameOfCommand``, ``args`` : [``1``,``2``,``3``]}
+     *               {``command`` : ``nameOfCommand``, ``argin`` : [``1``,``2``,``3``]}
      *               OR
-     *               {``command`` : ``nameOfCommand``, ``args`` : ``1``}
+     *               {``command`` : ``nameOfCommand``, ``argin`` : ``1``}
+     *    @returns Output in JSON.
      */
     //--------------------------------------------------------
-    void WebSocketDS::send_command_to_device(Tango::DevString argin)
+    Tango::DevString WebSocketDS::send_command_to_device(Tango::DevString argin)
     {
+        Tango::DevString argout;
         DEBUG_STREAM << "WebSocketDS::SendCommandToDevice()  - " << device_name << endl;
         /*----- PROTECTED REGION ID(WebSocketDS::send_command_to_device) ENABLED START -----*/
 
@@ -468,8 +470,21 @@ namespace WebSocketDS_ns
         try
         {
             /// ??? check if command.size() = 0
-//            string command = processor.getCommandName(argin);
-            std::map<std::string,std::string> jsonArgs = processor.getCommandName(argin);
+            //            string command = processor.getCommandName(argin);
+            std::map<std::string, std::string> jsonArgs = processor.getCommandName(argin);
+
+            //if (jsonArgs.find("command") == jsonArgs.end())
+            //    return "{\"error\": \"String command not found\"}";
+
+            //if (jsonArgs.find("argin") == jsonArgs.end())
+            //    return "{\"error\": \"argin not found\"}";
+            if (jsonArgs["command"]=="NONE")
+                return "{\"error\": \"String command not found\"}";
+            if (jsonArgs["argin"] == "NONE")
+                return "{\"error\": \"argin not found\"}";
+
+
+
             bool isCommandAccessible = processor.checkCommand(jsonArgs["command"], accessibleCommandInfo);
 
             if (isCommandAccessible) {
@@ -485,17 +500,24 @@ namespace WebSocketDS_ns
                     /// ??? check if wrong input data 
                     out = device->command_inout(jsonArgs["command"], deviceData);
                 }
-                    //string fromDevData = processor.gettingJsonStrFromDevData(out,jsonArgs["command"]);
-                    string fromDevData = processor.gettingJsonStrFromDevData(out,jsonArgs);
-                    //cout << fromDevData << endl; // !!! test
+
+                string fromDevData = processor.gettingJsonStrFromDevData(out, jsonArgs);
+                argout = CORBA::string_dup(fromDevData.c_str());
+            }
+            else {
+                argout = CORBA::string_dup("{\"error\": \"Command not found on DeviceServer\"}");
             }
         }
         catch (Tango::DevFailed &e) {
             Tango::Except::print_exception(e);
+            //CORBA::string_dup(e.errors[0].desc);
+            argout = CORBA::string_dup("{\"error\": \"Exception from send_command_to_device\"}");
+            return argout;
             // ADD MESSAGE ???
         }
 
         /*----- PROTECTED REGION END -----*/    //    WebSocketDS::send_command_to_device
+        return argout;
     }
     //--------------------------------------------------------
     /**

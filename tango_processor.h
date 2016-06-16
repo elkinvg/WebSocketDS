@@ -1,6 +1,9 @@
 #ifndef attribute_reader_H
 #define attribute_reader_H
 #include <tango.h>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
+#include <boost/foreach.hpp>
 
 namespace WebSocketDS_ns
 {
@@ -34,6 +37,8 @@ namespace WebSocketDS_ns
 
         template <typename T>
         void generateStringJsonFromDevData(Tango::DeviceData& devData, std::stringstream& json);
+
+        boost::property_tree::ptree getPTree(const std::string& jsonData);
 
 //        std::string devDataToString(Tango::DeviceData* deviceData);
 

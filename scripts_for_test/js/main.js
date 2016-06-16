@@ -49,6 +49,10 @@ $("#close_butt").click(function () {
 
 socket.onmessage = function(event) {
   //alert("Получены данные " + event.data);
+  var fromJson = $.parseJSON(event.data);
+  if (fromJson.command !== undefined || fromJson.error  !== undefined) {
+  $("#out_from_server").html("Ответ: " + event.data + "<br><br>");
+  } else
   $("#test").html("Получены данные " + event.data + "<br><br>");
   //console.log("Получены данные " + event.data);
 };

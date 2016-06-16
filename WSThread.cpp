@@ -37,10 +37,11 @@ void *WSThread::run_undetached(void *ptr)
 }
 
 void WSThread::on_message(websocketpp::connection_hdl hdl, server::message_ptr msg) {
-    DEBUG_STREAM << msg->get_payload() << endl;
+    DEBUG_STREAM << " Input message: " << msg->get_payload() << endl;
     string data_from_client = msg->get_payload();
     Tango::DevString input = const_cast<Tango::DevString>(data_from_client.c_str());
-    ds->send_command_to_device(input);
+    Tango::DevString output = ds->send_command_to_device(input);
+    send(hdl, output);
 
     //send(hdl, "from on_message");
 }

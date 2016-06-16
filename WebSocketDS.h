@@ -98,7 +98,7 @@ public:
 
 //    Device property data members
 public:
-    //    Port:
+    //    Port:    
     Tango::DevShort    port;
     //    DeviceServer:    DeviceServer name
     string    deviceServer;
@@ -173,7 +173,7 @@ public:
 
 /**
  *    Attribute JSON related methods
- *    Description:
+ *    Description: 
  *
  *    Data type:    Tango::DevString
  *    Attr type:    Scalar
@@ -197,35 +197,36 @@ public:
 public:
     /**
      *    Command On related method
-     *    Description:
+     *    Description: 
      *
      */
     virtual void on();
     virtual bool is_On_allowed(const CORBA::Any &any);
     /**
      *    Command Off related method
-     *    Description:
+     *    Description: 
      *
      */
     virtual void off();
     virtual bool is_Off_allowed(const CORBA::Any &any);
     /**
      *    Command UpdateData related method
-     *    Description:
+     *    Description: 
      *
      */
     virtual void update_data();
     virtual bool is_UpdateData_allowed(const CORBA::Any &any);
     /**
      *    Command SendCommandToDevice related method
-     *    Description:
+     *    Description: Command for sending command to device from property.
      *
      *    @param argin input argument must be in JSON. Command must be included to device property ``Commands``
-     *               {``command`` : ``nameOfCommand``, ``args`` : [``1``,``2``,``3``]}
+     *               {``command`` : ``nameOfCommand``, ``argin`` : [``1``,``2``,``3``]}
      *               OR
-     *               {``command`` : ``nameOfCommand``, ``args`` : ``1``}
+     *               {``command`` : ``nameOfCommand``, ``argin`` : ``1``}
+     *    @returns Output in JSON.
      */
-    virtual void send_command_to_device(Tango::DevString argin);
+    virtual Tango::DevString send_command_to_device(Tango::DevString argin);
     virtual bool is_SendCommandToDevice_allowed(const CORBA::Any &any);
 
 
