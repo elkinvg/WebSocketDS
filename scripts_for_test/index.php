@@ -6,6 +6,8 @@
 </head>
 <body>
 <button id="test_butt">отправить</button>
+<button id="close_butt">закрыть соединение</button>
+<button id="massive_butt">отправить массив</button>
 <div id="out_from_server"></div>
 <div id="test"></div>
 </body>

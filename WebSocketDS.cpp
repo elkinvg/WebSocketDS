@@ -468,21 +468,26 @@ namespace WebSocketDS_ns
         try
         {
             /// ??? check if command.size() = 0
-            string command = processor.getCommandName(argin);
-            bool isCommandAccessible = processor.checkCommand(command, accessibleCommandInfo);
+//            string command = processor.getCommandName(argin);
+            std::map<std::string,std::string> jsonArgs = processor.getCommandName(argin);
+            bool isCommandAccessible = processor.checkCommand(jsonArgs["command"], accessibleCommandInfo);
 
             if (isCommandAccessible) {
-                Tango::CommandInfo comInfo = accessibleCommandInfo[command];
+                Tango::CommandInfo comInfo = accessibleCommandInfo[jsonArgs["command"]];
                 int type = comInfo.in_type;
+                Tango::DeviceData out;
 
                 if (type == Tango::DEV_VOID)
-                    Tango::DeviceData out = device->command_inout(command);
+                    out = device->command_inout(jsonArgs["command"]);
                 else {
                     Tango::DeviceData deviceData = processor.gettingDevDataFromJsonStr(argin, type);
                     /// ??? check string(argin)
                     /// ??? check if wrong input data 
-                    Tango::DeviceData out = device->command_inout(command, deviceData);
+                    out = device->command_inout(jsonArgs["command"], deviceData);
                 }
+                    //string fromDevData = processor.gettingJsonStrFromDevData(out,jsonArgs["command"]);
+                    string fromDevData = processor.gettingJsonStrFromDevData(out,jsonArgs);
+                    //cout << fromDevData << endl; // !!! test
             }
         }
         catch (Tango::DevFailed &e) {

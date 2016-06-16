@@ -1,6 +1,7 @@
 ﻿$(document).ready(function () {
 var socket = new WebSocket("ws://127.0.0.1:7777");
 var test = 2;
+var id = 0;
 
 $("#test_butt").click(function () {
   argin = ['a','b','c'];
@@ -14,11 +15,35 @@ $("#test_butt").click(function () {
   argin = {};
   //argin.argin = [23,556,8886,333];
   argin.command = "DevShort";
+  argin.id = id;
    argin.argin = 23;
   //socket.send("HELLLLOOOOOOOO");
   var sender = JSON.stringify(argin);
   socket.send(sender);
   console.log("but clicked");
+  console.log("id= " + id);
+    id++;
+});
+
+$("#massive_butt").click(function () {
+  argin = {};
+  argin.command = "DevVarShortArray";
+  argin.argin = [23,556,8886,333];
+  argin.id = id;
+  
+  argin.command = "DevVoid";
+  argin.argin = "";
+  argin.id = id;
+  var sender = JSON.stringify(argin);
+  socket.send(sender);
+  console.log("but clicked");
+  console.log("id= " + id);
+  id++;
+});
+
+$("#close_butt").click(function () {
+  $("#test").append('Соединение закрыто');
+  socket.close();
 });
 
 

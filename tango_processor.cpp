@@ -89,17 +89,240 @@ namespace WebSocketDS_ns
         else ss << data;
     }
 
-    string tango_processor::getCommandName(const string& jsonInput) {
+    std::map<std::string,std::string> tango_processor::getCommandName(const string& jsonInput) {
         boost::property_tree::ptree pt;
         std::stringstream ss;
+        std::map<std::string,std::string> output;
 
-        std::string command;
+        std::string command,id;
 
         ss << jsonInput;
         boost::property_tree::read_json(ss, pt);
 
         command = pt.get<std::string>("command");
-        return command;
+        id = pt.get<std::string>("id");
+        output.insert(std::pair<std::string,std::string>("command",command));
+        output.insert(std::pair<std::string,std::string>("id",id));
+        return output;
+        //return command;
+    }
+
+    string tango_processor::gettingJsonStrFromDevData(Tango::DeviceData &devData,std::map<std::string,std::string> inputArgs)
+    {
+        int type;
+        try {
+            type = devData.get_type();
+        }
+//        catch (Tango::DevFailed &e) {
+        catch (Tango::WrongData &e) {
+            type = Tango::DEV_VOID;
+        }
+
+        std::stringstream json;
+        // ??? check, if inputArgs['arg'] is empty
+        json << "{";
+        json << "\"command\": " << "\"" << inputArgs["command"] << "\",";
+        json << "\"id\": " << "\"" << inputArgs["id"] << "\",";
+
+        switch (type)
+        {
+        case Tango::DEV_VOID:
+            json << "\"agrout\": \"OK\"";
+            break;
+        case Tango::DEV_BOOLEAN: // ??? not boolean?
+        //{
+        //    //Tango::DevBoolean parsed;
+        //    deviceData = parsingJsonForGenerateData<bool>(devData, json);
+        //}
+        break;
+        case Tango::DEV_SHORT:
+        {
+            /*fromDeviceData = */generateStringJsonFromDevData<Tango::DevShort>(devData, json);
+        }
+        break;
+        case Tango::DEV_LONG:
+        {
+            //Tango::DevLong parsed;
+            /*fromDeviceData = */generateStringJsonFromDevData<Tango::DevLong>(devData, json);
+        }
+        break;
+        case Tango::DEV_FLOAT:
+        {
+            //Tango::DevFloat parsed;
+            /*fromDeviceData = */generateStringJsonFromDevData<Tango::DevFloat>(devData, json);
+        }
+        break;
+        case Tango::DEV_DOUBLE:
+        {
+            //Tango::DevDouble parsed;
+            /*fromDeviceData = */generateStringJsonFromDevData<Tango::DevDouble>(devData, json);
+        }
+        break;
+        case Tango::DEV_USHORT:
+        {
+            //Tango::DevUShort parsed;
+            /*fromDeviceData = */generateStringJsonFromDevData<Tango::DevUShort>(devData, json);
+        }
+        break;
+        case Tango::DEV_ULONG:
+        {
+            //Tango::DevULong parsed;
+            /*fromDeviceData = */generateStringJsonFromDevData<Tango::DevULong>(devData, json);
+        }
+        break;
+        case Tango::DEV_STRING:
+        {
+            //std::string parsed;
+            /*fromDeviceData = */generateStringJsonFromDevData<std::string>(devData, json);
+        }
+        break;
+        case Tango::DEVVAR_CHARARRAY: // ??? why not DEVVAR_CHARARRAY
+                    //{
+                    //    Tango::DevUChar parsed;
+                    //    deviceData = generateStringJsonFromDevData<Tango::DevUChar>(jsonData,typeForDeviceData);
+                    //}
+            break;
+        case Tango::DEVVAR_SHORTARRAY:
+        {
+            //Tango::DevShort parsed;
+            /*fromDeviceData = */generateStringJsonFromDevData<Tango::DevShort>(devData, json);
+        }
+        break;
+        case Tango::DEVVAR_LONGARRAY:
+        {
+            //Tango::DevLong parsed;
+            /*fromDeviceData = */generateStringJsonFromDevData<Tango::DevLong>(devData, json);
+        }
+        break;
+        case Tango::DEVVAR_FLOATARRAY:
+        {
+            //Tango::DevFloat parsed;
+            /*fromDeviceData = */generateStringJsonFromDevData<Tango::DevFloat>(devData, json);
+        }
+        break;
+        case Tango::DEVVAR_DOUBLEARRAY:
+        {
+            //Tango::DevDouble parsed;
+            /*fromDeviceData = */generateStringJsonFromDevData<Tango::DevDouble>(devData, json);
+        }
+        break;
+        case Tango::DEVVAR_USHORTARRAY:
+        {
+            //Tango::DevUShort parsed;
+            /*fromDeviceData = */generateStringJsonFromDevData<Tango::DevUShort>(devData, json);
+        }
+        break;
+        case Tango::DEVVAR_ULONGARRAY:
+        {
+            //Tango::DevULong parsed;
+            /*fromDeviceData = */generateStringJsonFromDevData<Tango::DevULong>(devData, json);
+        }
+        break;
+        case Tango::DEVVAR_STRINGARRAY:
+        {
+            //std::string parsed;
+            /*fromDeviceData = */generateStringJsonFromDevData<std::string>(devData, json);
+        }
+        break;
+        case Tango::DEVVAR_LONGSTRINGARRAY:
+            //        {
+            //            Tango::DevLong parsed;
+            //            deviceData = generateStringJsonFromDevData(jsonData,typeForDeviceData);
+            //        }
+            break;
+        case Tango::DEVVAR_DOUBLESTRINGARRAY:
+            break;
+            //        case Tango::DEV_STATE:
+            //            json << devStateToStr(&data);
+            //            break;
+            //        case Tango::CONST_DEV_STRING:
+            //            json << devConstStringToStr(&data);
+            //            break;
+        case Tango::DEVVAR_BOOLEANARRAY:
+            //        {
+            //            Tango::DevBoolean parsed;
+            //            deviceData = generateStringJsonFromDevData(jsonData,typeForDeviceData);
+            //        }
+            break;
+        case Tango::DEV_UCHAR:
+            //        {
+            //            Tango::DevUChar parsed;
+            //            deviceData = generateStringJsonFromDevData(jsonData,typeForDeviceData);
+            //        }
+            break;
+        case Tango::DEV_LONG64:
+        {
+            //Tango::DevLong64 parsed;
+            /*fromDeviceData = */generateStringJsonFromDevData<Tango::DevLong64>(devData, json);
+        }
+        break;
+        case Tango::DEV_ULONG64:
+        {
+            //Tango::DevULong64 parsed;
+            /*fromDeviceData = */generateStringJsonFromDevData<Tango::DevULong64>(devData, json);
+        }
+        break;
+        case Tango::DEVVAR_LONG64ARRAY:
+        {
+            //Tango::DevLong64 parsed;
+            /*fromDeviceData = */generateStringJsonFromDevData<Tango::DevLong64>(devData, json);
+        }
+        break;
+        case Tango::DEVVAR_ULONG64ARRAY:
+        {
+            //Tango::DevULong64 parsed;
+            /*fromDeviceData = */generateStringJsonFromDevData<Tango::DevULong64>(devData, json);
+        }
+        break;
+        //case Tango::DEV_INT:
+        //{
+        //    int parsed;
+        //    deviceData = generateStringJsonFromDevData(jsonData,typeForDeviceData);
+        //}
+        //            break;
+        ////        case Tango::DEV_ENCODED:
+        ////            json << devEncodedToStr(&data);
+        ////            break;
+        default:
+            break;
+        }
+        json << "}";
+        return json.str();
+    }
+
+    template <typename T>
+    void tango_processor::generateStringJsonFromDevData(Tango::DeviceData &devData, std::stringstream& json)
+    {
+        TYPE_OF_DEVICE_DATA type = getTypeOfData(devData.get_type());
+        std::vector<T> vecFromData;
+        T data;
+
+        if (type == TYPE_OF_DEVICE_DATA::DATA) {
+            devData >> data;
+        } else if (type == TYPE_OF_DEVICE_DATA::ARRAY) {
+            devData >> vecFromData;
+        } else if (type == TYPE_OF_DEVICE_DATA::VOID_D) {
+            json << "\"agrout\": \"OK\"";
+        }
+
+//        std::stringstream json;
+//        json << "{";
+//        json << "\"command\": \"test\" ,";
+        if (type == TYPE_OF_DEVICE_DATA::DATA) {
+            json << "\"agrout\": ";
+            dataFromAttrsToJson(data,json);
+        } else if (type == TYPE_OF_DEVICE_DATA::ARRAY) {
+            json << "\"agrout\": [";
+            bool begin = true;
+            for (const auto& fromData : vecFromData) {
+                if (!begin) json << ", ";
+                else begin = false;
+                dataFromAttrsToJson(fromData, json);
+            }
+            json << " ]";
+        }
+//        json << "}";
+//        return json.str();
     }
 
     //string tango_processor::process_device_data_json_t(string jsonInput, int typeForDeviceData)
