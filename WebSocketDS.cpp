@@ -478,7 +478,7 @@ namespace WebSocketDS_ns
                 if (type == Tango::DEV_VOID)
                     Tango::DeviceData out = device->command_inout(command);
                 else {
-                    Tango::DeviceData deviceData = processor.gettingDevDataFromJsonStr(string(argin), type);
+                    Tango::DeviceData deviceData = processor.gettingDevDataFromJsonStr(argin, type);
                     /// ??? check string(argin)
                     /// ??? check if wrong input data 
                     Tango::DeviceData out = device->command_inout(command, deviceData);

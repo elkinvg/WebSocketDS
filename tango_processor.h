@@ -10,7 +10,7 @@ namespace WebSocketDS_ns
         // elkin begin
         std::string process_attribute_t(Tango::DeviceAttribute& att);
         bool checkCommand(const string &command, const std::map<string, Tango::CommandInfo> &accessibleCommandInfo);
-        Tango::DeviceData gettingDevDataFromJsonStr(std::string& jsonData, int typeForDeviceData);
+        Tango::DeviceData gettingDevDataFromJsonStr(const std::string& jsonData, int typeForDeviceData);
         std::string getCommandName(const string& jsonInput);
 
     private:

@@ -254,7 +254,7 @@ namespace WebSocketDS_ns
         return out;
     }
 
-    Tango::DeviceData tango_processor::gettingDevDataFromJsonStr(string& jsonData, int typeForDeviceData)
+    Tango::DeviceData tango_processor::gettingDevDataFromJsonStr(const string &jsonData, int typeForDeviceData)
     {
         Tango::DeviceData deviceData;
 
