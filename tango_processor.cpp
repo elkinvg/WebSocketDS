@@ -70,7 +70,9 @@ namespace WebSocketDS_ns
         else
             if (format == Tango::AttrDataFormat::SPECTRUM || format == Tango::AttrDataFormat::IMAGE) {
                 (*attr) >> dataVector;
+                ss << "[";
                 dataArrayFromAttrsToJson(dataVector,ss);
+                ss << "]";
 //                ss << "[";
 //                bool begin = true;
 //                for (T fromData : dataVector) {
@@ -88,7 +90,7 @@ namespace WebSocketDS_ns
         if (is_floating_point<T>::value) ss << std::setprecision(5) << data;
         else if (std::is_same<T, bool>::value) ss << std::boolalpha << data;
         else if (std::is_same<T, const std::string>::value || std::is_same<T, std::string>::value) ss << "\"" << data << "\"";
-        //else if (std::is_same<T, unsigned char>::value || std::is_same<T, char>::value) ss << "\"" << data << "\"";
+        //else if (std::is_same<T, unsigned char>::value || std::is_same<T, char>::value) ss << (short int)data;
         else ss << data;
     }
 
@@ -206,12 +208,15 @@ namespace WebSocketDS_ns
         {
             std::vector<unsigned char> vecFromData;
             devData >> vecFromData;
-            json << "\"agrout\": [";
+            json << "\"argout\": [";
             bool begin = true;
             for (const auto& fromData : vecFromData) {
-                if (!begin) json << ", ";
+                unsigned short int tmp;
+                if (!begin) json << ", ";                
                 else begin = false;
-                dataFromAttrsToJson(fromData, json);
+                //tmp = reinterpret_cast<unsigned short int>(fromData);
+                tmp = (unsigned short int)fromData;
+                dataFromAttrsToJson(tmp, json);
             }
             json << " ]";
 //            json << "\"argout\":\"OKK\"";
@@ -352,7 +357,9 @@ namespace WebSocketDS_ns
             json << "\"agrout\": ";
             dataFromAttrsToJson(data,json);
         } else if (type == TYPE_OF_DEVICE_DATA::ARRAY) {
+            json << "\"agrout\": [";
             dataArrayFromAttrsToJson(vecFromData,json);
+            json << " ]";
 //            json << "\"agrout\": [";
 //            bool begin = true;
 //            for (T fromData : vecFromData) {
@@ -369,13 +376,13 @@ namespace WebSocketDS_ns
     template <typename T>
     void tango_processor::dataArrayFromAttrsToJson(std::vector<T>& vecFromData,  std::stringstream& json) {
         bool begin = true;
-        json << "\"agrout\": [";
+        //json << "\"agrout\": [";
         for (T fromData : vecFromData) {
             if (!begin) json << ", ";
             else begin = false;
             dataFromAttrsToJson(fromData, json);
         }
-        json << " ]";
+        //json << " ]";
     }
 
     //string tango_processor::process_device_data_json_t(string jsonInput, int typeForDeviceData)
@@ -540,7 +547,35 @@ namespace WebSocketDS_ns
         case Tango::DEV_UCHAR:
         {
             //Tango::DevUChar inp;
-            out = attrsToString<Tango::DevUChar>(attr);
+            std::stringstream ss;
+            Tango::AttrDataFormat format = attr->get_data_format();
+            if (format == Tango::AttrDataFormat::SPECTRUM || format == Tango::AttrDataFormat::IMAGE)
+                ss << "\"dimX\": " << attr->dim_x << ", ";
+            if (format == Tango::AttrDataFormat::IMAGE)
+                ss << "\"dimY\": " << attr->dim_y << ", ";
+
+            ss << "\"data\": ";
+            Tango::DevUChar data;
+            unsigned short tmp;
+            vector<unsigned char> dataVector;
+            vector<unsigned short> tmpVec;
+            if (format == Tango::AttrDataFormat::SCALAR) {
+                (*attr) >> data;
+                tmp = (unsigned short)data;                
+                dataFromAttrsToJson(tmp, ss);
+            }
+            else
+                if (format == Tango::AttrDataFormat::SPECTRUM || format == Tango::AttrDataFormat::IMAGE) {
+                    (*attr) >> dataVector;
+                    for (auto& i : dataVector) {
+                        tmpVec.push_back((unsigned short)i);
+                    }
+                    ss << "[";
+                    dataArrayFromAttrsToJson(tmpVec, ss);
+                    ss << "]";
+                }
+            out = ss.str();
+            //out = attrsToString<Tango::DevUChar>(attr);
         }
         break;
         case Tango::DEV_USHORT:
@@ -710,7 +745,8 @@ namespace WebSocketDS_ns
             break;
         case Tango::DEV_UCHAR:
         {
-            deviceData = getDeviceDataFromDataType<Tango::DevUChar>(jsonData);
+            //deviceData = getDeviceDataFromDataType<Tango::DevUChar>(jsonData);
+            //deviceData = getDeviceDataFromDataType<unsigned char>(jsonData);
         }
             //        {
             //            Tango::DevUChar parsed;
