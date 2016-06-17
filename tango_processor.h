@@ -7,6 +7,8 @@ namespace WebSocketDS_ns
     class tango_processor
     {
     public:
+        const string NONE = "\"NONE\"";
+    public:
         // elkin begin
         std::string process_attribute_t(Tango::DeviceAttribute& att);
         bool checkCommand(const string &command, const std::map<string, Tango::CommandInfo> &accessibleCommandInfo);

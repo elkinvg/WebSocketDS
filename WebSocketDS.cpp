@@ -478,9 +478,9 @@ namespace WebSocketDS_ns
 
             //if (jsonArgs.find("argin") == jsonArgs.end())
             //    return "{\"error\": \"argin not found\"}";
-            if (jsonArgs["command"]=="NONE")
+            if (jsonArgs["command"] == processor.NONE)
                 return "{\"error\": \"String command not found\"}";
-            if (jsonArgs["argin"] == "NONE")
+            if (jsonArgs["argin"] == processor.NONE)
                 return "{\"error\": \"argin not found\"}";
 
 
