@@ -117,7 +117,7 @@ namespace WebSocketDS_ns
                 output.insert(std::pair<std::string, std::string>(v.first, v.second.get()));
             }
             else {
-                output.insert(std::pair<std::string, std::string>(v.first, "NONE"));
+                output.insert(std::pair<std::string, std::string>(v.first, "\"NONE\""));
             }
         }
 
