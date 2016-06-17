@@ -19,15 +19,18 @@ namespace WebSocketDS_ns
         std::stringstream json;
         json << "";
 
-        Tango::AttrQuality quality = att.get_quality();
-
+        std::string quality = SwitchAttrQuality(att.get_quality());
         json << "{";
         json << "\"attr\": \"" << att.get_name() << "\", ";
-        json << "\"qual\": \"" << SwitchAttrQuality(att.get_quality()) << "\", ";
+        json << "\"qual\": \"" << quality << "\", ";
         json << "\"time\": " << att.time.tv_sec << ", ";
 
         Tango::AttrDataFormat format = att.get_data_format();
-        json << devAttrToStr(&att);
+        if (quality == "INVALID")
+            json << "\"data\": \"NONE\"";
+        else
+            json << devAttrToStr(&att);
+          
         json << "}";
         return json.str();
     }
