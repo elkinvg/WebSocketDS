@@ -473,11 +473,6 @@ namespace WebSocketDS_ns
             //            string command = processor.getCommandName(argin);
             std::map<std::string, std::string> jsonArgs = processor.getCommandName(argin);
 
-            //if (jsonArgs.find("command") == jsonArgs.end())
-            //    return "{\"error\": \"String command not found\"}";
-
-            //if (jsonArgs.find("argin") == jsonArgs.end())
-            //    return "{\"error\": \"argin not found\"}";
             if (jsonArgs.find("error") != jsonArgs.end()) {
                 std::string tmp = "{\"error\":";
                 tmp += "\"" + jsonArgs["error"] + "\"}";
