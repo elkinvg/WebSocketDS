@@ -505,10 +505,16 @@ namespace WebSocketDS_ns
                         if (!processor.isMassive(type)) return "{\"error\": \"The input data do not have to be an array\"}";
                     }
                     Tango::DeviceData deviceData = processor.gettingDevDataFromJsonStr(argin, type);
+
                     /// ??? check string(argin)
                     /// ??? check if wrong input data
-
-                    out = device->command_inout(jsonArgs["command"], deviceData);
+                    try {
+                        out = device->command_inout(jsonArgs["command"], deviceData);
+                    }
+                    catch (Tango::DevFailed &e) {
+                        argout = CORBA::string_dup("{\"error\": \"Exception from command_inout. Check the format of the data\"}");
+                        return argout;
+                    }
                 }
 
                 string fromDevData = processor.gettingJsonStrFromDevData(out, jsonArgs);
@@ -520,8 +526,11 @@ namespace WebSocketDS_ns
         }
         catch (Tango::DevFailed &e) {
             Tango::Except::print_exception(e);
+            std::string exc;
+            exc = "{\"error\":" + (std::string)"\"" + (string)(e.errors[0].desc) + "\"}";
             //CORBA::string_dup(e.errors[0].desc);
-            argout = CORBA::string_dup("{\"error\": \"Exception from send_command_to_device\"}");
+            //argout = CORBA::string_dup("{\"error\": \"Exception from send_command_to_device\"}");
+            argout = CORBA::string_dup(exc.c_str());
             return argout;
             // ADD MESSAGE ???
         }

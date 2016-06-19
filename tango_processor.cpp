@@ -99,6 +99,9 @@ namespace WebSocketDS_ns
     }
 
     std::map<std::string,std::string> tango_processor::getCommandName(const string& jsonInput) {
+        // Проверка входных парамеров JSON.
+        // Если параметры найдены в строке будет значение параметра, иначе пустая строка
+        // Для argin, если входной параметр массив передаёт "Array", иначе просто значение
         boost::property_tree::ptree pt;
         std::stringstream ss;
         std::map<std::string,std::string> output;
@@ -110,8 +113,10 @@ namespace WebSocketDS_ns
             boost::property_tree::read_json(ss, pt);
 
             //pt.get_value_optional
-            vector<pair<std::string, boost::optional<std::string>>> boostOpt;
+            // Взят boost::optional. В случае, если параметр JSON не найден присваивает этому параметру пустую строку
 
+            // Если входная строка не JSON, возвращяет строку с ошибкой.
+            vector<pair<std::string, boost::optional<std::string>>> boostOpt;
 
 
             boostOpt.push_back(std::make_pair("command", pt.get_optional<std::string>("command")));
@@ -122,14 +127,15 @@ namespace WebSocketDS_ns
             for (auto& v : boostOpt) {
                 if (v.second) {
                     output.insert(std::pair<std::string, std::string>(v.first, v.second.get()));
-                    // if empty
                 }
                 else {
                     output.insert(std::pair<std::string, std::string>(v.first, NONE));
                 }
             }
 
-            
+            // Здесь, если output["argin"].size() == 0, значит параметр argin найден, но формат данных не простое значение.
+            // Прводится проверка, является ли он массивом
+
             if (output["argin"].size() == 0) {
                 int it = 0;
                 try {
