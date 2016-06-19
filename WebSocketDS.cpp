@@ -478,10 +478,21 @@ namespace WebSocketDS_ns
 
             //if (jsonArgs.find("argin") == jsonArgs.end())
             //    return "{\"error\": \"argin not found\"}";
+            if (jsonArgs.find("error") != jsonArgs.end()) {
+                std::string tmp = "{\"error\":";
+                tmp += "\"" + jsonArgs["error"] + "\"}";
+                return CORBA::string_dup(tmp.c_str());
+            }
+
+            if (jsonArgs["argin"].size() == 0)
+                return "{\"error\": \"argin invalid\"}";
+
+
             if (jsonArgs["command"] == processor.NONE)
                 return "{\"error\": \"String command not found\"}";
             if (jsonArgs["argin"] == processor.NONE)
                 return "{\"error\": \"argin not found\"}";
+            
 
 
 
@@ -495,9 +506,13 @@ namespace WebSocketDS_ns
                 if (type == Tango::DEV_VOID)
                     out = device->command_inout(jsonArgs["command"]);
                 else {
+                    if (jsonArgs["argin"] == "Array") {
+                        if (!processor.isMassive(type)) return "{\"error\": \"The input data do not have to be an array\"}";
+                    }
                     Tango::DeviceData deviceData = processor.gettingDevDataFromJsonStr(argin, type);
                     /// ??? check string(argin)
-                    /// ??? check if wrong input data 
+                    /// ??? check if wrong input data
+
                     out = device->command_inout(jsonArgs["command"], deviceData);
                 }
 

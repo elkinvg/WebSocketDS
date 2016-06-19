@@ -1,6 +1,7 @@
 #ifndef attribute_reader_H
 #define attribute_reader_H
 #include <tango.h>
+#include <array>
 
 namespace WebSocketDS_ns
 {
@@ -8,8 +9,12 @@ namespace WebSocketDS_ns
     {
     public:
         const string NONE = "\"NONE\"";
+    private:
+        enum class TYPE_OF_DEVICE_DATA { VOID_D = 0, DATA = 1, ARRAY = 2 };
+
     public:
-        // elkin begin
+        tango_processor();
+        bool isMassive(int inType);
         std::string process_attribute_t(Tango::DeviceAttribute& att);
         bool checkCommand(const string &command, const std::map<string, Tango::CommandInfo> &accessibleCommandInfo);
         Tango::DeviceData gettingDevDataFromJsonStr(const std::string& jsonData, int typeForDeviceData);
@@ -19,7 +24,6 @@ namespace WebSocketDS_ns
         std::string gettingJsonStrFromDevData(Tango::DeviceData& devData,std::map<std::string,std::string> inputArgs);
 
     private:
-
         std::string devAttrToStr(Tango::DeviceAttribute *attr);
         template <typename T>
         std::string attrsToString(/*T& data, */Tango::DeviceAttribute *attr);
@@ -31,8 +35,8 @@ namespace WebSocketDS_ns
 
         //TMP BEGIN
         //std::string process_device_data_t(Tango::DeviceData &deviceData);
-        enum class TYPE_OF_DEVICE_DATA {VOID_D=0, DATA=1 ,ARRAY=2};
-        TYPE_OF_DEVICE_DATA getTypeOfData(int tangoType);
+        
+        //TYPE_OF_DEVICE_DATA getTypeOfData(int tangoType);
 
         template <typename T>
         void generateStringJsonFromDevData(Tango::DeviceData& devData, std::stringstream& json);
@@ -59,8 +63,10 @@ namespace WebSocketDS_ns
         std::string process_device_attribute_json(Tango::DeviceAttribute& data);
         std::string process_device_data_json(Tango::DeviceData& data);
     private:
-        std::string SwitchAttrQuality(Tango::AttrQuality quality);
-        std::string SwitchTangoState(Tango::DevState state);
+        void initQualityNState();
+        std::array<string, 5> attrQuality;
+        std::array<string, 13> tangoState;
+        std::array<TYPE_OF_DEVICE_DATA,28> typeOfData;
 
     };
 }    //    End of namespace

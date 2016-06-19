@@ -14,12 +14,22 @@
 
 namespace WebSocketDS_ns
 {
+    tango_processor::tango_processor() {
+        initQualityNState();
+    }
+
+    bool tango_processor::isMassive(int inType) {
+        TYPE_OF_DEVICE_DATA td = typeOfData[inType];
+        if (td == TYPE_OF_DEVICE_DATA::ARRAY) return true;
+        else return false;
+    }
+
     std::string tango_processor::process_attribute_t(Tango::DeviceAttribute& att) {
         // Генерация JSON из DeviceAttribute
         std::stringstream json;
         json << "";
 
-        std::string quality = SwitchAttrQuality(att.get_quality());
+        std::string quality = attrQuality[att.get_quality()]; //SwitchAttrQuality(att.get_quality());
         json << "{";
         json << "\"attr\": \"" << att.get_name() << "\", ";
         json << "\"qual\": \"" << quality << "\", ";
@@ -62,7 +72,7 @@ namespace WebSocketDS_ns
         if (format == Tango::AttrDataFormat::SCALAR) {
             if (type == Tango::DEV_STATE) {
                 (*attr) >> stateIn;
-                stateStr = SwitchTangoState(stateIn);
+                stateStr = tangoState[stateIn];// SwitchTangoState(stateIn);
                 dataFromAttrsToJson(stateStr, ss);
             }
             else {
@@ -105,24 +115,67 @@ namespace WebSocketDS_ns
         std::string command,id;
 
         ss << jsonInput;
-        boost::property_tree::read_json(ss, pt);
+        try {
+            boost::property_tree::read_json(ss, pt);
 
-        //pt.get_value_optional
-        vector<pair<std::string, boost::optional<std::string>>> boostOpt;
+            //pt.get_value_optional
+            vector<pair<std::string, boost::optional<std::string>>> boostOpt;
 
-        boostOpt.push_back(std::make_pair("command", pt.get_optional<std::string>("command")));
-        boostOpt.push_back(std::make_pair("id", pt.get_optional<std::string>("id")));
-        boostOpt.push_back(std::make_pair("argin", pt.get_optional<std::string>("argin")));
 
-        bool isJsonExact = true;
-        for (auto& v : boostOpt) {
-            if (v.second) {
-                output.insert(std::pair<std::string, std::string>(v.first, v.second.get()));
+
+            boostOpt.push_back(std::make_pair("command", pt.get_optional<std::string>("command")));
+            boostOpt.push_back(std::make_pair("id", pt.get_optional<std::string>("id")));
+            boostOpt.push_back(std::make_pair("argin", pt.get_optional<std::string>("argin")));
+
+            bool isJsonExact = true;
+            for (auto& v : boostOpt) {
+                if (v.second) {
+                    output.insert(std::pair<std::string, std::string>(v.first, v.second.get()));
+                    // if empty
+                }
+                else {
+                    output.insert(std::pair<std::string, std::string>(v.first, NONE));
+                }
             }
-            else {
-                output.insert(std::pair<std::string, std::string>(v.first, NONE));
+
+            
+            if (output["argin"].size() == 0) {
+                int it = 0;
+                try {
+                    for (boost::property_tree::ptree::value_type &v : pt.get_child("argin")) {
+                        it++;
+                    }
+                }
+                catch (boost::property_tree::ptree_bad_data) { it = 0; }
+                if (it) output["argin"] = "Array";
             }
+
+
+
+            //try {
+            //    for (boost::property_tree::ptree::value_type &v : pt.get_child("argin")) {
+            //        
+            //        //devDataVector.push_back(v.second.get_value<T>());
+            //    }
+            //}
+            //catch (boost::property_tree::ptree_bad_data) {
+            //}
+
+
+
         }
+        catch (boost::property_tree::json_parser::json_parser_error &je)
+        {
+            std::string err = "Json parsed error. Message from Boost: " + je.message();
+            output.insert(std::make_pair("error",err));
+            //output.insert
+            //std::cout << "Error parsing: " << je.filename() << " on line: " << je.line() << std::endl;
+            //std::cout << je.message() << std::endl;
+        }
+        //catch (std::exception const& e) {
+        //    std::cerr << e.what() << std::endl;
+        //}
+
 
         // FOR TEST DevVarCharArray. This word is not encoded in JSON.
 
@@ -154,7 +207,7 @@ namespace WebSocketDS_ns
         switch (type)
         {
         case Tango::DEV_VOID:
-            json << "\"agrout\": \"OK\"";
+            json << "\"argout\": \"OK\"";
             break;
         case Tango::DEV_BOOLEAN: // ??? not boolean?
         {
@@ -162,7 +215,7 @@ namespace WebSocketDS_ns
             //generateStringJsonFromDevData<Tango::DevBoolean>(devData, json);
             Tango::DevBoolean bl;
             devData >> bl;
-            json << "\"agrout\": ";
+            json << "\"argout\": ";
             dataFromAttrsToJson(bl, json);
         }
         break;
@@ -341,7 +394,7 @@ namespace WebSocketDS_ns
     template <typename T>
     void tango_processor::generateStringJsonFromDevData(Tango::DeviceData &devData, std::stringstream& json)
     {
-        TYPE_OF_DEVICE_DATA type = getTypeOfData(devData.get_type());
+        TYPE_OF_DEVICE_DATA type = typeOfData[devData.get_type()];// typeOfData[devData.get_type()]; //getTypeOfData(devData.get_type());
         std::vector<T> vecFromData;
         T data;
 
@@ -350,20 +403,20 @@ namespace WebSocketDS_ns
         } else if (type == TYPE_OF_DEVICE_DATA::ARRAY) {
             devData >> vecFromData;
         } else if (type == TYPE_OF_DEVICE_DATA::VOID_D) {
-            json << "\"agrout\": \"OK\"";
+            json << "\"argout\": \"OK\"";
         }
 
 //        std::stringstream json;
 //        json << "{";
 //        json << "\"command\": \"test\" ,";
         if (type == TYPE_OF_DEVICE_DATA::DATA) {
-            json << "\"agrout\": ";
+            json << "\"argout\": ";
             dataFromAttrsToJson(data,json);
         } else if (type == TYPE_OF_DEVICE_DATA::ARRAY) {
-            json << "\"agrout\": [";
+            json << "\"argout\": [";
             dataArrayFromAttrsToJson(vecFromData,json);
             json << " ]";
-//            json << "\"agrout\": [";
+//            json << "\"argout\": [";
 //            bool begin = true;
 //            for (T fromData : vecFromData) {
 //                if (!begin) json << ", ";
@@ -379,7 +432,7 @@ namespace WebSocketDS_ns
     template <typename T>
     void tango_processor::dataArrayFromAttrsToJson(std::vector<T>& vecFromData,  std::stringstream& json) {
         bool begin = true;
-        //json << "\"agrout\": [";
+        //json << "\"argout\": [";
         for (T fromData : vecFromData) {
             if (!begin) json << ", ";
             else begin = false;
@@ -490,7 +543,7 @@ namespace WebSocketDS_ns
         Tango::DeviceData dOut;
 //        T devData;
 
-        TYPE_OF_DEVICE_DATA type = getTypeOfData(typeForDeviceData);
+        TYPE_OF_DEVICE_DATA type = typeOfData[typeForDeviceData];//getTypeOfData(typeForDeviceData);
         if (type == TYPE_OF_DEVICE_DATA::DATA) {
 //            devData = pt.get<T>("argin");
 //            dOut << devData;
@@ -814,76 +867,135 @@ namespace WebSocketDS_ns
     //        return out;
     //    }
 
-    tango_processor::TYPE_OF_DEVICE_DATA tango_processor::getTypeOfData(int tangoType)
-    {
-        switch (tangoType)
-        {
-        case Tango::DEV_VOID:
-            return TYPE_OF_DEVICE_DATA::VOID_D;
-        case Tango::DEV_BOOLEAN:
-            return TYPE_OF_DEVICE_DATA::DATA;
-        case Tango::DEV_SHORT:
-            return TYPE_OF_DEVICE_DATA::DATA;
-        case Tango::DEV_LONG:
-            return TYPE_OF_DEVICE_DATA::DATA;
-        case Tango::DEV_FLOAT:
-            return TYPE_OF_DEVICE_DATA::DATA;
-        case Tango::DEV_DOUBLE:
-            return TYPE_OF_DEVICE_DATA::DATA;
-        case Tango::DEV_USHORT:
-            return TYPE_OF_DEVICE_DATA::DATA;
-        case Tango::DEV_ULONG:
-            return TYPE_OF_DEVICE_DATA::DATA;
-        case Tango::DEV_STRING:
-            return TYPE_OF_DEVICE_DATA::DATA;
-        case Tango::DEVVAR_CHARARRAY:
-            return TYPE_OF_DEVICE_DATA::ARRAY;
-        case Tango::DEVVAR_SHORTARRAY:
-            return TYPE_OF_DEVICE_DATA::ARRAY;
-        case Tango::DEVVAR_LONGARRAY:
-            return TYPE_OF_DEVICE_DATA::ARRAY;
-        case Tango::DEVVAR_FLOATARRAY:
-            return TYPE_OF_DEVICE_DATA::ARRAY;
-        case Tango::DEVVAR_DOUBLEARRAY:
-            return TYPE_OF_DEVICE_DATA::ARRAY;
-        case Tango::DEVVAR_USHORTARRAY:
-            return TYPE_OF_DEVICE_DATA::ARRAY;
-        case Tango::DEVVAR_ULONGARRAY:
-            return TYPE_OF_DEVICE_DATA::ARRAY;
-        case Tango::DEVVAR_STRINGARRAY:
-            return TYPE_OF_DEVICE_DATA::ARRAY;
-        case Tango::DEVVAR_LONGSTRINGARRAY:
-            return TYPE_OF_DEVICE_DATA::ARRAY;
-        case Tango::DEVVAR_DOUBLESTRINGARRAY:
-            return TYPE_OF_DEVICE_DATA::ARRAY;
-            //        case Tango::DEV_STATE:
-            //            json << devStateToStr(&data);
-            //            break;
-            //        case Tango::CONST_DEV_STRING:
-            //            json << devConstStringToStr(&data);
-            //            break;
-        case Tango::DEVVAR_BOOLEANARRAY:
-            return TYPE_OF_DEVICE_DATA::ARRAY;
-        case Tango::DEV_UCHAR:
-            return TYPE_OF_DEVICE_DATA::DATA;
-        case Tango::DEV_LONG64:
-            return TYPE_OF_DEVICE_DATA::DATA;
-        case Tango::DEV_ULONG64:
-            return TYPE_OF_DEVICE_DATA::DATA;
-        case Tango::DEVVAR_LONG64ARRAY:
-            return TYPE_OF_DEVICE_DATA::ARRAY;
-        case Tango::DEVVAR_ULONG64ARRAY:
-            return TYPE_OF_DEVICE_DATA::ARRAY;
-        case Tango::DEV_INT:
-            return TYPE_OF_DEVICE_DATA::DATA;
-            //        case Tango::DEV_ENCODED:
-            //            json << devEncodedToStr(&data);
-            //            break;
-        default:
-            break;
-        }
-    }
+    //tango_processor::TYPE_OF_DEVICE_DATA tango_processor::getTypeOfData(int tangoType)
+    //{
+    //    switch (tangoType)
+    //    {
+    //    case Tango::DEV_VOID:
+    //        return TYPE_OF_DEVICE_DATA::VOID_D;
+    //    case Tango::DEV_BOOLEAN:
+    //        return TYPE_OF_DEVICE_DATA::DATA;
+    //    case Tango::DEV_SHORT:
+    //        return TYPE_OF_DEVICE_DATA::DATA;
+    //    case Tango::DEV_LONG:
+    //        return TYPE_OF_DEVICE_DATA::DATA;
+    //    case Tango::DEV_FLOAT:
+    //        return TYPE_OF_DEVICE_DATA::DATA;
+    //    case Tango::DEV_DOUBLE:
+    //        return TYPE_OF_DEVICE_DATA::DATA;
+    //    case Tango::DEV_USHORT:
+    //        return TYPE_OF_DEVICE_DATA::DATA;
+    //    case Tango::DEV_ULONG:
+    //        return TYPE_OF_DEVICE_DATA::DATA;
+    //    case Tango::DEV_STRING:
+    //        return TYPE_OF_DEVICE_DATA::DATA;
+    //    case Tango::DEVVAR_CHARARRAY:
+    //        return TYPE_OF_DEVICE_DATA::ARRAY;
+    //    case Tango::DEVVAR_SHORTARRAY:
+    //        return TYPE_OF_DEVICE_DATA::ARRAY;
+    //    case Tango::DEVVAR_LONGARRAY:
+    //        return TYPE_OF_DEVICE_DATA::ARRAY;
+    //    case Tango::DEVVAR_FLOATARRAY:
+    //        return TYPE_OF_DEVICE_DATA::ARRAY;
+    //    case Tango::DEVVAR_DOUBLEARRAY:
+    //        return TYPE_OF_DEVICE_DATA::ARRAY;
+    //    case Tango::DEVVAR_USHORTARRAY:
+    //        return TYPE_OF_DEVICE_DATA::ARRAY;
+    //    case Tango::DEVVAR_ULONGARRAY:
+    //        return TYPE_OF_DEVICE_DATA::ARRAY;
+    //    case Tango::DEVVAR_STRINGARRAY:
+    //        return TYPE_OF_DEVICE_DATA::ARRAY;
+    //    case Tango::DEVVAR_LONGSTRINGARRAY:
+    //        return TYPE_OF_DEVICE_DATA::ARRAY;
+    //    case Tango::DEVVAR_DOUBLESTRINGARRAY:
+    //        return TYPE_OF_DEVICE_DATA::ARRAY;
+    //        //        case Tango::DEV_STATE:
+    //        //            json << devStateToStr(&data);
+    //        //            break;
+    //        //        case Tango::CONST_DEV_STRING:
+    //        //            json << devConstStringToStr(&data);
+    //        //            break;
+    //    case Tango::DEVVAR_BOOLEANARRAY:
+    //        return TYPE_OF_DEVICE_DATA::ARRAY;
+    //    case Tango::DEV_UCHAR:
+    //        return TYPE_OF_DEVICE_DATA::DATA;
+    //    case Tango::DEV_LONG64:
+    //        return TYPE_OF_DEVICE_DATA::DATA;
+    //    case Tango::DEV_ULONG64:
+    //        return TYPE_OF_DEVICE_DATA::DATA;
+    //    case Tango::DEVVAR_LONG64ARRAY:
+    //        return TYPE_OF_DEVICE_DATA::ARRAY;
+    //    case Tango::DEVVAR_ULONG64ARRAY:
+    //        return TYPE_OF_DEVICE_DATA::ARRAY;
+    //    case Tango::DEV_INT:
+    //        return TYPE_OF_DEVICE_DATA::DATA;
+    //        //        case Tango::DEV_ENCODED:
+    //        //            json << devEncodedToStr(&data);
+    //        //            break;
+    //    default:
+    //        break;
+    //    }
+    //}
 
+    void tango_processor::initQualityNState() {
+        //init array for AttrQuality
+        attrQuality[Tango::AttrQuality::ATTR_VALID] = "VALID";
+        attrQuality[Tango::AttrQuality::ATTR_INVALID] = "INVALID";
+        attrQuality[Tango::AttrQuality::ATTR_ALARM] = "ALARM";
+        attrQuality[Tango::AttrQuality::ATTR_CHANGING] = "CHANGING";
+        attrQuality[Tango::AttrQuality::ATTR_WARNING] = "WARNING";
+
+        // ini array for State
+        tangoState[Tango::ON] = "ON";
+        tangoState[Tango::OFF] = "OFF";
+        tangoState[Tango::CLOSE] = "CLOSE";
+        tangoState[Tango::OPEN] = "OPEN";
+        tangoState[Tango::INSERT] = "INSERT";
+        tangoState[Tango::EXTRACT] = "EXTRACT";
+        tangoState[Tango::MOVING] = "MOVING";
+        tangoState[Tango::STANDBY] = "STANDBY";
+        tangoState[Tango::FAULT] = "FAULT";
+        tangoState[Tango::INIT] = "INIT";
+        tangoState[Tango::RUNNING] = "RUNNING";
+        tangoState[Tango::ALARM] = "ALARM";
+        tangoState[Tango::DISABLE] = "DISABLE";
+
+        // init array for type (data or massive)
+        typeOfData[Tango::DEV_VOID] = TYPE_OF_DEVICE_DATA::VOID_D;
+
+        typeOfData[Tango::DEV_BOOLEAN] = TYPE_OF_DEVICE_DATA::DATA;
+        typeOfData[Tango::DEV_SHORT] = TYPE_OF_DEVICE_DATA::DATA;
+        typeOfData[Tango::DEV_LONG] = TYPE_OF_DEVICE_DATA::DATA;
+        typeOfData[Tango::DEV_FLOAT] = TYPE_OF_DEVICE_DATA::DATA;
+        typeOfData[Tango::DEV_DOUBLE] = TYPE_OF_DEVICE_DATA::DATA;
+        typeOfData[Tango::DEV_USHORT] = TYPE_OF_DEVICE_DATA::DATA;
+        typeOfData[Tango::DEV_ULONG] = TYPE_OF_DEVICE_DATA::DATA;
+        typeOfData[Tango::DEV_STRING] = TYPE_OF_DEVICE_DATA::DATA;
+
+        typeOfData[Tango::DEVVAR_CHARARRAY] = TYPE_OF_DEVICE_DATA::ARRAY;
+        typeOfData[Tango::DEVVAR_SHORTARRAY] = TYPE_OF_DEVICE_DATA::ARRAY;
+        typeOfData[Tango::DEVVAR_LONGARRAY] = TYPE_OF_DEVICE_DATA::ARRAY;
+        typeOfData[Tango::DEVVAR_FLOATARRAY] = TYPE_OF_DEVICE_DATA::ARRAY;
+        typeOfData[Tango::DEVVAR_DOUBLEARRAY] = TYPE_OF_DEVICE_DATA::ARRAY;
+        typeOfData[Tango::DEVVAR_USHORTARRAY] = TYPE_OF_DEVICE_DATA::ARRAY;
+        typeOfData[Tango::DEVVAR_ULONGARRAY] = TYPE_OF_DEVICE_DATA::ARRAY;
+        typeOfData[Tango::DEVVAR_STRINGARRAY] = TYPE_OF_DEVICE_DATA::ARRAY;
+        typeOfData[Tango::DEVVAR_LONGSTRINGARRAY] = TYPE_OF_DEVICE_DATA::ARRAY;
+        typeOfData[Tango::DEVVAR_DOUBLESTRINGARRAY] = TYPE_OF_DEVICE_DATA::ARRAY;
+        
+        //typeOfData[Tango::DEV_STATE] = TYPE_OF_DEVICE_DATA::ARRAY;
+        //typeOfData[Tango::CONST_DEV_STRING] = TYPE_OF_DEVICE_DATA::ARRAY;
+
+        typeOfData[Tango::DEVVAR_BOOLEANARRAY] = TYPE_OF_DEVICE_DATA::ARRAY;
+
+        typeOfData[Tango::DEV_UCHAR] = TYPE_OF_DEVICE_DATA::DATA;
+        typeOfData[Tango::DEV_LONG64] = TYPE_OF_DEVICE_DATA::DATA;
+        typeOfData[Tango::DEV_ULONG64] = TYPE_OF_DEVICE_DATA::DATA;
+        typeOfData[Tango::DEVVAR_LONG64ARRAY] = TYPE_OF_DEVICE_DATA::ARRAY;
+        typeOfData[Tango::DEVVAR_ULONG64ARRAY] = TYPE_OF_DEVICE_DATA::ARRAY;
+        typeOfData[Tango::DEV_INT] = TYPE_OF_DEVICE_DATA::DATA;
+        //typeOfData[Tango::DEV_ENCODED] = TYPE_OF_DEVICE_DATA::DATA;
+    }
 
     //    template <typename T>
     //    std::string  tango_processor::dataToString(T& data, Tango::DeviceData *devData) {
@@ -923,79 +1035,5 @@ namespace WebSocketDS_ns
         std::string argout;
         (data) >> argout;
         return argout;
-    }
-
-    std::string tango_processor::SwitchAttrQuality(Tango::AttrQuality quality)
-    {
-        //ATTR_VALID, ATTR_INVALID, ATTR_ALARM, ATTR_CHANGING, ATTR_WARNING
-        switch (quality)
-        {
-        case Tango::AttrQuality::ATTR_VALID:
-            return std::string("VALID");
-            break;
-        case Tango::AttrQuality::ATTR_INVALID:
-            return std::string("INVALID");
-            break;
-        case Tango::AttrQuality::ATTR_ALARM:
-            return std::string("ALARM");
-            break;
-        case Tango::AttrQuality::ATTR_CHANGING:
-            return std::string("CHANGING");
-            break;
-        case Tango::AttrQuality::ATTR_WARNING:
-            return std::string("WARNING");
-            break;
-        default:
-            return std::string("INVALID");
-        }
-    }
-
-    std::string tango_processor::SwitchTangoState(Tango::DevState state)
-    {
-
-        switch (state)
-        {
-        case Tango::ON:
-            return std::string("ON");
-            break;
-        case Tango::OFF:
-            return std::string("OFF");
-            break;
-        case Tango::CLOSE:
-            return std::string("CLOSE");
-            break;
-        case Tango::OPEN:
-            return std::string("OPEN");
-            break;
-        case Tango::INSERT:
-            return std::string("INSERT");
-            break;
-        case Tango::EXTRACT:
-            return std::string("EXTRACT");
-            break;
-        case Tango::MOVING:
-            return std::string("MOVING");
-            break;
-        case Tango::STANDBY:
-            return std::string("STANDBY");
-            break;
-        case Tango::FAULT:
-            return std::string("FAULT");
-            break;
-        case Tango::INIT:
-            return std::string("INIT");
-            break;
-        case Tango::RUNNING:
-            return std::string("RUNNING");
-            break;
-        case Tango::ALARM:
-            return std::string("ALARM");
-            break;
-        case Tango::DISABLE:
-            return std::string("DISABLE");
-            break;
-        default:
-            return std::string("UNKNOWN");
-        }
     }
 }
