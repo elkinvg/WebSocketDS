@@ -29,6 +29,7 @@ void *WSThread::run_undetached(void *ptr)
     boost::asio::ip::tcp::endpoint endpoint = *resolver.resolve(query);*/
 
     //print_server.listen(endpoint);
+    print_server.set_reuse_addr(true); // for LINUX
     print_server.listen(port);
     print_server.start_accept();
     print_server.run();
