@@ -13,26 +13,26 @@ void *WSThread::run_undetached(void *ptr)
 {
     DEBUG_STREAM << "The upload thread starts..." << endl;
     cache = "";
-    print_server.set_open_handler(websocketpp::lib::bind(&WSThread::on_open,this,websocketpp::lib::placeholders::_1));
-    print_server.set_close_handler(websocketpp::lib::bind(&WSThread::on_close,this,websocketpp::lib::placeholders::_1));
-    print_server.set_message_handler(websocketpp::lib::bind(&WSThread::on_message,this,websocketpp::lib::placeholders::_1,websocketpp::lib::placeholders::_2));
+    m_server.set_open_handler(websocketpp::lib::bind(&WSThread::on_open,this,websocketpp::lib::placeholders::_1));
+    m_server.set_close_handler(websocketpp::lib::bind(&WSThread::on_close,this,websocketpp::lib::placeholders::_1));
+    m_server.set_message_handler(websocketpp::lib::bind(&WSThread::on_message,this,websocketpp::lib::placeholders::_1,websocketpp::lib::placeholders::_2));
     
     // this will turn off console output for frame header and payload
-    print_server.clear_access_channels(websocketpp::log::alevel::frame_header | websocketpp::log::alevel::frame_payload);
+    m_server.clear_access_channels(websocketpp::log::alevel::frame_header | websocketpp::log::alevel::frame_payload);
 
     // this will turn off everything in console output
-    //print_server.clear_access_channels(websocketpp::log::alevel::all);
+    //m_server.clear_access_channels(websocketpp::log::alevel::all);
 
-    print_server.init_asio();
-    /*boost::asio::ip::tcp::resolver resolver(print_server.get_io_service());
+    m_server.init_asio();
+    /*boost::asio::ip::tcp::resolver resolver(m_server.get_io_service());
     boost::asio::ip::tcp::resolver::query query(host, port);
     boost::asio::ip::tcp::endpoint endpoint = *resolver.resolve(query);*/
 
-    //print_server.listen(endpoint);
-    print_server.set_reuse_addr(true); // for LINUX
-    print_server.listen(port);
-    print_server.start_accept();
-    print_server.run();
+    //m_server.listen(endpoint);
+    m_server.set_reuse_addr(true); // for LINUX
+    m_server.listen(port);
+    m_server.start_accept();
+    m_server.run();
     DEBUG_STREAM << "WS stopped.." << endl;
     return 0;      
 }
@@ -82,7 +82,7 @@ WSThread::~WSThread() {
 void WSThread::stop()
 {
     DEBUG_STREAM << "The ws thread stops..." << endl;
-    print_server.stop();
+    m_server.stop();
     DEBUG_STREAM << "WS stops..." << endl;
 }
 

@@ -709,7 +709,7 @@ namespace WebSocketDS_ns
         tangoState[Tango::RUNNING] = "RUNNING";
         tangoState[Tango::ALARM] = "ALARM";
         tangoState[Tango::DISABLE] = "DISABLE";
-
+        tangoState[Tango::UNKNOWN] = "UNKNOWN";
         // init array for type (data or massive)
         typeOfData[Tango::DEV_VOID] = TYPE_OF_DEVICE_DATA::VOID_D;
 

@@ -65,7 +65,7 @@ namespace WebSocketDS_ns
     private:
         void initQualityNState();
         std::array<string, 5> attrQuality;
-        std::array<string, 13> tangoState;
+        std::array<string, 14> tangoState;
         std::array<TYPE_OF_DEVICE_DATA,28> typeOfData;
 
     };
