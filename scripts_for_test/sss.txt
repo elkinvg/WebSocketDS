@@ -1,0 +1,4 @@
+in header:    Tango::ApiUtil *aa;
+
+        Tango::ApiUtil *aa = Tango::ApiUtil::instance();
+        aa->set_asynch_cb_sub_model(Tango::cb_sub_model::PUSH_CALLBACK);

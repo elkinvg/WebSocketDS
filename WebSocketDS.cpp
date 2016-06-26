@@ -443,8 +443,10 @@ namespace WebSocketDS_ns
         catch (Tango::DevFailed &e)
         {
             Tango::Except::print_exception(e);
-            set_state(Tango::FAULT);
-            set_status("Couldn't read attribute from device: " + deviceServer);
+            //set_state(Tango::FAULT);
+            //set_status("Couldn't read attribute from device: " + deviceServer);
+            std::string error = "{\"error\": \"Couldn't read attribute from device:" + deviceServer + "\"}";
+            wsThread->send_all(error.c_str());
         }
         /*----- PROTECTED REGION END -----*/    //    WebSocketDS::update_data
     }
