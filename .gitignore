@@ -9,6 +9,7 @@ obj/*
 *.bck
 *.pro
 *.user
+*.user.*
 *.tmp
 bin/*
 lib/*

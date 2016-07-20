@@ -1,25 +1,50 @@
 <?xml version="1.0" encoding="ASCII"?>
 <pogoDsl:PogoSystem xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:pogoDsl="http://www.esrf.fr/tango/pogo/PogoDsl">
   <classes name="WebSocketDS" pogoRevision="9.1">
-    <description description="WebSocket access to tango device-server attributes.&#xA;&#xA;Configuration should be done via properties:&#xA;&#xA;Port - port to listen incoming ws connections;&#xA;DeviceServer - tango id of a required device server;&#xA;Attributes - list of required DS attributes, you wish to read via WS;&#xA;Then you should set polling to the UpdateData command. (1000 means that all connected clients would read attributes once per second).&#xA;&#xA;Data format: JSON string with array of attrubute objects {atrrtibute name, attribute value, quality, timestamp};" title="WebSocket access to tango device-server attributes" sourcePath="D:\progrdir\vs12_2013\fortango\WebSocketDS" language="Cpp" filestogenerate="XMI   file,Code files,Protected Regions" license="GPL" hasMandatoryProperty="false" hasConcreteProperty="true" hasAbstractCommand="false" hasAbstractAttribute="false">
+    <description description="WebSocket access to tango device-server attributes.&#xA;&#xA;Configuration should be done via properties:&#xA;&#xA;Port - port to listen incoming ws connections;&#xA;DeviceServer - tango id of a required device server;&#xA;Attributes - list of required DS attributes, you wish to read via WS;&#xA;Then you should set polling to the UpdateData command. (1000 means that all connected clients would read attributes once per second).&#xA;&#xA;Data format: JSON string with array of attrubute objects {atrrtibute name, attribute value, quality, timestamp};" title="WebSocket access to tango device-server attributes" sourcePath="/home/elkin/tempwork/tangoservs/WebSocketDS" language="Cpp" filestogenerate="XMI   file,Code files,Protected Regions,html Pages" license="GPL" hasMandatoryProperty="false" hasConcreteProperty="true" hasAbstractCommand="false" hasAbstractAttribute="false" descriptionHtmlExists="false">
       <inheritances classname="Device_Impl" sourcePath=""/>
       <identification contact="at dubna.tk - egor" author="egor" emailDomain="dubna.tk" classFamily="Communication" siteSpecific="" platform="All Platforms" bus="Not Applicable" manufacturer="none" reference=""/>
     </description>
-    <deviceProperties name="Port" description="">
-      <type xsi:type="pogoDsl:ShortType"/>
+    <deviceProperties name="Attributes" description="Attributes list">
+      <type xsi:type="pogoDsl:StringVectorType"/>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+    </deviceProperties>
+    <deviceProperties name="AuthDS" description="Tango web authentication device server (TangoWebAuth ) name.">
+      <type xsi:type="pogoDsl:StringType"/>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+      <DefaultPropValue>auth/web/1</DefaultPropValue>
+    </deviceProperties>
+    <deviceProperties name="Certificate" description="Certificate file name (crt) with path&#xA;example: /etc/ssl/certs/ssl-cert-snakeoil.pem">
+      <type xsi:type="pogoDsl:StringType"/>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+      <DefaultPropValue>/etc/ssl/certs/server.crt</DefaultPropValue>
+    </deviceProperties>
+    <deviceProperties name="Commands" description="Commandes list">
+      <type xsi:type="pogoDsl:StringVectorType"/>
       <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
     </deviceProperties>
     <deviceProperties name="DeviceServer" description="DeviceServer name">
       <type xsi:type="pogoDsl:StringType"/>
       <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
     </deviceProperties>
-    <deviceProperties name="Attributes" description="Attributes list">
-      <type xsi:type="pogoDsl:StringVectorType"/>
+    <deviceProperties name="Host" description="Host for http server&#xA;(127.0.0.1 for localhost only or current ip)">
+      <type xsi:type="pogoDsl:StringType"/>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+      <DefaultPropValue>127.0.0.1</DefaultPropValue>
+    </deviceProperties>
+    <deviceProperties name="Key" description="Private key file name&#xA;Exammple: /etc/ssl/private/ssl-cert-snakeoil.key">
+      <type xsi:type="pogoDsl:StringType"/>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+      <DefaultPropValue>/etc/ssl/private/server.key</DefaultPropValue>
+    </deviceProperties>
+    <deviceProperties name="Port" description="">
+      <type xsi:type="pogoDsl:ShortType"/>
       <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
     </deviceProperties>
-    <deviceProperties name="Commands" description="Commandes list">
-      <type xsi:type="pogoDsl:StringVectorType"/>
+    <deviceProperties name="Secure" description="Shall we use SSL encryption?&#xA;It will be used wss connection (websocket secure)">
+      <type xsi:type="pogoDsl:BooleanType"/>
       <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+      <DefaultPropValue>false</DefaultPropValue>
     </deviceProperties>
     <commands name="State" description="This command gets the device state (stored in its device_state data member) and returns it to the caller." execMethod="dev_state" displayLevel="OPERATOR" polledPeriod="0">
       <argin description="none">
@@ -96,7 +121,7 @@
     <states name="FAULT" description="">
       <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
     </states>
-    <preferences docHome="./doc_html" makefileHome="/home/taurel/tmp/tango_install/share/pogo/preferences"/>
+    <preferences docHome="./doc_html" makefileHome="/usr/local/share/pogo/preferences"/>
     <additionalFiles name="WSThread" path="D:\coding\Tango\DeviceServers\WebSocketDS\WSThread.cpp"/>
   </classes>
 </pogoDsl:PogoSystem>

@@ -47,7 +47,9 @@
 //#define _MSC_VER 1600
 //#define WINVER 0x0601
 //#define _WEBSOCKETPP_CPP11_STRICT_
-#include <websocketpp/config/asio_no_tls.hpp>
+//#include <websocketpp/config/asio_no_tls.hpp>
+//#include <websocketpp/config/asio.hpp>
+#include <websocketpp/config/asio.hpp>
 #include <websocketpp/server.hpp>
 #include <iostream>
 #include <set>
@@ -55,22 +57,19 @@
 #include <websocketpp/common/thread.hpp>
 #include "tango_processor.h"
 
-
-typedef websocketpp::server<websocketpp::config::asio> server;
-
 /*----- PROTECTED REGION END -----*/    //    WebSocketDS.h
 
 /**
  *  WebSocketDS class description:
  *    WebSocket access to tango device-server attributes.
- *    
+ *
  *    Configuration should be done via properties:
- *    
+ *
  *    Port - port to listen incoming ws connections;
  *    DeviceServer - tango id of a required device server;
  *    Attributes - list of required DS attributes, you wish to read via WS;
  *    Then you should set polling to the UpdateData command. (1000 means that all connected clients would read attributes once per second).
- *    
+ *
  *    Data format: JSON string with array of attrubute objects {atrrtibute name, attribute value, quality, timestamp};
  */
 
@@ -79,39 +78,56 @@ namespace WebSocketDS_ns
 /*----- PROTECTED REGION ID(WebSocketDS::Additional Class Declarations) ENABLED START -----*/
 
 class WSThread;
+class WSThread_tls;
+class WSThread_plain;
 /*----- PROTECTED REGION END -----*/    //    WebSocketDS::Additional Class Declarations
 
 class WebSocketDS : public TANGO_BASE_CLASS
 {
 
-/*----- PROTECTED REGION ID(WebSocketDS::Data Members) ENABLED START -----*/
+    /*----- PROTECTED REGION ID(WebSocketDS::Data Members) ENABLED START -----*/
 
-//    Add your own data members
+    //    Add your own data members
 private:
+    //WSThread *wsThread;
     WSThread *wsThread;
     Tango::DeviceProxy *device;
     tango_processor processor;
     std::vector<bool>  isJsonAttribute;
 public:
     std::map<std::string, Tango::CommandInfo> accessibleCommandInfo;
-/*----- PROTECTED REGION END -----*/    //    WebSocketDS::Data Members
+    /*----- PROTECTED REGION END -----*/    //    WebSocketDS::Data Members
 
-//    Device property data members
+    //    Device property data members
 public:
-    //    Port:    
-    Tango::DevShort    port;
-    //    DeviceServer:    DeviceServer name
-    string    deviceServer;
     //    Attributes:    Attributes list
     vector<string>    attributes;
+    //    AuthDS:    Tango web authentication device server (TangoWebAuth ) name.
+    string    authDS;
+    //    Certificate:    Certificate file name (crt) with path
+    //  example: /etc/ssl/certs/ssl-cert-snakeoil.pem
+    string    certificate;
     //    Commands:    Commandes list
     vector<string>    commands;
+    //    DeviceServer:    DeviceServer name
+    string    deviceServer;
+    //    Host:    Host for http server
+    //  (127.0.0.1 for localhost only or current ip)
+    string    host;
+    //    Key:    Private key file name
+    //  Exammple: /etc/ssl/private/ssl-cert-snakeoil.key
+    string    key;
+    //    Port:
+    Tango::DevShort    port;
+    //    Secure:    Shall we use SSL encryption?
+    //  It will be used wss connection (websocket secure)
+    Tango::DevBoolean    secure;
 
-//    Attribute data members
+    //    Attribute data members
 public:
     Tango::DevString    *attr_JSON_read;
 
-//    Constructors and destructors
+    //    Constructors and destructors
 public:
     /**
      * Constructs a newly device object.
@@ -141,7 +157,7 @@ public:
     ~WebSocketDS() {delete_device();};
 
 
-//    Miscellaneous methods
+    //    Miscellaneous methods
 public:
     /*
      *    will be called at device destruction or at init command.
@@ -161,7 +177,7 @@ public:
     virtual void always_executed_hook();
 
 
-//    Attribute methods
+    //    Attribute methods
 public:
     //--------------------------------------------------------
     /*
@@ -171,9 +187,9 @@ public:
     //--------------------------------------------------------
     virtual void read_attr_hardware(vector<long> &attr_list);
 
-/**
+    /**
  *    Attribute JSON related methods
- *    Description: 
+ *    Description:
  *
  *    Data type:    Tango::DevString
  *    Attr type:    Scalar
@@ -193,25 +209,25 @@ public:
 
 
 
-//    Command related methods
+    //    Command related methods
 public:
     /**
      *    Command On related method
-     *    Description: 
+     *    Description:
      *
      */
     virtual void on();
     virtual bool is_On_allowed(const CORBA::Any &any);
     /**
      *    Command Off related method
-     *    Description: 
+     *    Description:
      *
      */
     virtual void off();
     virtual bool is_Off_allowed(const CORBA::Any &any);
     /**
      *    Command UpdateData related method
-     *    Description: 
+     *    Description:
      *
      */
     virtual void update_data();
@@ -238,7 +254,7 @@ public:
     //--------------------------------------------------------
     void add_dynamic_commands();
 
-/*----- PROTECTED REGION ID(WebSocketDS::Additional Method prototypes) ENABLED START -----*/
+    /*----- PROTECTED REGION ID(WebSocketDS::Additional Method prototypes) ENABLED START -----*/
 
     //elkin test begin
     void Test() {
@@ -246,46 +262,99 @@ public:
     }
 
     //elkin test end
-/*----- PROTECTED REGION END -----*/    //    WebSocketDS::Additional Method prototypes
+    /*----- PROTECTED REGION END -----*/    //    WebSocketDS::Additional Method prototypes
 };
 
 /*----- PROTECTED REGION ID(WebSocketDS::Additional Classes Definitions) ENABLED START -----*/
 
 //    Additional Classes Definitions
 
+typedef websocketpp::lib::shared_ptr<websocketpp::lib::asio::ssl::context> context_ptr;
+typedef websocketpp::server<websocketpp::config::asio> server;
+typedef websocketpp::server<websocketpp::config::asio_tls> server_tls;
+
 class WSThread: public omni_thread, public Tango::LogAdapter
 {
 public:
-    WSThread(WebSocketDS *dev, std::string hostName,int portNumber):
-    omni_thread(),Tango::LogAdapter(dev)
+    WSThread(WebSocketDS *dev, std::string hostName,int portNumber): omni_thread(), Tango::LogAdapter(dev)
     {
         host = hostName;
         port = portNumber;
         ds = dev;
-        start_undetached();
     }
+    virtual ~WSThread();
 
-    ~WSThread();
-    void *run_undetached(void *);
-    void stop();
-    void send_all(std::string msg);
-    void send(websocketpp::connection_hdl hdl, std::string msg);
-private:
-    typedef std::set<websocketpp::connection_hdl,std::owner_less<websocketpp::connection_hdl> > con_list;
+    virtual void *run_undetached(void *) = 0;
 
-    server m_server;
-    con_list m_connections;
-    int port;
-    std::string host;
+    virtual  void stop() = 0;
+    virtual void send_all(std::string msg) = 0;
+    virtual void send(websocketpp::connection_hdl hdl, std::string msg) = 0;
+protected:
     std::string cache;
-    websocketpp::lib::mutex m_action_lock;
-    websocketpp::lib::mutex m_connection_lock;
-    websocketpp::lib::condition_variable m_action_cond;
-    WebSocketDS *ds;
-    bool local_th_exit;
     void on_message(websocketpp::connection_hdl hdl, server::message_ptr msg);
     void on_open(websocketpp::connection_hdl hdl);
     void on_close(websocketpp::connection_hdl hdl);
+    int port;
+
+    typedef std::set<websocketpp::connection_hdl,std::owner_less<websocketpp::connection_hdl> > con_list;
+    con_list m_connections;
+private:
+    websocketpp::lib::mutex m_action_lock;
+    websocketpp::lib::mutex m_connection_lock;
+    websocketpp::lib::condition_variable m_action_cond;
+    bool local_th_exit;
+
+    WebSocketDS *ds;
+
+    std::string host;
+};
+
+class WSThread_plain: public WSThread
+{
+public:
+    WSThread_plain(WebSocketDS *dev, std::string hostName,int portNumber):
+        WSThread(dev,hostName,portNumber)
+    {
+        start_undetached();
+    }
+
+    virtual ~WSThread_plain();
+    virtual void *run_undetached(void *) override;
+    virtual void stop() override;
+    virtual void send_all(std::string msg) override;
+    virtual void send(websocketpp::connection_hdl hdl, std::string msg) override;
+private:
+    server m_server;
+};
+
+
+
+class WSThread_tls: public WSThread
+{
+public:
+    WSThread_tls(WebSocketDS *dev, std::string hostName,int portNumber, string cert, string key):
+        WSThread(dev,hostName,portNumber)
+    {
+        certificate_ = cert;
+        key_ = key;
+        start_undetached();
+    }
+
+    virtual ~WSThread_tls();
+    virtual void *run_undetached(void *) override;
+
+    virtual  void stop() override;
+    virtual void send_all(std::string msg) override;
+    virtual void send(websocketpp::connection_hdl hdl, std::string msg) override;
+
+private:
+    context_ptr on_tls_init(websocketpp::connection_hdl hdl);
+    std::string get_password();
+
+    server_tls m_server;
+
+    std::string certificate_;
+    std::string key_;
 };
 
 /*----- PROTECTED REGION END -----*/    //    WebSocketDS::Additional Classes Definitions

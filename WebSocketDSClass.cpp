@@ -300,8 +300,49 @@ void WebSocketDSClass::set_default_property()
     //    Set Default Class Properties
 
     //    Set Default device Properties
-    prop_name = "Port";
-    prop_desc = "";
+    prop_name = "Attributes";
+    prop_desc = "Attributes list";
+    prop_def  = "";
+    vect_data.clear();
+    if (prop_def.length()>0)
+    {
+        Tango::DbDatum    data(prop_name);
+        data << vect_data ;
+        dev_def_prop.push_back(data);
+        add_wiz_dev_prop(prop_name, prop_desc,  prop_def);
+    }
+    else
+        add_wiz_dev_prop(prop_name, prop_desc);
+    prop_name = "AuthDS";
+    prop_desc = "Tango web authentication device server (TangoWebAuth ) name.";
+    prop_def  = "auth/web/1";
+    vect_data.clear();
+    vect_data.push_back("auth/web/1");
+    if (prop_def.length()>0)
+    {
+        Tango::DbDatum    data(prop_name);
+        data << vect_data ;
+        dev_def_prop.push_back(data);
+        add_wiz_dev_prop(prop_name, prop_desc,  prop_def);
+    }
+    else
+        add_wiz_dev_prop(prop_name, prop_desc);
+    prop_name = "Certificate";
+    prop_desc = "Certificate file name (crt) with path\nexample: /etc/ssl/certs/ssl-cert-snakeoil.pem";
+    prop_def  = "/etc/ssl/certs/server.crt";
+    vect_data.clear();
+    vect_data.push_back("/etc/ssl/certs/server.crt");
+    if (prop_def.length()>0)
+    {
+        Tango::DbDatum    data(prop_name);
+        data << vect_data ;
+        dev_def_prop.push_back(data);
+        add_wiz_dev_prop(prop_name, prop_desc,  prop_def);
+    }
+    else
+        add_wiz_dev_prop(prop_name, prop_desc);
+    prop_name = "Commands";
+    prop_desc = "Commandes list";
     prop_def  = "";
     vect_data.clear();
     if (prop_def.length()>0)
@@ -326,8 +367,36 @@ void WebSocketDSClass::set_default_property()
     }
     else
         add_wiz_dev_prop(prop_name, prop_desc);
-    prop_name = "Attributes";
-    prop_desc = "Attributes list";
+    prop_name = "Host";
+    prop_desc = "Host for http server\n(127.0.0.1 for localhost only or current ip)";
+    prop_def  = "127.0.0.1";
+    vect_data.clear();
+    vect_data.push_back("127.0.0.1");
+    if (prop_def.length()>0)
+    {
+        Tango::DbDatum    data(prop_name);
+        data << vect_data ;
+        dev_def_prop.push_back(data);
+        add_wiz_dev_prop(prop_name, prop_desc,  prop_def);
+    }
+    else
+        add_wiz_dev_prop(prop_name, prop_desc);
+    prop_name = "Key";
+    prop_desc = "Private key file name\nExammple: /etc/ssl/private/ssl-cert-snakeoil.key";
+    prop_def  = "/etc/ssl/private/server.key";
+    vect_data.clear();
+    vect_data.push_back("/etc/ssl/private/server.key");
+    if (prop_def.length()>0)
+    {
+        Tango::DbDatum    data(prop_name);
+        data << vect_data ;
+        dev_def_prop.push_back(data);
+        add_wiz_dev_prop(prop_name, prop_desc,  prop_def);
+    }
+    else
+        add_wiz_dev_prop(prop_name, prop_desc);
+    prop_name = "Port";
+    prop_desc = "";
     prop_def  = "";
     vect_data.clear();
     if (prop_def.length()>0)
@@ -339,10 +408,11 @@ void WebSocketDSClass::set_default_property()
     }
     else
         add_wiz_dev_prop(prop_name, prop_desc);
-    prop_name = "Commands";
-    prop_desc = "Commandes list";
-    prop_def  = "";
+    prop_name = "Secure";
+    prop_desc = "Shall we use SSL encryption?\nIt will be used wss connection (websocket secure)";
+    prop_def  = "false";
     vect_data.clear();
+    vect_data.push_back("false");
     if (prop_def.length()>0)
     {
         Tango::DbDatum    data(prop_name);

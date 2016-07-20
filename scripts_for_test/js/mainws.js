@@ -1,5 +1,5 @@
 ﻿$(document).ready(function () {
-var protocol = 'wss';
+var protocol = 'ws';
 var wsAddr = protocol + "://" + location.host + ":7777";
 var socket = new WebSocket(wsAddr);
 //var socket = new WebSocket("wss://127.0.0.1:7777");

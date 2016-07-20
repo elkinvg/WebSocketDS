@@ -48,7 +48,7 @@ int main(int argc,char *argv[])
         //----------------------------------------
         Tango::Util *tg = Tango::Util::init(argc,argv);
 
-        // Create the device server singleton 
+        // Create the device server singleton
         //    which will create everything
         //----------------------------------------
         tg->server_init(false);

@@ -1,0 +1,69 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title> WebSocketDS Tango Class Description </title>
+</head>
+<body text="Black" bgcolor="White" link="Blue" vlink="Purple" alink="Red">
+<ul>
+	<br><br><br>
+	<table border="0" width="100%">
+		<Tr>
+			<td> <font size="+1"><u><b> WebSocketDS Class Identification : </b></u></font> </td>
+			<td> <font size="+1"><u><b> WebSocketDS Class Inheritance : </b></u></font> </td>
+		</tr>
+		<td><ul>
+			<table border="0">
+				<Tr>
+					<td> Contact </td><td> : at dubna.tk - egor</td>
+				</tr>
+				<tr>
+					<td> Class Family </td><td> : Communication
+				</tr>
+				<tr>
+					<td> Platform </td><td> : All Platforms </td>
+				</tr>
+				<tr>
+					<td> Bus </td><td> : Not Applicable </td>
+				</tr>
+				<tr>
+					<td> Manufacturer </td><td> : none </td>
+				</tr>
+				<tr>
+					<td> Manufacturer ref.</td><td> :  </td>
+				</tr>
+			</Table>
+		</ul></td>
+		<td>
+			<ul><li> <a href="http://www.esrf.eu/computing/cs/tango/tango_doc/kernel_doc/cpp_doc/" target="new"> Tango::DeviceImpl</a></li>
+			<ul> <li> WebSocketDS</li>
+			<br>
+			<br>
+			<br>
+			<br>
+			<br>
+		</td>
+	</Table>
+	<br><br><br>
+	<font size="+1"><u><b> WebSocketDS Class Description : </b></u></font>
+	<br><br>
+	<ul>
+		WebSocket access to tango device-server attributes.<Br>
+		<Br>
+		Configuration should be done via properties:<Br>
+		<Br>
+		Port - port to listen incoming ws connections;<Br>
+		DeviceServer - tango id of a required device server;<Br>
+		Attributes - list of required DS attributes, you wish to read via WS;<Br>
+		Then you should set polling to the UpdateData command. (1000 means that all connected clients would read attributes once per second).<Br>
+		<Br>
+		Data format: JSON string with array of attrubute objects {atrrtibute name, attribute value, quality, timestamp};
+		
+		<!---  /*PROTECTED REGION ID(index.html) ENABLED START*/  --->
+			<!--- Add your own documentation, pictures, links,.... --->
+			
+		<!---  /*PROTECTED REGION END*/  --->
+		
+	</ul>
+</ul>
+</body>
+</html>

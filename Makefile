@@ -69,7 +69,7 @@ INC_DIR_USER= -I/usr/include
 #   - for a device server, tango libraries directories are automatically appended
 #   - '-L ../lib' is automatically appended in all cases
 #
-LIB_DIR_USER= -L/usr/lib64 -lboost_thread -lboost_system -lboost_date_time -lboost_regex -lboost_random
+LIB_DIR_USER= -L/usr/lib64 -lboost_thread -lboost_system -lboost_date_time -lboost_regex -lboost_random -lssl -lcrypto
 
 #=============================================================================
 # LFLAGS_USR is the list of user link flags
@@ -135,6 +135,8 @@ SVC_INHERITANCE_OBJ =  \
 #------------ Object files for additional files ------------
 ADDITIONAL_OBJS = \
 		$(OBJDIR)/WSThread.o \
+		$(OBJDIR)/WSThread_plain.o \
+		$(OBJDIR)/WSThread_tls.o \
 		$(OBJDIR)/tango_processor.o
 
 #=============================================================================
