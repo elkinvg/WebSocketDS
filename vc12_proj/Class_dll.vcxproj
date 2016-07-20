@@ -52,7 +52,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..;$(TANGO_ROOT)\win64\include\vc12;$(TANGO_ROOT)\classes\win64\include\vc12;TemplateAbstractPath;$(BOOST_INCLUDES);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..;$(TANGO_ROOT)\win64\include\vc12;$(TANGO_ROOT)\classes\win64\include\vc12;TemplateAbstractPath;$(BOOST_INCLUDES);$(OPENSSL_ROOT_64)\include64;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_DEBUG;LOG4TANGO_HAS_DLL;TANGO_HAS_DLL;WIN32;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>false</StringPooling>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -70,12 +70,12 @@
       </Command>
     </PreLinkEvent>
     <Link>
-      <AdditionalDependencies>omniORB4_rtd.lib;omniDynamic4_rtd.lib;COS4_rtd.lib;omnithread_rtd.lib;tangod.lib;log4tangod.lib;zmqd.lib;comctl32.lib;ws2_32.lib;mswsock.lib;advapi32.lib;libboost_thread-vc120-mt-gd-1_59.lib;libboost_system-vc120-mt-gd-1_59.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>omniORB4_rtd.lib;omniDynamic4_rtd.lib;COS4_rtd.lib;omnithread_rtd.lib;tangod.lib;log4tangod.lib;zmqd.lib;comctl32.lib;ws2_32.lib;mswsock.lib;advapi32.lib;libboost_thread-vc120-mt-gd-1_59.lib;libboost_system-vc120-mt-gd-1_59.lib;ssleay32MTd.lib;libeay32MTd.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ShowProgress>NotSet</ShowProgress>
       <OutputFile>$(OutDir)$(SolutionName)d.dll</OutputFile>
       <Version>1.0</Version>
       <SuppressStartupBanner>true</SuppressStartupBanner>
-      <AdditionalLibraryDirectories>..\lib\win64\vc12_dll;$(TANGO_ROOT)\win64\lib\vc12_dll;$(TANGO_ROOT)\classes\win64\lib\vc12_dll;$(BOOST_LIBS_12_64);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\lib\win64\vc12_dll;$(TANGO_ROOT)\win64\lib\vc12_dll;$(TANGO_ROOT)\classes\win64\lib\vc12_dll;$(BOOST_LIBS_12_64);$(OPENSSL_ROOT_64)\lib64\VC;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ModuleDefinitionFile>
       </ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -128,6 +128,8 @@
     <ClCompile Include="..\WebSocketDSClass.cpp" />
     <ClCompile Include="..\WebSocketDSStateMachine.cpp" />
     <ClCompile Include="..\WSThread.cpp" />
+    <ClCompile Include="..\WSThread_plain.cpp" />
+    <ClCompile Include="..\WSThread_tls.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\tango_processor.h" />
