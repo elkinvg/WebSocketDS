@@ -100,7 +100,7 @@ namespace WebSocketDS_ns
  */
 //--------------------------------------------------------
 WebSocketDS::WebSocketDS(Tango::DeviceClass *cl, string &s)
-    : TANGO_BASE_CLASS(cl, s.c_str())
+ : TANGO_BASE_CLASS(cl, s.c_str())
 {
     /*----- PROTECTED REGION ID(WebSocketDS::constructor_1) ENABLED START -----*/
     init_device();
@@ -109,7 +109,7 @@ WebSocketDS::WebSocketDS(Tango::DeviceClass *cl, string &s)
 }
 //--------------------------------------------------------
 WebSocketDS::WebSocketDS(Tango::DeviceClass *cl, const char *s)
-    : TANGO_BASE_CLASS(cl, s)
+ : TANGO_BASE_CLASS(cl, s)
 {
     /*----- PROTECTED REGION ID(WebSocketDS::constructor_2) ENABLED START -----*/
     init_device();
@@ -118,7 +118,7 @@ WebSocketDS::WebSocketDS(Tango::DeviceClass *cl, const char *s)
 }
 //--------------------------------------------------------
 WebSocketDS::WebSocketDS(Tango::DeviceClass *cl, const char *s, const char *d)
-    : TANGO_BASE_CLASS(cl, s, d)
+ : TANGO_BASE_CLASS(cl, s, d)
 {
     /*----- PROTECTED REGION ID(WebSocketDS::constructor_3) ENABLED START -----*/
     init_device();
@@ -163,7 +163,8 @@ void WebSocketDS::init_device()
 
     //    Initialization before get_device_property() call
 
-    /*----- PROTECTED REGION END -----*/    //    WebSocketDS::init_device_before   
+    /*----- PROTECTED REGION END -----*/    //    WebSocketDS::init_device_before
+    
 
     //    Get the device properties from database
     get_device_property();
@@ -232,7 +233,7 @@ void WebSocketDS::get_device_property()
     /*----- PROTECTED REGION ID(WebSocketDS::get_device_property_before) ENABLED START -----*/
 
     //    Initialize property data members
-    port = 9002;
+    //port = 9002;
 
     /*----- PROTECTED REGION END -----*/    //    WebSocketDS::get_device_property_before
 
@@ -245,8 +246,8 @@ void WebSocketDS::get_device_property()
     dev_prop.push_back(Tango::DbDatum("Commands"));
     dev_prop.push_back(Tango::DbDatum("DeviceServer"));
     dev_prop.push_back(Tango::DbDatum("Key"));
-    dev_prop.push_back(Tango::DbDatum("Port"));
     dev_prop.push_back(Tango::DbDatum("Secure"));
+    dev_prop.push_back(Tango::DbDatum("Port"));
 
     //    is there at least one property to be read ?
     if (dev_prop.size()>0)
@@ -258,7 +259,7 @@ void WebSocketDS::get_device_property()
         //    get instance on WebSocketDSClass to get class property
         Tango::DbDatum    def_prop, cl_prop;
         WebSocketDSClass    *ds_class =
-                (static_cast<WebSocketDSClass *>(get_device_class()));
+            (static_cast<WebSocketDSClass *>(get_device_class()));
         int    i = -1;
 
         //    Try to initialize Attributes from class property
@@ -327,17 +328,6 @@ void WebSocketDS::get_device_property()
         //    And try to extract Key value from database
         if (dev_prop[i].is_empty()==false)    dev_prop[i]  >>  key;
 
-        //    Try to initialize Port from class property
-        cl_prop = ds_class->get_class_property(dev_prop[++i].name);
-        if (cl_prop.is_empty()==false)    cl_prop  >>  port;
-        else {
-            //    Try to initialize Port from default device value
-            def_prop = ds_class->get_default_device_property(dev_prop[i].name);
-            if (def_prop.is_empty()==false)    def_prop  >>  port;
-        }
-        //    And try to extract Port value from database
-        if (dev_prop[i].is_empty()==false)    dev_prop[i]  >>  port;
-
         //    Try to initialize Secure from class property
         cl_prop = ds_class->get_class_property(dev_prop[++i].name);
         if (cl_prop.is_empty()==false)    cl_prop  >>  secure;
@@ -348,6 +338,17 @@ void WebSocketDS::get_device_property()
         }
         //    And try to extract Secure value from database
         if (dev_prop[i].is_empty()==false)    dev_prop[i]  >>  secure;
+
+        //    Try to initialize Port from class property
+        cl_prop = ds_class->get_class_property(dev_prop[++i].name);
+        if (cl_prop.is_empty()==false)    cl_prop  >>  port;
+        else {
+            //    Try to initialize Port from default device value
+            def_prop = ds_class->get_default_device_property(dev_prop[i].name);
+            if (def_prop.is_empty()==false)    def_prop  >>  port;
+        }
+        //    And try to extract Port value from database
+        if (dev_prop[i].is_empty()==false)    dev_prop[i]  >>  port;
 
     }
 
@@ -615,59 +616,6 @@ void WebSocketDS::add_dynamic_commands()
 }
 
 /*----- PROTECTED REGION ID(WebSocketDS::namespace_ending) ENABLED START -----*/
-//void WebSocketDS::testFromJson(std::string& input) {
-//    boost::property_tree::ptree pt;
-//    std::stringstream ss;
-//    ss << input;
-//    boost::property_tree::read_json(ss, pt);
-//    //pt.get_child("argin");
-//    //auto tmp1 = pt.get<std::string>("argin");
-//    for (boost::property_tree::ptree::value_type &v : pt.get_child("argin"))
-//    {
-//        // fruit.first contain the string ""
-//        cout << "SD: " << v.second.data() << " | ";
-//        //fruits.push_back(fruit.second.data());
-//    }
-//    cout << endl;
-//    auto ii = device->command_list_query();
-//    auto aa = device->command_query("DevVarShortArray");
-//    //vector<short> parsed = pt.get<short>("argin");
-//    auto ttt = pt;
-//}
-// //--------------------------------------------------------
-// /**
-//  *    Read attribute MyAttr related method
-//  *    Description:
-//  *
-//  *    Data type:    Tango::DevDouble
-//  *    Attr type:    Scalar
-//  */
-// //--------------------------------------------------------
-// void WebSocketDS::read_MyAttr(Tango::Attribute &attr)
-// {
-//     DEBUG_STREAM << "WebSocketDS::read_MyAttr(Tango::Attribute &attr) entering... " << endl;
-//     //    Set the attribute value
-//     attr.set_value(attr_MyAttr_read);
-//
-// }
-
-// //--------------------------------------------------------
-// /**
-//  *    Read attribute JSONCharts related method
-//  *    Description:
-//  *
-//  *    Data type:    Tango::DevString
-//  *    Attr type:    Scalar
-//  */
-// //--------------------------------------------------------
-// void WebSocketDS::read_JSONCharts(Tango::Attribute &attr)
-// {
-//     DEBUG_STREAM << "WebSocketDS::read_JSONCharts(Tango::Attribute &attr) entering... " << endl;
-//     //    Set the attribute value
-//     attr.set_value(attr_JSONCharts_read);
-//
-// }
-
 
 /*----- PROTECTED REGION END -----*/    //    WebSocketDS::namespace_ending
 } //    namespace

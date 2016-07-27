@@ -114,11 +114,11 @@ public:
     //    Key:    Private key file name
     //  Exammple: /etc/ssl/private/ssl-cert-snakeoil.key
     string    key;
-    //    Port:    
-    Tango::DevShort    port;
     //    Secure:    Shall we use SSL encryption?
     //  It will be used wss connection (websocket secure)
     Tango::DevBoolean    secure;
+    //    Port:    Using port of WebSocket
+    Tango::DevShort    port;
 
 //    Attribute data members
 public:

@@ -381,10 +381,11 @@ void WebSocketDSClass::set_default_property()
     }
     else
         add_wiz_dev_prop(prop_name, prop_desc);
-    prop_name = "Port";
-    prop_desc = "";
-    prop_def  = "";
+    prop_name = "Secure";
+    prop_desc = "Shall we use SSL encryption?\nIt will be used wss connection (websocket secure)";
+    prop_def  = "false";
     vect_data.clear();
+    vect_data.push_back("false");
     if (prop_def.length()>0)
     {
         Tango::DbDatum    data(prop_name);
@@ -394,11 +395,10 @@ void WebSocketDSClass::set_default_property()
     }
     else
         add_wiz_dev_prop(prop_name, prop_desc);
-    prop_name = "Secure";
-    prop_desc = "Shall we use SSL encryption?\nIt will be used wss connection (websocket secure)";
-    prop_def  = "false";
+    prop_name = "Port";
+    prop_desc = "Using port of WebSocket";
+    prop_def  = "";
     vect_data.clear();
-    vect_data.push_back("false");
     if (prop_def.length()>0)
     {
         Tango::DbDatum    data(prop_name);
