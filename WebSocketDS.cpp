@@ -178,9 +178,9 @@ void WebSocketDS::init_device()
 //        delete auth;
 
         if (!secure){
-            wsThread = new WSThread_plain(this, host, port);
+            wsThread = new WSThread_plain(this/*, host*/, port);
         } else {
-            wsThread = new WSThread_tls(this,host,port,certificate,key);
+            wsThread = new WSThread_tls(this,/*host,*/port,certificate,key);
         }
         set_state(Tango::ON);
         set_status("Device is On");

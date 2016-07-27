@@ -267,9 +267,9 @@ typedef websocketpp::server<websocketpp::config::asio_tls> server_tls;
 class WSThread: public omni_thread, public Tango::LogAdapter
 {
 public:
-    WSThread(WebSocketDS *dev, std::string hostName,int portNumber): omni_thread(), Tango::LogAdapter(dev)
+    WSThread(WebSocketDS *dev/*, std::string hostName*/,int portNumber): omni_thread(), Tango::LogAdapter(dev)
     {
-        host = hostName;
+        //host = hostName;
         port = portNumber;
         ds = dev;
     }
@@ -314,15 +314,15 @@ private:
 
     WebSocketDS *ds;
 
-    std::string host;
+//    std::string host;
 
 };
 
 class WSThread_plain: public WSThread
 {
 public:
-    WSThread_plain(WebSocketDS *dev, std::string hostName,int portNumber):
-        WSThread(dev,hostName,portNumber)
+    WSThread_plain(WebSocketDS *dev/*, std::string hostName*/,int portNumber):
+        WSThread(dev/*,hostName*/,portNumber)
     {
         start_undetached();
     }
@@ -343,8 +343,8 @@ private:
 class WSThread_tls: public WSThread
 {
 public:
-    WSThread_tls(WebSocketDS *dev, std::string hostName,int portNumber, string cert, string key):
-        WSThread(dev,hostName,portNumber)
+    WSThread_tls(WebSocketDS *dev/*, std::string hostName*/,int portNumber, string cert, string key):
+        WSThread(dev/*,hostName*/,portNumber)
     {
         certificate_ = cert;
         key_ = key;
