@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="ASCII"?>
 <pogoDsl:PogoSystem xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:pogoDsl="http://www.esrf.fr/tango/pogo/PogoDsl">
   <classes name="WebSocketDS" pogoRevision="9.1">
-    <description description="WebSocket access to tango device-server attributes and commands.&#xA;&#xA;Configuration should be done via properties:&#xA;&#xA;AuthDS - Device server for authentication&#xA;Port - port to listen incoming ws connections;&#xA;DeviceServer - tango id of a required device server;&#xA;Commands - list of required DS command, you wish to execute via WS;&#xA;Attributes - list of required DS attributes, you wish to read via WS;&#xA;Secure - true if you will use a secure connection&#xA;Certificate - Certificate file name (crt) with path. Used if Secure=true&#xA;Key - Private key file name. Used if Secure=true&#xA;&#xA;Then you should set polling to the UpdateData command. (1000 means that all connected clients would read attributes once per second)&#xA;&#xA;Data format: JSON string with array of attrubute objects {atrrtibute name, attribute value, quality, timestamp};" title="WebSocket access to tango device-server attributes" sourcePath="D:\progrdir\vs12_2013\fortango\WebSocketDS" language="Cpp" filestogenerate="XMI   file,Protected Regions,html Pages" license="GPL" copyright="" hasMandatoryProperty="false" hasConcreteProperty="true" hasAbstractCommand="false" hasAbstractAttribute="false" descriptionHtmlExists="false">
+    <description description="WebSocket access to tango device-server attributes.&#xA;&#xA;Configuration should be done via properties:&#xA;&#xA;Port - port to listen incoming ws connections;&#xA;DeviceServer - tango id of a required device server;&#xA;Attributes - list of required DS attributes, you wish to read via WS;&#xA;Then you should set polling to the UpdateData command. (1000 means that all connected clients would read attributes once per second).&#xA;&#xA;Data format: JSON string with array of attrubute objects {atrrtibute name, attribute value, quality, timestamp};" title="WebSocket access to tango device-server attributes" sourcePath="D:\progrdir\vs12_2013\fortango\WebSocketDS" language="Cpp" filestogenerate="XMI   file,Code files,Protected Regions,html Pages" license="GPL" hasMandatoryProperty="false" hasConcreteProperty="true" hasAbstractCommand="false" hasAbstractAttribute="false" descriptionHtmlExists="false">
       <inheritances classname="Device_Impl" sourcePath=""/>
-      <identification contact="at jinr.ru - elkin" author="elkin" emailDomain="jinr.ru" classFamily="Communication" siteSpecific="" platform="All Platforms" bus="Not Applicable" manufacturer="none" reference=""/>
+      <identification contact="at dubna.tk - egor" author="egor" emailDomain="dubna.tk" classFamily="Communication" siteSpecific="" platform="All Platforms" bus="Not Applicable" manufacturer="none" reference=""/>
     </description>
     <deviceProperties name="Attributes" description="Attributes list">
       <type xsi:type="pogoDsl:StringVectorType"/>
@@ -26,11 +26,6 @@
     <deviceProperties name="DeviceServer" description="DeviceServer name">
       <type xsi:type="pogoDsl:StringType"/>
       <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
-    </deviceProperties>
-    <deviceProperties name="Host" description="Host for http server&#xA;(127.0.0.1 for localhost only or current ip)">
-      <type xsi:type="pogoDsl:StringType"/>
-      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
-      <DefaultPropValue>127.0.0.1</DefaultPropValue>
     </deviceProperties>
     <deviceProperties name="Key" description="Private key file name&#xA;Exammple: /etc/ssl/private/ssl-cert-snakeoil.key">
       <type xsi:type="pogoDsl:StringType"/>

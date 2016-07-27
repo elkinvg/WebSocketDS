@@ -53,14 +53,14 @@ static const char *RcsId = "$Id:  $";
 /**
  *  WebSocketDS class description:
  *    WebSocket access to tango device-server attributes.
- *
+ *    
  *    Configuration should be done via properties:
- *
+ *    
  *    Port - port to listen incoming ws connections;
  *    DeviceServer - tango id of a required device server;
  *    Attributes - list of required DS attributes, you wish to read via WS;
  *    Then you should set polling to the UpdateData command. (1000 means that all connected clients would read attributes once per second).
- *
+ *    
  *    Data format: JSON string with array of attrubute objects {atrrtibute name, attribute value, quality, timestamp};
  */
 
@@ -163,12 +163,11 @@ void WebSocketDS::init_device()
 
     //    Initialization before get_device_property() call
 
-    /*----- PROTECTED REGION END -----*/    //    WebSocketDS::init_device_before
-
+    /*----- PROTECTED REGION END -----*/    //    WebSocketDS::init_device_before   
 
     //    Get the device properties from database
     get_device_property();
-
+    
     attr_JSON_read = new Tango::DevString[1];
     /*----- PROTECTED REGION ID(WebSocketDS::init_device) ENABLED START -----*/
 
@@ -245,7 +244,6 @@ void WebSocketDS::get_device_property()
     dev_prop.push_back(Tango::DbDatum("Certificate"));
     dev_prop.push_back(Tango::DbDatum("Commands"));
     dev_prop.push_back(Tango::DbDatum("DeviceServer"));
-    dev_prop.push_back(Tango::DbDatum("Host"));
     dev_prop.push_back(Tango::DbDatum("Key"));
     dev_prop.push_back(Tango::DbDatum("Port"));
     dev_prop.push_back(Tango::DbDatum("Secure"));
@@ -256,7 +254,7 @@ void WebSocketDS::get_device_property()
         //    Call database and extract values
         if (Tango::Util::instance()->_UseDb==true)
             get_db_device()->get_property(dev_prop);
-
+    
         //    get instance on WebSocketDSClass to get class property
         Tango::DbDatum    def_prop, cl_prop;
         WebSocketDSClass    *ds_class =
@@ -318,17 +316,6 @@ void WebSocketDS::get_device_property()
         //    And try to extract DeviceServer value from database
         if (dev_prop[i].is_empty()==false)    dev_prop[i]  >>  deviceServer;
 
-        //    Try to initialize Host from class property
-        cl_prop = ds_class->get_class_property(dev_prop[++i].name);
-        if (cl_prop.is_empty()==false)    cl_prop  >>  host;
-        else {
-            //    Try to initialize Host from default device value
-            def_prop = ds_class->get_default_device_property(dev_prop[i].name);
-            if (def_prop.is_empty()==false)    def_prop  >>  host;
-        }
-        //    And try to extract Host value from database
-        if (dev_prop[i].is_empty()==false)    dev_prop[i]  >>  host;
-
         //    Try to initialize Key from class property
         cl_prop = ds_class->get_class_property(dev_prop[++i].name);
         if (cl_prop.is_empty()==false)    cl_prop  >>  key;
@@ -379,7 +366,7 @@ void WebSocketDS::get_device_property()
 //--------------------------------------------------------
 void WebSocketDS::always_executed_hook()
 {
-    //    DEBUG_STREAM << "WebSocketDS::always_executed_hook()  " << device_name << endl;
+//    DEBUG_STREAM << "WebSocketDS::always_executed_hook()  " << device_name << endl;
     /*----- PROTECTED REGION ID(WebSocketDS::always_executed_hook) ENABLED START -----*/
 
     //    code always executed before all requests
@@ -406,7 +393,7 @@ void WebSocketDS::read_attr_hardware(TANGO_UNUSED(vector<long> &attr_list))
 //--------------------------------------------------------
 /**
  *    Read attribute JSON related method
- *    Description:
+ *    Description: 
  *
  *    Data type:    Tango::DevString
  *    Attr type:    Scalar
@@ -441,7 +428,7 @@ void WebSocketDS::add_dynamic_attributes()
 //--------------------------------------------------------
 /**
  *    Command On related method
- *    Description:
+ *    Description: 
  *
  */
 //--------------------------------------------------------
@@ -459,7 +446,7 @@ void WebSocketDS::on()
 //--------------------------------------------------------
 /**
  *    Command Off related method
- *    Description:
+ *    Description: 
  *
  */
 //--------------------------------------------------------
@@ -476,7 +463,7 @@ void WebSocketDS::off()
 //--------------------------------------------------------
 /**
  *    Command UpdateData related method
- *    Description:
+ *    Description: 
  *
  */
 //--------------------------------------------------------

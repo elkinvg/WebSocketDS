@@ -62,14 +62,14 @@
 /**
  *  WebSocketDS class description:
  *    WebSocket access to tango device-server attributes.
- *
+ *    
  *    Configuration should be done via properties:
- *
+ *    
  *    Port - port to listen incoming ws connections;
  *    DeviceServer - tango id of a required device server;
  *    Attributes - list of required DS attributes, you wish to read via WS;
  *    Then you should set polling to the UpdateData command. (1000 means that all connected clients would read attributes once per second).
- *
+ *    
  *    Data format: JSON string with array of attrubute objects {atrrtibute name, attribute value, quality, timestamp};
  */
 
@@ -85,7 +85,7 @@ class WSThread_plain;
 class WebSocketDS : public TANGO_BASE_CLASS
 {
 
-    /*----- PROTECTED REGION ID(WebSocketDS::Data Members) ENABLED START -----*/
+/*----- PROTECTED REGION ID(WebSocketDS::Data Members) ENABLED START -----*/
 
     //    Add your own data members
 private:
@@ -98,7 +98,7 @@ public:
     std::map<std::string, Tango::CommandInfo> accessibleCommandInfo;
     /*----- PROTECTED REGION END -----*/    //    WebSocketDS::Data Members
 
-    //    Device property data members
+//    Device property data members
 public:
     //    Attributes:    Attributes list
     vector<string>    attributes;
@@ -111,23 +111,20 @@ public:
     vector<string>    commands;
     //    DeviceServer:    DeviceServer name
     string    deviceServer;
-    //    Host:    Host for http server
-    //  (127.0.0.1 for localhost only or current ip)
-    string    host;
     //    Key:    Private key file name
     //  Exammple: /etc/ssl/private/ssl-cert-snakeoil.key
     string    key;
-    //    Port:
+    //    Port:    
     Tango::DevShort    port;
     //    Secure:    Shall we use SSL encryption?
     //  It will be used wss connection (websocket secure)
     Tango::DevBoolean    secure;
 
-    //    Attribute data members
+//    Attribute data members
 public:
     Tango::DevString    *attr_JSON_read;
 
-    //    Constructors and destructors
+//    Constructors and destructors
 public:
     /**
      * Constructs a newly device object.
@@ -157,7 +154,7 @@ public:
     ~WebSocketDS() {delete_device();};
 
 
-    //    Miscellaneous methods
+//    Miscellaneous methods
 public:
     /*
      *    will be called at device destruction or at init command.
@@ -177,7 +174,7 @@ public:
     virtual void always_executed_hook();
 
 
-    //    Attribute methods
+//    Attribute methods
 public:
     //--------------------------------------------------------
     /*
@@ -187,9 +184,9 @@ public:
     //--------------------------------------------------------
     virtual void read_attr_hardware(vector<long> &attr_list);
 
-    /**
+/**
  *    Attribute JSON related methods
- *    Description:
+ *    Description: 
  *
  *    Data type:    Tango::DevString
  *    Attr type:    Scalar
@@ -209,25 +206,25 @@ public:
 
 
 
-    //    Command related methods
+//    Command related methods
 public:
     /**
      *    Command On related method
-     *    Description:
+     *    Description: 
      *
      */
     virtual void on();
     virtual bool is_On_allowed(const CORBA::Any &any);
     /**
      *    Command Off related method
-     *    Description:
+     *    Description: 
      *
      */
     virtual void off();
     virtual bool is_Off_allowed(const CORBA::Any &any);
     /**
      *    Command UpdateData related method
-     *    Description:
+     *    Description: 
      *
      */
     virtual void update_data();
@@ -254,7 +251,7 @@ public:
     //--------------------------------------------------------
     void add_dynamic_commands();
 
-    /*----- PROTECTED REGION ID(WebSocketDS::Additional Method prototypes) ENABLED START -----*/
+/*----- PROTECTED REGION ID(WebSocketDS::Additional Method prototypes) ENABLED START -----*/
 
     /*----- PROTECTED REGION END -----*/    //    WebSocketDS::Additional Method prototypes
 };

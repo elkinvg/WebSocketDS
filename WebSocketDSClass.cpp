@@ -367,20 +367,6 @@ void WebSocketDSClass::set_default_property()
     }
     else
         add_wiz_dev_prop(prop_name, prop_desc);
-    prop_name = "Host";
-    prop_desc = "Host for http server\n(127.0.0.1 for localhost only or current ip)";
-    prop_def  = "127.0.0.1";
-    vect_data.clear();
-    vect_data.push_back("127.0.0.1");
-    if (prop_def.length()>0)
-    {
-        Tango::DbDatum    data(prop_name);
-        data << vect_data ;
-        dev_def_prop.push_back(data);
-        add_wiz_dev_prop(prop_name, prop_desc,  prop_def);
-    }
-    else
-        add_wiz_dev_prop(prop_name, prop_desc);
     prop_name = "Key";
     prop_desc = "Private key file name\nExammple: /etc/ssl/private/ssl-cert-snakeoil.key";
     prop_def  = "/etc/ssl/private/server.key";
