@@ -9,13 +9,21 @@
 namespace WebSocketDS_ns
 {
 
+bool WSThread_tls::on_validate(websocketpp::connection_hdl hdl) {
+
+    map<string, string> conf = getRemoteConf(hdl);
+
+    return forValidate(conf);
+}
+
 void *WSThread_tls::run_undetached(void *ptr)
 {
     DEBUG_STREAM << "The upload thread (TLS) starts..." << endl;
-    cache = "";
+    cache = ""; 
     m_server.set_open_handler(websocketpp::lib::bind(&WSThread_tls::on_open,this,websocketpp::lib::placeholders::_1));
     m_server.set_close_handler(websocketpp::lib::bind(&WSThread_tls::on_close,this,websocketpp::lib::placeholders::_1));
     m_server.set_message_handler(websocketpp::lib::bind(&WSThread_tls::on_message,this,websocketpp::lib::placeholders::_1,websocketpp::lib::placeholders::_2));
+    m_server.set_validate_handler(bind(&WSThread_tls::on_validate, this, websocketpp::lib::placeholders::_1));
     
     // this will turn off console output for frame header and payload
     m_server.clear_access_channels(websocketpp::log::alevel::frame_header | websocketpp::log::alevel::frame_payload);
@@ -59,6 +67,22 @@ void WSThread_tls::stop()
     DEBUG_STREAM << "The ws thread stops..." << endl;
     m_server.stop();
     DEBUG_STREAM << "WS stops..." << endl;
+}
+
+map<string, string> WSThread_tls::getRemoteConf(websocketpp::connection_hdl hdl) {
+    websocketpp::server<websocketpp::config::asio_tls>::connection_ptr con = m_server.get_con_from_hdl(hdl);
+    websocketpp::uri_ptr uri = con->get_uri();
+
+    string remoteEndpoint = con->get_remote_endpoint();
+    map<string, string> parsedGet;
+
+    string query = uri->get_query(); // returns empty string if no query string set.
+
+    if (!query.empty()) {
+        parsedGet = parseOfGetQuery(query);
+        parsedGet["ip"] = remoteEndpoint;
+    }
+    return parsedGet;
 }
 
 context_ptr WSThread_tls::on_tls_init(websocketpp::connection_hdl hdl) {

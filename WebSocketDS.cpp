@@ -174,6 +174,10 @@ void WebSocketDS::init_device()
 
     try
     {
+//        Tango::DeviceProxy *auth = new Tango::DeviceProxy(authDS);
+//        auth->ping();
+//        delete auth;
+
         if (!secure){
             wsThread = new WSThread_plain(this, host, port);
         } else {

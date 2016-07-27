@@ -256,12 +256,6 @@ public:
 
     /*----- PROTECTED REGION ID(WebSocketDS::Additional Method prototypes) ENABLED START -----*/
 
-    //elkin test begin
-    void Test() {
-        cout << "COUT WORKING!!!!" << endl;
-    }
-
-    //elkin test end
     /*----- PROTECTED REGION END -----*/    //    WebSocketDS::Additional Method prototypes
 };
 
@@ -291,14 +285,31 @@ public:
     virtual void send(websocketpp::connection_hdl hdl, std::string msg) = 0;
 protected:
     std::string cache;
+    virtual bool on_validate(websocketpp::connection_hdl hdl) = 0;
     void on_message(websocketpp::connection_hdl hdl, server::message_ptr msg);
     void on_open(websocketpp::connection_hdl hdl);
     void on_close(websocketpp::connection_hdl hdl);
+
+    string parseOfAddress(string addrFromConn); // parsing of get_remote_endpoint-return
+    // remoteEndpoint in websocket output formate[::ffff:127.0.0.1 : 11111]
+
+    map<string, string> parseOfGetQuery(string query);
+
+    virtual map<string, string> getRemoteConf(websocketpp::connection_hdl hdl) = 0;
+
+    bool forValidate(map<string, string> remoteConf);
     int port;
 
     typedef std::set<websocketpp::connection_hdl,std::owner_less<websocketpp::connection_hdl> > con_list;
     con_list m_connections;
+    
 private:
+    vector<string> &split(const string &s, char delim, vector<string> &elems);
+    vector<string> split(const string &s, char delim);
+    bool check_user(map<string, string>& parsedGet);
+    bool check_permission(map<string, string>& parsedGet, Tango::DevString commandJson);
+    string getCommandName(const string& commandJson);
+
     websocketpp::lib::mutex m_action_lock;
     websocketpp::lib::mutex m_connection_lock;
     websocketpp::lib::condition_variable m_action_cond;
@@ -307,6 +318,7 @@ private:
     WebSocketDS *ds;
 
     std::string host;
+
 };
 
 class WSThread_plain: public WSThread
@@ -323,7 +335,9 @@ public:
     virtual void stop() override;
     virtual void send_all(std::string msg) override;
     virtual void send(websocketpp::connection_hdl hdl, std::string msg) override;
+    virtual bool on_validate(websocketpp::connection_hdl hdl) override;
 private:
+    virtual map<string, string> getRemoteConf(websocketpp::connection_hdl hdl) override;
     server m_server;
 };
 
@@ -346,10 +360,11 @@ public:
     virtual  void stop() override;
     virtual void send_all(std::string msg) override;
     virtual void send(websocketpp::connection_hdl hdl, std::string msg) override;
-
+    virtual bool on_validate(websocketpp::connection_hdl hdl) override;
 private:
     context_ptr on_tls_init(websocketpp::connection_hdl hdl);
     std::string get_password();
+    virtual map<string, string> getRemoteConf(websocketpp::connection_hdl hdl) override;
 
     server_tls m_server;
 
