@@ -14,7 +14,7 @@
 		<td><ul>
 			<table border="0">
 				<Tr>
-					<td> Contact </td><td> : at dubna.tk - egor</td>
+					<td> Contact </td><td> : at jinr.ru - elkin</td>
 				</tr>
 				<tr>
 					<td> Class Family </td><td> : Communication
@@ -47,14 +47,20 @@
 	<font size="+1"><u><b> WebSocketDS Class Description : </b></u></font>
 	<br><br>
 	<ul>
-		WebSocket access to tango device-server attributes.<Br>
+		WebSocket access to tango device-server attributes and commands.<Br>
 		<Br>
 		Configuration should be done via properties:<Br>
 		<Br>
+		AuthDS - Device server for authentication<Br>
 		Port - port to listen incoming ws connections;<Br>
 		DeviceServer - tango id of a required device server;<Br>
+		Commands - list of required DS command, you wish to execute via WS;<Br>
 		Attributes - list of required DS attributes, you wish to read via WS;<Br>
-		Then you should set polling to the UpdateData command. (1000 means that all connected clients would read attributes once per second).<Br>
+		Secure - true if you will use a secure connection<Br>
+		Certificate - Certificate file name (crt) with path. Used if Secure=true<Br>
+		Key - Private key file name. Used if Secure=true<Br>
+		<Br>
+		Then you should set polling to the UpdateData command. (1000 means that all connected clients would read attributes once per second)<Br>
 		<Br>
 		Data format: JSON string with array of attrubute objects {atrrtibute name, attribute value, quality, timestamp};
 		
