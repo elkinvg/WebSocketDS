@@ -87,7 +87,7 @@
 		<td><ul>
 			<table border="0">
 				<Tr>
-					<td> Contact </td><td> : at dubna.tk - egor</td>
+					<td> Contact </td><td> : at jinr.ru - elkin</td>
 				</tr>
 				<tr>
 					<td> Class Family </td><td> : Communication
@@ -127,6 +127,12 @@
 		Port - port to listen incoming ws connections;<Br>
 		DeviceServer - tango id of a required device server;<Br>
 		Attributes - list of required DS attributes, you wish to read via WS;<Br>
+		Commands - list of required DS commandes, you wish to executed via WS;<Br>
+		AuthDS - Tango web authentication device server (TangoWebAuth ) name.<Br>
+		Secure - It will be used wss connection (websocket secure). (true if you want)<Br>
+		Certificate - Certificate file name (crt) with full path (if Secure = true)<Br>
+		Key - Private key file name (if Secure = true)<Br>
+		<Br>
 		Then you should set polling to the UpdateData command. (1000 means that all connected clients would read attributes once per second).<Br>
 		<Br>
 		Data format: JSON string with array of attrubute objects {atrrtibute name, attribute value, quality, timestamp};
@@ -176,20 +182,20 @@
 	</tr>
 	<tr>
 		<td> Commands </td>
-		<td> Commandes list </td>
+		<td> Commandes list from using DS </td>
 		<td> String[] </td>
 		<td> none </td>
 	</tr>
 	<tr>
 		<td> DeviceServer </td>
-		<td> DeviceServer name </td>
+		<td> Using DeviceServer name </td>
 		<td> String </td>
 		<td> none </td>
 	</tr>
 	<tr>
 		<td> Key </td>
 		<td> Private key file name<Br>
-			Exammple: /etc/ssl/private/ssl-cert-snakeoil.key </td>
+			Example: /etc/ssl/private/ssl-cert-snakeoil.key </td>
 		<td> String </td>
 		<td> /etc/ssl/private/server.key <br> </td>
 	</tr>
