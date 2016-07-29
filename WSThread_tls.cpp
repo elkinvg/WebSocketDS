@@ -75,6 +75,7 @@ map<string, string> WSThread_tls::getRemoteConf(websocketpp::connection_hdl hdl)
 
     string remoteEndpoint = con->get_remote_endpoint();
     map<string, string> parsedGet;
+    remoteEndpoint = parseOfAddress(remoteEndpoint);
 
     string query = uri->get_query(); // returns empty string if no query string set.
 

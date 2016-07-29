@@ -6,6 +6,7 @@
 #include <locale.h>
 #include <boost/lexical_cast.hpp>
 #include <boost/asio.hpp>
+
 namespace WebSocketDS_ns
 {
 
@@ -171,7 +172,8 @@ string WSThread::getCommandName(const string& commandJson) {
     found2 = tmp.find_last_of("\"");
 
     out = tmp.substr(found + 1, found2 - (found +1));
-    out.erase(remove_if(out.begin(), out.end(), isspace), out.end());
+    out.erase(std::remove(out.begin(), out.end(), ' '), out.end());
+    //out.erase(std::remove_if(out.begin(), out.end(), std::isspace), out.end());
     return out;
 }
 

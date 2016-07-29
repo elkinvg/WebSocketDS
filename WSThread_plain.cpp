@@ -66,6 +66,8 @@ namespace WebSocketDS_ns
         websocketpp::uri_ptr uri = con->get_uri();
 
         string remoteEndpoint = con->get_remote_endpoint();
+        remoteEndpoint = parseOfAddress(remoteEndpoint);
+
         map<string, string> parsedGet;
 
         string query = uri->get_query(); // returns empty string if no query string set.
