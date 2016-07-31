@@ -137,7 +137,8 @@ ADDITIONAL_OBJS = \
 		$(OBJDIR)/WSThread.o \
 		$(OBJDIR)/WSThread_plain.o \
 		$(OBJDIR)/WSThread_tls.o \
-		$(OBJDIR)/tango_processor.o
+		$(OBJDIR)/tango_processor.o \
+		$(OBJDIR)/UserControl.o
 
 #=============================================================================
 #	include common targets

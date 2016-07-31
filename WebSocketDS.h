@@ -80,6 +80,7 @@ namespace WebSocketDS_ns
 class WSThread;
 class WSThread_tls;
 class WSThread_plain;
+
 /*----- PROTECTED REGION END -----*/    //    WebSocketDS::Additional Class Declarations
 
 class WebSocketDS : public TANGO_BASE_CLASS
@@ -260,6 +261,24 @@ public:
 
 //    Additional Classes Definitions
 
+class UserControl: public Tango::LogAdapter
+{
+public:
+    UserControl(WebSocketDS *dev):
+        Tango::LogAdapter(dev)
+    {
+        ds = dev;
+    }
+    ~UserControl(){};
+
+    bool check_permission(map<string, string>& parsedGet, Tango::DevString commandJson);
+    bool check_user(map<string, string>& parsedGet);
+private:
+    WebSocketDS *ds;
+    string getCommandName(const string& commandJson);
+
+};
+
 typedef websocketpp::lib::shared_ptr<websocketpp::lib::asio::ssl::context> context_ptr;
 typedef websocketpp::server<websocketpp::config::asio> server;
 typedef websocketpp::server<websocketpp::config::asio_tls> server_tls;
@@ -272,6 +291,7 @@ public:
         //host = hostName;
         port = portNumber;
         ds = dev;
+        uc = unique_ptr<UserControl>(new UserControl(dev));
     }
     virtual ~WSThread();
 
@@ -299,13 +319,11 @@ protected:
 
     typedef std::set<websocketpp::connection_hdl,std::owner_less<websocketpp::connection_hdl> > con_list;
     con_list m_connections;
+    unique_ptr<UserControl> uc;
     
 private:
     vector<string> &split(const string &s, char delim, vector<string> &elems);
     vector<string> split(const string &s, char delim);
-    bool check_user(map<string, string>& parsedGet);
-    bool check_permission(map<string, string>& parsedGet, Tango::DevString commandJson);
-    string getCommandName(const string& commandJson);
 
     websocketpp::lib::mutex m_action_lock;
     websocketpp::lib::mutex m_connection_lock;

@@ -89,6 +89,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\tango_processor.cpp" />
+    <ClCompile Include="..\UserControl.cpp" />
     <ClCompile Include="..\WebSocketDS.cpp" />
     <ClCompile Include="..\WebSocketDSClass.cpp" />
     <ClCompile Include="..\WebSocketDSStateMachine.cpp" />
