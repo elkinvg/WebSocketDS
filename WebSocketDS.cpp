@@ -217,7 +217,7 @@ void WebSocketDS::init_device()
         }
     }
 
-    attr_JSON_read[0] = Tango::string_dup("{\"success\": false}");
+    attr_JSON_read[0] = Tango::string_dup("[{\"success\": false}]");
     update_data();
     /*----- PROTECTED REGION END -----*/    //    WebSocketDS::init_device
 }
