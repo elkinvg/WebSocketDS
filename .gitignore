@@ -7,7 +7,6 @@ obj/*
 .project
 *-back
 *.bck
-*.pro
 *.user
 *.user.*
 *.tmp
