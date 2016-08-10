@@ -16,8 +16,6 @@ SOURCES += main.cpp \
 *.cpp \
 *.h \
     WSThread_tls.cpp \
-    WSThread_plain.cpp \
-    mysqlclientforlogging.cpp
+    WSThread_plain.cpp
 
 HEADERS += \
-    mysqlclientforlogging.h
