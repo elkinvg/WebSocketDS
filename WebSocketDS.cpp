@@ -486,7 +486,8 @@ void WebSocketDS::update_data()
     {
         std::vector<Tango::DeviceAttribute> *attrList = device->read_attributes(attributes);
         std::stringstream json;
-        json << "[";
+        //json << "[";
+        json << "{\"event\": \"read\", \"data\":[";
         for (int i = 0; i < attributes.size(); i++)
         {
             if (i != 0) json << ", ";
@@ -497,7 +498,8 @@ void WebSocketDS::update_data()
                 //json << processor.process_attribute(att);
                 json << processor.process_attribute_t(att);
         }
-        json << "]";
+        json << "]}";
+        //json << "]";
         delete attrList;
         CORBA::string_free(*attr_JSON_read);
         attr_JSON_read[0] = Tango::string_dup(json.str().c_str());

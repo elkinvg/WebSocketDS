@@ -11,9 +11,9 @@ namespace WebSocketDS_ns
 {
 
 void WSThread::on_message(websocketpp::connection_hdl hdl, server::message_ptr msg) {
-    DEBUG_STREAM << " Input message: " << msg->get_payload() << endl;
+    //DEBUG_STREAM << " Input message: " << msg->get_payload() << endl;
     string data_from_client = msg->get_payload();
-
+    INFO_STREAM << " Input message: " << msg->get_payload() << endl;
     Tango::DevString input = const_cast<Tango::DevString>(data_from_client.c_str());
     map<string, string> conf = getRemoteConf(hdl);
     Tango::DevString output;
