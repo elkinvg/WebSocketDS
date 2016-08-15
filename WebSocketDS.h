@@ -59,7 +59,7 @@
 
 //#define USELOG
 
-/*----- PROTECTED REGION END -----*/    //    WebSocketDS.h
+/*----- PROTECTED REGION END -----*/	//	WebSocketDS.h
 
 /**
  *  WebSocketDS class description:
@@ -70,6 +70,12 @@
  *    Port - port to listen incoming ws connections;
  *    DeviceServer - tango id of a required device server;
  *    Attributes - list of required DS attributes, you wish to read via WS;
+ *    Commands - list of required DS commandes, you wish to executed via WS;
+ *    AuthDS - Tango web authentication device server (TangoWebAuth ) name.
+ *    Secure - It will be used wss connection (websocket secure). (true if you want)
+ *    Certificate - Certificate file name (crt) with full path (if Secure = true)
+ *    Key - Private key file name (if Secure = true)
+ *    
  *    Then you should set polling to the UpdateData command. (1000 means that all connected clients would read attributes once per second).
  *    
  *    Data format: JSON string with array of attrubute objects {atrrtibute name, attribute value, quality, timestamp};
@@ -83,7 +89,7 @@ class WSThread;
 class WSThread_tls;
 class WSThread_plain;
 
-/*----- PROTECTED REGION END -----*/    //    WebSocketDS::Additional Class Declarations
+/*----- PROTECTED REGION END -----*/	//	WebSocketDS::Additional Class Declarations
 
 class WebSocketDS : public TANGO_BASE_CLASS
 {
@@ -99,164 +105,164 @@ private:
     std::vector<bool>  isJsonAttribute;
 public:
     std::map<std::string, Tango::CommandInfo> accessibleCommandInfo;
-    /*----- PROTECTED REGION END -----*/    //    WebSocketDS::Data Members
+    /*----- PROTECTED REGION END -----*/	//	WebSocketDS::Data Members
 
-//    Device property data members
+//	Device property data members
 public:
-    //    Attributes:    Attributes list
-    vector<string>    attributes;
-    //    AuthDS:    Tango web authentication device server (TangoWebAuth ) name.
-    string    authDS;
-    //    Certificate:    Certificate file name (crt) with path
-    //  example: /etc/ssl/certs/ssl-cert-snakeoil.pem
-    string    certificate;
-    //    Commands:    Commandes list
-    vector<string>    commands;
-    //    DeviceServer:    DeviceServer name
-    string    deviceServer;
-    //    Key:    Private key file name
-    //  Exammple: /etc/ssl/private/ssl-cert-snakeoil.key
-    string    key;
-    //    Secure:    Shall we use SSL encryption?
-    //  It will be used wss connection (websocket secure)
-    Tango::DevBoolean    secure;
-    //    Port:    Using port of WebSocket
-    Tango::DevShort    port;
+	//	DeviceServer:	Using DeviceServer name
+	string	deviceServer;
+	//	Port:	Using port of WebSocket
+	Tango::DevShort	port;
+	//	Attributes:	Attributes list
+	vector<string>	attributes;
+	//	Commands:	Commandes list from using DS
+	vector<string>	commands;
+	//	Secure:	Shall we use SSL encryption?
+	//  It will be used wss connection (websocket secure)
+	Tango::DevBoolean	secure;
+	//	Certificate:	Certificate file name (crt) with path
+	//  example: /etc/ssl/certs/ssl-cert-snakeoil.pem
+	string	certificate;
+	//	Key:	Private key file name
+	//  Example: /etc/ssl/private/ssl-cert-snakeoil.key
+	string	key;
+	//	AuthDS:	Tango web authentication device server (TangoWebAuth ) name.
+	string	authDS;
 
-//    Attribute data members
+//	Attribute data members
 public:
-    Tango::DevString    *attr_JSON_read;
+	Tango::DevString	*attr_JSON_read;
 
-//    Constructors and destructors
+//	Constructors and destructors
 public:
-    /**
-     * Constructs a newly device object.
-     *
-     *    @param cl    Class.
-     *    @param s     Device Name
-     */
-    WebSocketDS(Tango::DeviceClass *cl,string &s);
-    /**
-     * Constructs a newly device object.
-     *
-     *    @param cl    Class.
-     *    @param s     Device Name
-     */
-    WebSocketDS(Tango::DeviceClass *cl,const char *s);
-    /**
-     * Constructs a newly device object.
-     *
-     *    @param cl    Class.
-     *    @param s     Device name
-     *    @param d    Device description.
-     */
-    WebSocketDS(Tango::DeviceClass *cl,const char *s,const char *d);
-    /**
-     * The device object destructor.
-     */
-    ~WebSocketDS() {delete_device();};
+	/**
+	 * Constructs a newly device object.
+	 *
+	 *	@param cl	Class.
+	 *	@param s 	Device Name
+	 */
+	WebSocketDS(Tango::DeviceClass *cl,string &s);
+	/**
+	 * Constructs a newly device object.
+	 *
+	 *	@param cl	Class.
+	 *	@param s 	Device Name
+	 */
+	WebSocketDS(Tango::DeviceClass *cl,const char *s);
+	/**
+	 * Constructs a newly device object.
+	 *
+	 *	@param cl	Class.
+	 *	@param s 	Device name
+	 *	@param d	Device description.
+	 */
+	WebSocketDS(Tango::DeviceClass *cl,const char *s,const char *d);
+	/**
+	 * The device object destructor.
+	 */
+	~WebSocketDS() {delete_device();};
 
 
-//    Miscellaneous methods
+//	Miscellaneous methods
 public:
-    /*
-     *    will be called at device destruction or at init command.
-     */
-    void delete_device();
-    /*
-     *    Initialize the device
-     */
-    virtual void init_device();
-    /*
-     *    Read the device properties from database
-     */
-    void get_device_property();
-    /*
-     *    Always executed method before execution command method.
-     */
-    virtual void always_executed_hook();
+	/*
+	 *	will be called at device destruction or at init command.
+	 */
+	void delete_device();
+	/*
+	 *	Initialize the device
+	 */
+	virtual void init_device();
+	/*
+	 *	Read the device properties from database
+	 */
+	void get_device_property();
+	/*
+	 *	Always executed method before execution command method.
+	 */
+	virtual void always_executed_hook();
 
 
-//    Attribute methods
+//	Attribute methods
 public:
-    //--------------------------------------------------------
-    /*
-     *    Method      : WebSocketDS::read_attr_hardware()
-     *    Description : Hardware acquisition for attributes.
-     */
-    //--------------------------------------------------------
-    virtual void read_attr_hardware(vector<long> &attr_list);
+	//--------------------------------------------------------
+	/*
+	 *	Method      : WebSocketDS::read_attr_hardware()
+	 *	Description : Hardware acquisition for attributes.
+	 */
+	//--------------------------------------------------------
+	virtual void read_attr_hardware(vector<long> &attr_list);
 
 /**
- *    Attribute JSON related methods
- *    Description: 
+ *	Attribute JSON related methods
+ *	Description: 
  *
- *    Data type:    Tango::DevString
- *    Attr type:    Scalar
+ *	Data type:	Tango::DevString
+ *	Attr type:	Scalar
  */
-    virtual void read_JSON(Tango::Attribute &attr);
-    virtual bool is_JSON_allowed(Tango::AttReqType type);
+	virtual void read_JSON(Tango::Attribute &attr);
+	virtual bool is_JSON_allowed(Tango::AttReqType type);
 
 
-    //--------------------------------------------------------
-    /**
-     *    Method      : WebSocketDS::add_dynamic_attributes()
-     *    Description : Add dynamic attributes if any.
-     */
-    //--------------------------------------------------------
-    void add_dynamic_attributes();
+	//--------------------------------------------------------
+	/**
+	 *	Method      : WebSocketDS::add_dynamic_attributes()
+	 *	Description : Add dynamic attributes if any.
+	 */
+	//--------------------------------------------------------
+	void add_dynamic_attributes();
 
 
 
 
-//    Command related methods
+//	Command related methods
 public:
-    /**
-     *    Command On related method
-     *    Description: 
-     *
-     */
-    virtual void on();
-    virtual bool is_On_allowed(const CORBA::Any &any);
-    /**
-     *    Command Off related method
-     *    Description: 
-     *
-     */
-    virtual void off();
-    virtual bool is_Off_allowed(const CORBA::Any &any);
-    /**
-     *    Command UpdateData related method
-     *    Description: 
-     *
-     */
-    virtual void update_data();
-    virtual bool is_UpdateData_allowed(const CORBA::Any &any);
-    /**
-     *    Command SendCommandToDevice related method
-     *    Description: Command for sending command to device from property.
-     *
-     *    @param argin input argument must be in JSON. Command must be included to device property ``Commands``
-     *               {``command`` : ``nameOfCommand``, ``argin`` : [``1``,``2``,``3``]}
-     *               OR
-     *               {``command`` : ``nameOfCommand``, ``argin`` : ``1``}
-     *    @returns Output in JSON.
-     */
-    virtual Tango::DevString send_command_to_device(Tango::DevString argin);
-    virtual bool is_SendCommandToDevice_allowed(const CORBA::Any &any);
+	/**
+	 *	Command On related method
+	 *	Description: 
+	 *
+	 */
+	virtual void on();
+	virtual bool is_On_allowed(const CORBA::Any &any);
+	/**
+	 *	Command Off related method
+	 *	Description: 
+	 *
+	 */
+	virtual void off();
+	virtual bool is_Off_allowed(const CORBA::Any &any);
+	/**
+	 *	Command UpdateData related method
+	 *	Description: 
+	 *
+	 */
+	virtual void update_data();
+	virtual bool is_UpdateData_allowed(const CORBA::Any &any);
+	/**
+	 *	Command SendCommandToDevice related method
+	 *	Description: Command for sending command to device from property.
+	 *
+	 *	@param argin input argument must be in JSON. Command must be included to device property ``Commands``
+	 *               {``command`` : ``nameOfCommand``, ``argin`` : [``1``,``2``,``3``]}
+	 *               OR
+	 *               {``command`` : ``nameOfCommand``, ``argin`` : ``1``}
+	 *	@returns Output in JSON.
+	 */
+	virtual Tango::DevString send_command_to_device(Tango::DevString argin);
+	virtual bool is_SendCommandToDevice_allowed(const CORBA::Any &any);
 
 
-    //--------------------------------------------------------
-    /**
-     *    Method      : WebSocketDS::add_dynamic_commands()
-     *    Description : Add dynamic commands if any.
-     */
-    //--------------------------------------------------------
-    void add_dynamic_commands();
+	//--------------------------------------------------------
+	/**
+	 *	Method      : WebSocketDS::add_dynamic_commands()
+	 *	Description : Add dynamic commands if any.
+	 */
+	//--------------------------------------------------------
+	void add_dynamic_commands();
 
 /*----- PROTECTED REGION ID(WebSocketDS::Additional Method prototypes) ENABLED START -----*/
 
-    /*----- PROTECTED REGION END -----*/    //    WebSocketDS::Additional Method prototypes
+    /*----- PROTECTED REGION END -----*/	//	WebSocketDS::Additional Method prototypes
 };
 
 /*----- PROTECTED REGION ID(WebSocketDS::Additional Classes Definitions) ENABLED START -----*/
@@ -392,8 +398,8 @@ private:
     std::string key_;
 };
 
-/*----- PROTECTED REGION END -----*/    //    WebSocketDS::Additional Classes Definitions
+/*----- PROTECTED REGION END -----*/	//	WebSocketDS::Additional Classes Definitions
 
-}    //    End of namespace
+}	//	End of namespace
 
-#endif   //    WebSocketDS_H
+#endif   //	WebSocketDS_H

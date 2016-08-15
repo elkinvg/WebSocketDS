@@ -46,7 +46,7 @@
 #include <WebSocketDS.h>
 
 
-/*----- PROTECTED REGION END -----*/    //    WebSocketDSClass.h
+/*----- PROTECTED REGION END -----*/	//	WebSocketDSClass.h
 
 
 namespace WebSocketDS_ns
@@ -54,123 +54,123 @@ namespace WebSocketDS_ns
 /*----- PROTECTED REGION ID(WebSocketDSClass::classes for dynamic creation) ENABLED START -----*/
 
 
-/*----- PROTECTED REGION END -----*/    //    WebSocketDSClass::classes for dynamic creation
+/*----- PROTECTED REGION END -----*/	//	WebSocketDSClass::classes for dynamic creation
 
 //=========================================
-//    Define classes for attributes
+//	Define classes for attributes
 //=========================================
-//    Attribute JSON class definition
+//	Attribute JSON class definition
 class JSONAttrib: public Tango::Attr
 {
 public:
-    JSONAttrib():Attr("JSON",
-            Tango::DEV_STRING, Tango::READ) {};
-    ~JSONAttrib() {};
-    virtual void read(Tango::DeviceImpl *dev,Tango::Attribute &att)
-        {(static_cast<WebSocketDS *>(dev))->read_JSON(att);}
-    virtual bool is_allowed(Tango::DeviceImpl *dev,Tango::AttReqType ty)
-        {return (static_cast<WebSocketDS *>(dev))->is_JSON_allowed(ty);}
+	JSONAttrib():Attr("JSON",
+			Tango::DEV_STRING, Tango::READ) {};
+	~JSONAttrib() {};
+	virtual void read(Tango::DeviceImpl *dev,Tango::Attribute &att)
+		{(static_cast<WebSocketDS *>(dev))->read_JSON(att);}
+	virtual bool is_allowed(Tango::DeviceImpl *dev,Tango::AttReqType ty)
+		{return (static_cast<WebSocketDS *>(dev))->is_JSON_allowed(ty);}
 };
 
 
 //=========================================
-//    Define classes for commands
+//	Define classes for commands
 //=========================================
-//    Command On class definition
+//	Command On class definition
 class OnClass : public Tango::Command
 {
 public:
-    OnClass(const char   *name,
-                   Tango::CmdArgType in,
-                   Tango::CmdArgType out,
-                   const char        *in_desc,
-                   const char        *out_desc,
-                   Tango::DispLevel  level)
-    :Command(name,in,out,in_desc,out_desc, level)    {};
+	OnClass(const char   *name,
+	               Tango::CmdArgType in,
+				   Tango::CmdArgType out,
+				   const char        *in_desc,
+				   const char        *out_desc,
+				   Tango::DispLevel  level)
+	:Command(name,in,out,in_desc,out_desc, level)	{};
 
-    OnClass(const char   *name,
-                   Tango::CmdArgType in,
-                   Tango::CmdArgType out)
-    :Command(name,in,out)    {};
-    ~OnClass() {};
-    
-    virtual CORBA::Any *execute (Tango::DeviceImpl *dev, const CORBA::Any &any);
-    virtual bool is_allowed (Tango::DeviceImpl *dev, const CORBA::Any &any)
-    {return (static_cast<WebSocketDS *>(dev))->is_On_allowed(any);}
+	OnClass(const char   *name,
+	               Tango::CmdArgType in,
+				   Tango::CmdArgType out)
+	:Command(name,in,out)	{};
+	~OnClass() {};
+	
+	virtual CORBA::Any *execute (Tango::DeviceImpl *dev, const CORBA::Any &any);
+	virtual bool is_allowed (Tango::DeviceImpl *dev, const CORBA::Any &any)
+	{return (static_cast<WebSocketDS *>(dev))->is_On_allowed(any);}
 };
 
-//    Command Off class definition
+//	Command Off class definition
 class OffClass : public Tango::Command
 {
 public:
-    OffClass(const char   *name,
-                   Tango::CmdArgType in,
-                   Tango::CmdArgType out,
-                   const char        *in_desc,
-                   const char        *out_desc,
-                   Tango::DispLevel  level)
-    :Command(name,in,out,in_desc,out_desc, level)    {};
+	OffClass(const char   *name,
+	               Tango::CmdArgType in,
+				   Tango::CmdArgType out,
+				   const char        *in_desc,
+				   const char        *out_desc,
+				   Tango::DispLevel  level)
+	:Command(name,in,out,in_desc,out_desc, level)	{};
 
-    OffClass(const char   *name,
-                   Tango::CmdArgType in,
-                   Tango::CmdArgType out)
-    :Command(name,in,out)    {};
-    ~OffClass() {};
-    
-    virtual CORBA::Any *execute (Tango::DeviceImpl *dev, const CORBA::Any &any);
-    virtual bool is_allowed (Tango::DeviceImpl *dev, const CORBA::Any &any)
-    {return (static_cast<WebSocketDS *>(dev))->is_Off_allowed(any);}
+	OffClass(const char   *name,
+	               Tango::CmdArgType in,
+				   Tango::CmdArgType out)
+	:Command(name,in,out)	{};
+	~OffClass() {};
+	
+	virtual CORBA::Any *execute (Tango::DeviceImpl *dev, const CORBA::Any &any);
+	virtual bool is_allowed (Tango::DeviceImpl *dev, const CORBA::Any &any)
+	{return (static_cast<WebSocketDS *>(dev))->is_Off_allowed(any);}
 };
 
-//    Command UpdateData class definition
+//	Command UpdateData class definition
 class UpdateDataClass : public Tango::Command
 {
 public:
-    UpdateDataClass(const char   *name,
-                   Tango::CmdArgType in,
-                   Tango::CmdArgType out,
-                   const char        *in_desc,
-                   const char        *out_desc,
-                   Tango::DispLevel  level)
-    :Command(name,in,out,in_desc,out_desc, level)    {};
+	UpdateDataClass(const char   *name,
+	               Tango::CmdArgType in,
+				   Tango::CmdArgType out,
+				   const char        *in_desc,
+				   const char        *out_desc,
+				   Tango::DispLevel  level)
+	:Command(name,in,out,in_desc,out_desc, level)	{};
 
-    UpdateDataClass(const char   *name,
-                   Tango::CmdArgType in,
-                   Tango::CmdArgType out)
-    :Command(name,in,out)    {};
-    ~UpdateDataClass() {};
-    
-    virtual CORBA::Any *execute (Tango::DeviceImpl *dev, const CORBA::Any &any);
-    virtual bool is_allowed (Tango::DeviceImpl *dev, const CORBA::Any &any)
-    {return (static_cast<WebSocketDS *>(dev))->is_UpdateData_allowed(any);}
+	UpdateDataClass(const char   *name,
+	               Tango::CmdArgType in,
+				   Tango::CmdArgType out)
+	:Command(name,in,out)	{};
+	~UpdateDataClass() {};
+	
+	virtual CORBA::Any *execute (Tango::DeviceImpl *dev, const CORBA::Any &any);
+	virtual bool is_allowed (Tango::DeviceImpl *dev, const CORBA::Any &any)
+	{return (static_cast<WebSocketDS *>(dev))->is_UpdateData_allowed(any);}
 };
 
-//    Command SendCommandToDevice class definition
+//	Command SendCommandToDevice class definition
 class SendCommandToDeviceClass : public Tango::Command
 {
 public:
-    SendCommandToDeviceClass(const char   *name,
-                   Tango::CmdArgType in,
-                   Tango::CmdArgType out,
-                   const char        *in_desc,
-                   const char        *out_desc,
-                   Tango::DispLevel  level)
-    :Command(name,in,out,in_desc,out_desc, level)    {};
+	SendCommandToDeviceClass(const char   *name,
+	               Tango::CmdArgType in,
+				   Tango::CmdArgType out,
+				   const char        *in_desc,
+				   const char        *out_desc,
+				   Tango::DispLevel  level)
+	:Command(name,in,out,in_desc,out_desc, level)	{};
 
-    SendCommandToDeviceClass(const char   *name,
-                   Tango::CmdArgType in,
-                   Tango::CmdArgType out)
-    :Command(name,in,out)    {};
-    ~SendCommandToDeviceClass() {};
-    
-    virtual CORBA::Any *execute (Tango::DeviceImpl *dev, const CORBA::Any &any);
-    virtual bool is_allowed (Tango::DeviceImpl *dev, const CORBA::Any &any)
-    {return (static_cast<WebSocketDS *>(dev))->is_SendCommandToDevice_allowed(any);}
+	SendCommandToDeviceClass(const char   *name,
+	               Tango::CmdArgType in,
+				   Tango::CmdArgType out)
+	:Command(name,in,out)	{};
+	~SendCommandToDeviceClass() {};
+	
+	virtual CORBA::Any *execute (Tango::DeviceImpl *dev, const CORBA::Any &any);
+	virtual bool is_allowed (Tango::DeviceImpl *dev, const CORBA::Any &any)
+	{return (static_cast<WebSocketDS *>(dev))->is_SendCommandToDevice_allowed(any);}
 };
 
 
 /**
- *    The WebSocketDSClass singleton definition
+ *	The WebSocketDSClass singleton definition
  */
 
 #ifdef _TG_WINDOWS_
@@ -179,45 +179,45 @@ class __declspec(dllexport)  WebSocketDSClass : public Tango::DeviceClass
 class WebSocketDSClass : public Tango::DeviceClass
 #endif
 {
-    /*----- PROTECTED REGION ID(WebSocketDSClass::Additionnal DServer data members) ENABLED START -----*/
+	/*----- PROTECTED REGION ID(WebSocketDSClass::Additionnal DServer data members) ENABLED START -----*/
     
     
-    /*----- PROTECTED REGION END -----*/    //    WebSocketDSClass::Additionnal DServer data members
+    /*----- PROTECTED REGION END -----*/	//	WebSocketDSClass::Additionnal DServer data members
 
-    public:
-        //    write class properties data members
-        Tango::DbData    cl_prop;
-        Tango::DbData    cl_def_prop;
-        Tango::DbData    dev_def_prop;
-    
-        //    Method prototypes
-        static WebSocketDSClass *init(const char *);
-        static WebSocketDSClass *instance();
-        ~WebSocketDSClass();
-        Tango::DbDatum    get_class_property(string &);
-        Tango::DbDatum    get_default_device_property(string &);
-        Tango::DbDatum    get_default_class_property(string &);
-    
-    protected:
-        WebSocketDSClass(string &);
-        static WebSocketDSClass *_instance;
-        void command_factory();
-        void attribute_factory(vector<Tango::Attr *> &);
-        void pipe_factory();
-        void write_class_property();
-        void set_default_property();
-        void get_class_property();
-        string get_cvstag();
-        string get_cvsroot();
-    
-    private:
-        void device_factory(const Tango::DevVarStringArray *);
-        void create_static_attribute_list(vector<Tango::Attr *> &);
-        void erase_dynamic_attributes(const Tango::DevVarStringArray *,vector<Tango::Attr *> &);
-        vector<string>    defaultAttList;
-        Tango::Attr *get_attr_object_by_name(vector<Tango::Attr *> &att_list, string attname);
+	public:
+		//	write class properties data members
+		Tango::DbData	cl_prop;
+		Tango::DbData	cl_def_prop;
+		Tango::DbData	dev_def_prop;
+	
+		//	Method prototypes
+		static WebSocketDSClass *init(const char *);
+		static WebSocketDSClass *instance();
+		~WebSocketDSClass();
+		Tango::DbDatum	get_class_property(string &);
+		Tango::DbDatum	get_default_device_property(string &);
+		Tango::DbDatum	get_default_class_property(string &);
+	
+	protected:
+		WebSocketDSClass(string &);
+		static WebSocketDSClass *_instance;
+		void command_factory();
+		void attribute_factory(vector<Tango::Attr *> &);
+		void pipe_factory();
+		void write_class_property();
+		void set_default_property();
+		void get_class_property();
+		string get_cvstag();
+		string get_cvsroot();
+	
+	private:
+		void device_factory(const Tango::DevVarStringArray *);
+		void create_static_attribute_list(vector<Tango::Attr *> &);
+		void erase_dynamic_attributes(const Tango::DevVarStringArray *,vector<Tango::Attr *> &);
+		vector<string>	defaultAttList;
+		Tango::Attr *get_attr_object_by_name(vector<Tango::Attr *> &att_list, string attname);
 };
 
-}    //    End of namespace
+}	//	End of namespace
 
-#endif   //    WebSocketDS_H
+#endif   //	WebSocketDS_H

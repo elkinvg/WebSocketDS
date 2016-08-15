@@ -53,4 +53,4 @@ void Tango::DServer::class_factory()
     //    Add method class init if needed
     add_class(WebSocketDS_ns::WebSocketDSClass::init("WebSocketDS"));
 }
-/*----- PROTECTED REGION END -----*/    //    WebSocketDS::ClassFactory.cpp
+/*----- PROTECTED REGION END -----*/	//	WebSocketDS::ClassFactory.cpp

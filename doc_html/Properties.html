@@ -19,42 +19,28 @@
 		<td> <center><b> Default Value </b></center> </td>
 	</tr>
 	<tr>
-		<td> Attributes </td>
-		<td> Attributes list </td>
-		<td> String[] </td>
-		<td> none </td>
-	</tr>
-	<tr>
-		<td> AuthDS </td>
-		<td> Tango web authentication device server (TangoWebAuth ) name. </td>
-		<td> String </td>
-		<td> auth/web/1 <br> </td>
-	</tr>
-	<tr>
-		<td> Certificate </td>
-		<td> Certificate file name (crt) with path<Br>
-			example: /etc/ssl/certs/ssl-cert-snakeoil.pem </td>
-		<td> String </td>
-		<td> /etc/ssl/certs/server.crt <br> </td>
-	</tr>
-	<tr>
-		<td> Commands </td>
-		<td> Commandes list from using DS </td>
-		<td> String[] </td>
-		<td> none </td>
-	</tr>
-	<tr>
 		<td> DeviceServer </td>
 		<td> Using DeviceServer name </td>
 		<td> String </td>
 		<td> none </td>
 	</tr>
 	<tr>
-		<td> Key </td>
-		<td> Private key file name<Br>
-			Example: /etc/ssl/private/ssl-cert-snakeoil.key </td>
-		<td> String </td>
-		<td> /etc/ssl/private/server.key <br> </td>
+		<td> Port </td>
+		<td> Using port of WebSocket </td>
+		<td> short </td>
+		<td> none </td>
+	</tr>
+	<tr>
+		<td> Attributes </td>
+		<td> Attributes list </td>
+		<td> String[] </td>
+		<td> none </td>
+	</tr>
+	<tr>
+		<td> Commands </td>
+		<td> Commandes list from using DS </td>
+		<td> String[] </td>
+		<td> none </td>
 	</tr>
 	<tr>
 		<td> Secure </td>
@@ -64,10 +50,24 @@
 		<td> false <br> </td>
 	</tr>
 	<tr>
-		<td> Port </td>
-		<td> Using port of WebSocket </td>
-		<td> short </td>
-		<td> none </td>
+		<td> Certificate </td>
+		<td> Certificate file name (crt) with path<Br>
+			example: /etc/ssl/certs/ssl-cert-snakeoil.pem </td>
+		<td> String </td>
+		<td> /etc/ssl/certs/server.crt <br> </td>
+	</tr>
+	<tr>
+		<td> Key </td>
+		<td> Private key file name<Br>
+			Example: /etc/ssl/private/ssl-cert-snakeoil.key </td>
+		<td> String </td>
+		<td> /etc/ssl/private/server.key <br> </td>
+	</tr>
+	<tr>
+		<td> AuthDS </td>
+		<td> Tango web authentication device server (TangoWebAuth ) name. </td>
+		<td> String </td>
+		<td> auth/web/1 <br> </td>
 	</tr>
 </table>
 </body>
