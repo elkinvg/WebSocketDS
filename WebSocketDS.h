@@ -57,6 +57,8 @@
 #include <websocketpp/common/thread.hpp>
 #include "tango_processor.h"
 
+//#define USELOG
+
 /*----- PROTECTED REGION END -----*/    //    WebSocketDS.h
 
 /**
@@ -275,6 +277,9 @@ public:
     bool check_user(map<string, string>& parsedGet);
 private:
     WebSocketDS *ds;
+#ifdef USELOG
+    bool sendLogCommand(vector <string> toLogData, Tango::DeviceProxy *authProxy);
+#endif
     string getCommandName(const string& commandJson);
 
 };

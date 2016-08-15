@@ -21,6 +21,22 @@ bool WebSocketDS_ns::UserControl::check_permission(map<string, string>& parsedGe
     permission_data[2] = parsedGet["ip"];
     permission_data[3] = parsedGet["login"];
 
+#ifdef USELOG
+    Tango::DevULong tv; // TIMESTAMP
+    std::chrono::seconds  unix_timestamp = std::chrono::seconds(std::time(NULL));
+    tv = unix_timestamp.count();
+    string timestamp_string = to_string(tv);
+
+    vector <string> permission_data_for_log;
+
+    permission_data_for_log.push_back(timestamp_string);
+    permission_data_for_log.push_back(parsedGet["login"]);
+    permission_data_for_log.push_back(deviceName);
+    permission_data_for_log.push_back(parsedGet["ip"]);
+    permission_data_for_log.push_back(commandName);
+    permission_data_for_log.push_back(commandJson);
+#endif
+
     Tango::DeviceData argin, argout;
 
     try {
@@ -28,6 +44,11 @@ bool WebSocketDS_ns::UserControl::check_permission(map<string, string>& parsedGe
         Tango::DeviceProxy *authProxy = new Tango::DeviceProxy(ds->authDS);
         argout = authProxy->command_inout("check_permissions", argin);
         argout >> isAuth;
+#ifdef USELOG
+        string statusBool = to_string(isAuth);
+        permission_data_for_log.push_back(statusBool);
+        sendLogCommand(permission_data_for_log,authProxy);
+#endif
         delete authProxy;
     }
     catch (Tango::DevFailed &e) {
@@ -63,6 +84,34 @@ bool WebSocketDS_ns::UserControl::check_user(map<string, string>& parsedGet) {
 
     return isAuth;
 }
+
+#ifdef USELOG
+bool WebSocketDS_ns::UserControl::sendLogCommand(vector<string> toLogData, Tango::DeviceProxy *authProxy)
+{
+    // toLogData[0] = timestamp_string UNIX_TIMESTAMP
+    // toLogData[1] = login
+    // toLogData[2] = deviceName
+    // toLogData[3] = IP
+    // toLogData[4] = commandName
+    // toLogData[5] = commandJson
+    // toLogData[6] = statusBool
+
+
+    bool isSuccess;
+    Tango::DeviceData argin, argout;
+
+    try {
+        argin << toLogData;
+        argout = authProxy->command_inout("send_log_command_ex", argin);
+        argout >> isSuccess;
+    }
+    catch (Tango::DevFailed &e) {
+        ERROR_STREAM << "Could not connect to device-server '" << ds->authDS << "'.. Desc: " << e.errors[0].desc.in();
+        isSuccess = false;
+    }
+    return isSuccess;
+}
+#endif
 
 string WebSocketDS_ns::UserControl::getCommandName(const string& commandJson) {
     string out = "";

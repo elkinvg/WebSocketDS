@@ -5,41 +5,41 @@
       <inheritances classname="Device_Impl" sourcePath=""/>
       <identification contact="at jinr.ru - elkin" author="elkin" emailDomain="jinr.ru" classFamily="Communication" siteSpecific="" platform="All Platforms" bus="Not Applicable" manufacturer="none" reference=""/>
     </description>
-    <deviceProperties name="Attributes" description="Attributes list">
-      <type xsi:type="pogoDsl:StringVectorType"/>
-      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
-    </deviceProperties>
-    <deviceProperties name="AuthDS" description="Tango web authentication device server (TangoWebAuth ) name.">
-      <type xsi:type="pogoDsl:StringType"/>
-      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
-      <DefaultPropValue>auth/web/1</DefaultPropValue>
-    </deviceProperties>
-    <deviceProperties name="Certificate" description="Certificate file name (crt) with path&#xA;example: /etc/ssl/certs/ssl-cert-snakeoil.pem">
-      <type xsi:type="pogoDsl:StringType"/>
-      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
-      <DefaultPropValue>/etc/ssl/certs/server.crt</DefaultPropValue>
-    </deviceProperties>
-    <deviceProperties name="Commands" description="Commandes list from using DS">
-      <type xsi:type="pogoDsl:StringVectorType"/>
-      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
-    </deviceProperties>
     <deviceProperties name="DeviceServer" description="Using DeviceServer name">
       <type xsi:type="pogoDsl:StringType"/>
       <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
     </deviceProperties>
-    <deviceProperties name="Key" description="Private key file name&#xA;Example: /etc/ssl/private/ssl-cert-snakeoil.key">
-      <type xsi:type="pogoDsl:StringType"/>
+    <deviceProperties name="Port" description="Using port of WebSocket">
+      <type xsi:type="pogoDsl:ShortType"/>
       <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
-      <DefaultPropValue>/etc/ssl/private/server.key</DefaultPropValue>
+    </deviceProperties>
+    <deviceProperties name="Attributes" description="Attributes list">
+      <type xsi:type="pogoDsl:StringVectorType"/>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+    </deviceProperties>
+    <deviceProperties name="Commands" description="Commandes list from using DS">
+      <type xsi:type="pogoDsl:StringVectorType"/>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
     </deviceProperties>
     <deviceProperties name="Secure" description="Shall we use SSL encryption?&#xA;It will be used wss connection (websocket secure)">
       <type xsi:type="pogoDsl:BooleanType"/>
       <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
       <DefaultPropValue>false</DefaultPropValue>
     </deviceProperties>
-    <deviceProperties name="Port" description="Using port of WebSocket">
-      <type xsi:type="pogoDsl:ShortType"/>
+    <deviceProperties name="Certificate" description="Certificate file name (crt) with path&#xA;example: /etc/ssl/certs/ssl-cert-snakeoil.pem">
+      <type xsi:type="pogoDsl:StringType"/>
       <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+      <DefaultPropValue>/etc/ssl/certs/server.crt</DefaultPropValue>
+    </deviceProperties>
+    <deviceProperties name="Key" description="Private key file name&#xA;Example: /etc/ssl/private/ssl-cert-snakeoil.key">
+      <type xsi:type="pogoDsl:StringType"/>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+      <DefaultPropValue>/etc/ssl/private/server.key</DefaultPropValue>
+    </deviceProperties>
+    <deviceProperties name="AuthDS" description="Tango web authentication device server (TangoWebAuth ) name.">
+      <type xsi:type="pogoDsl:StringType"/>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+      <DefaultPropValue>auth/web/1</DefaultPropValue>
     </deviceProperties>
     <commands name="State" description="This command gets the device state (stored in its device_state data member) and returns it to the caller." execMethod="dev_state" displayLevel="OPERATOR" polledPeriod="0">
       <argin description="none">

@@ -4,7 +4,7 @@ CONFIG -= app_bundle
 CONFIG -= qt
 CONFIG += c++11
 
-DEFINES += DBNAME DBUSER DBPASS DBHOST
+DEFINES += USELOG
 
 INCLUDEPATH += /usr/local/include/tango \
             /usr/local/include  \
