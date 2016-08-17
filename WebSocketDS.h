@@ -101,6 +101,7 @@ private:
     //WSThread *wsThread;
     WSThread *wsThread;
     Tango::DeviceProxy *device;
+    //std::unique_ptr<Tango::DeviceProxy> device;
     tango_processor processor;
     std::vector<bool>  isJsonAttribute;
 public:
@@ -261,6 +262,9 @@ public:
 	void add_dynamic_commands();
 
 /*----- PROTECTED REGION ID(WebSocketDS::Additional Method prototypes) ENABLED START -----*/
+    void reInitDevice();
+    void initAttrAndComm();
+    void fromException(Tango::DevFailed &e, string func);
 
     /*----- PROTECTED REGION END -----*/	//	WebSocketDS::Additional Method prototypes
 };

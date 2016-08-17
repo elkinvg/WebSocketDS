@@ -17,6 +17,18 @@ Then you should set polling to the UpdateData command. (1000 means that all conn
 
 Data format: JSON string with array of attrubute objects {atrrtibute name, attribute value, quality, timestamp};
 
+if you want to record in the logs, define #USELOG in makefile.
+The database (defined in AuthDS) must contain a table `command_history` with columns:
+
+* id - autoincrement
+* argin[0] = timestamp_string UNIX_TIMESTAMP
+* argin[1] = login
+* argin[2] = deviceName
+* argin[3] = IP
+* argin[4] = commandName
+* argin[5] = commandJson
+* argin[6] = statusBool
+
 ### Installation
 
 You need installed Tango

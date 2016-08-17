@@ -151,6 +151,8 @@ void WebSocketDS::delete_device()
     wsThread->join(&ptr);
 
     CORBA::string_free(*attr_JSON_read);
+    if (device!=nullptr)
+        delete device;
 
     /*----- PROTECTED REGION END -----*/	//	WebSocketDS::delete_device
 	delete[] attr_JSON_read;
@@ -177,6 +179,7 @@ void WebSocketDS::init_device()
 	
 	attr_JSON_read = new Tango::DevString[1];
 	/*----- PROTECTED REGION ID(WebSocketDS::init_device) ENABLED START -----*/
+    attr_JSON_read[0] = Tango::string_dup("[{\"success\": false}]");
 
     try
     {
@@ -189,41 +192,47 @@ void WebSocketDS::init_device()
         } else {
             wsThread = new WSThread_tls(this,/*host,*/port,certificate,key);
         }
+        device = new Tango::DeviceProxy(deviceServer);
+        device->set_timeout_millis(3000);
         set_state(Tango::ON);
         set_status("Device is On");
-        device = new Tango::DeviceProxy(deviceServer);
+        //device = unique_ptr<Tango::DeviceProxy>(new Tango::DeviceProxy(deviceServer));
     }
     catch (Tango::DevFailed &e)
     {
         Tango::Except::print_exception(e);
         set_state(Tango::FAULT);
         set_status("Couldn't connect to device: " + deviceServer);
+        fromException(e,"init. new device");
+
+        return;
+    }
+    catch (...) {
+        string err = "Unknown exception after ping : " + deviceServer;
+        set_state(Tango::FAULT);
+        set_status(err.c_str());
+        ERROR_STREAM << err.c_str() << endl;
+        return;
     }
 
-
-    DEBUG_STREAM << "Attributes: " << endl;
-    for (int i = 0; i < attributes.size(); i++)
-    {
-        std::string at = attributes.at(i);
-        boost::to_lower(at);
-        isJsonAttribute.push_back(at.find("json") != std::string::npos);
-        DEBUG_STREAM << attributes.at(i) << endl;
+    try {
+        device->ping();
     }
-
-    DEBUG_STREAM << "Commands: " << endl;
-    for (auto& com : commands) {
-        try {
-            Tango::CommandInfo info = device->command_query(com);
-            accessibleCommandInfo.insert(std::pair<std::string, Tango::CommandInfo>(com, info));
-            DEBUG_STREAM << com << endl;
+    catch (...) {
+        if (device != nullptr) {
+            delete device;
+            device = nullptr;
         }
-        catch (Tango::DevFailed &e)
-        {
-            ERROR_STREAM << "command " << com << " not found" << endl;
-        }
+        string err = "Unknown exception after ping : " + deviceServer;
+        set_state(Tango::FAULT);
+        set_status(err.c_str());
+        ERROR_STREAM << err.c_str() << endl;
+        return;
     }
 
-    attr_JSON_read[0] = Tango::string_dup("[{\"success\": false}]");
+    initAttrAndComm();
+
+//    attr_JSON_read[0] = Tango::string_dup("[{\"success\": false}]");
     update_data();
     /*----- PROTECTED REGION END -----*/	//	WebSocketDS::init_device
 }
@@ -373,9 +382,13 @@ void WebSocketDS::get_device_property()
 //--------------------------------------------------------
 void WebSocketDS::always_executed_hook()
 {
-	DEBUG_STREAM << "WebSocketDS::always_executed_hook()  " << device_name << endl;
+    //DEBUG_STREAM << "WebSocketDS::always_executed_hook()  " << device_name << endl;
 	/*----- PROTECTED REGION ID(WebSocketDS::always_executed_hook) ENABLED START -----*/
 
+    if (device==nullptr) {
+        reInitDevice();
+        return;
+    }
     //    code always executed before all requests
 
     /*----- PROTECTED REGION END -----*/	//	WebSocketDS::always_executed_hook
@@ -481,10 +494,28 @@ void WebSocketDS::update_data()
     //double r = rand_float(0,100);
     //attr_MyAttr_read[0] = r;
 
+    std::vector<Tango::DeviceAttribute> *attrList;
+
 
     try
     {
-        std::vector<Tango::DeviceAttribute> *attrList = device->read_attributes(attributes);
+        if (device==nullptr) {
+            return;
+        }
+        //device->ping();
+        attrList = device->read_attributes(attributes);
+    }
+    catch (Tango::DevFailed &e)
+    {
+        reInitDevice();
+        return;
+    }
+    catch (...) {
+        return;
+    }
+
+    try
+    {
         std::stringstream json;
         //json << "[";
         json << "{\"event\": \"read\", \"data\":[";
@@ -515,6 +546,7 @@ void WebSocketDS::update_data()
         //            wsThread->send_all(error.c_str());
         wsThread->send_all(error.c_str());
     }
+
     /*----- PROTECTED REGION END -----*/	//	WebSocketDS::update_data
 }
 //--------------------------------------------------------
@@ -624,6 +656,43 @@ void WebSocketDS::add_dynamic_commands()
 }
 
 /*----- PROTECTED REGION ID(WebSocketDS::namespace_ending) ENABLED START -----*/
+void WebSocketDS::reInitDevice() {
+    delete_device();
+    init_device();
+}
+
+void WebSocketDS::initAttrAndComm()
+{
+    DEBUG_STREAM << "Attributes: " << endl;
+    for (int i = 0; i < attributes.size(); i++)
+    {
+        std::string at = attributes.at(i);
+        boost::to_lower(at);
+        isJsonAttribute.push_back(at.find("json") != std::string::npos);
+        DEBUG_STREAM << attributes.at(i) << endl;
+    }
+
+    DEBUG_STREAM << "Commands: " << endl;
+    for (auto& com : commands) {
+        try {
+            Tango::CommandInfo info = device->command_query(com);
+            accessibleCommandInfo.insert(std::pair<std::string, Tango::CommandInfo>(com, info));
+            DEBUG_STREAM << com << endl;
+        }
+        catch (Tango::DevFailed &e)
+        {
+            ERROR_STREAM << "command " << com << " not found" << endl;
+        }
+    }
+}
+
+void WebSocketDS::fromException(Tango::DevFailed &e, string func)
+{
+    auto lnh = e.errors.length();
+    for (int i=0;i<lnh;i++) {
+        ERROR_STREAM << " From " + func + ": " << e.errors[i].desc << endl;
+    }
+}
 
 /*----- PROTECTED REGION END -----*/	//	WebSocketDS::namespace_ending
 } //	namespace

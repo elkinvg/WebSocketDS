@@ -135,7 +135,18 @@
 		<Br>
 		Then you should set polling to the UpdateData command. (1000 means that all connected clients would read attributes once per second).<Br>
 		<Br>
-		Data format: JSON string with array of attrubute objects {atrrtibute name, attribute value, quality, timestamp};
+		Data format: JSON string with array of attrubute objects {atrrtibute name, attribute value, quality, timestamp};<Br>
+		<Br>
+		if you want to record in the logs, define #USELOG in makefile.<Br>
+		The database (defined in AuthDS) must contain a table `command_history` with columns:<Br>
+		    // id - autoincrement<Br>
+		    // argin[0] = timestamp_string UNIX_TIMESTAMP<Br>
+		    // argin[1] = login<Br>
+		    // argin[2] = deviceName<Br>
+		    // argin[3] = IP<Br>
+		    // argin[4] = commandName<Br>
+		    // argin[5] = commandJson<Br>
+		    // argin[6] = statusBool
 		
 		<!---  /*PROTECTED REGION ID(FullDocument.html) ENABLED START*/  --->
 			<!--- Add your own documentation, pictures, links,.... --->
