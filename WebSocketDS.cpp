@@ -505,8 +505,26 @@ void WebSocketDS::update_data()
         //device->ping();
         attrList = device->read_attributes(attributes);
     }
+    catch (Tango::ConnectionFailed &e)
+    {
+        fromException(e,"update_data.read_attr ConnectionFailed ");
+        reInitDevice();
+        return;
+    }
+    catch (Tango::CommunicationFailed &e)
+    {
+        fromException(e,"update_data.read_attr CommunicationFailed ");
+        std::stringstream json;
+        json << "{\"event\": \"error\", \"data\":[{\"error\": \"CommunicationFailed from :";
+        json << deviceServer;
+        json << "\"} ]}";
+        wsThread->send_all(json.str().c_str());
+        //reInitDevice();
+        return;
+    }
     catch (Tango::DevFailed &e)
     {
+        fromException(e,"update_data.read_attr ");
         reInitDevice();
         return;
     }
