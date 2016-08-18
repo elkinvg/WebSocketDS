@@ -249,6 +249,24 @@ CORBA::Any *ResetClass::execute(Tango::DeviceImpl *device, TANGO_UNUSED(const CO
 	return new CORBA::Any();
 }
 
+//--------------------------------------------------------
+/**
+ * method : 		CheckPollClass::execute()
+ * description : 	method to trigger the execution of the command.
+ *
+ * @param	device	The device on which the command must be executed
+ * @param	in_any	The command input data
+ *
+ *	returns The command output data (packed in the Any object)
+ */
+//--------------------------------------------------------
+CORBA::Any *CheckPollClass::execute(Tango::DeviceImpl *device, TANGO_UNUSED(const CORBA::Any &in_any))
+{
+	cout2 << "CheckPollClass::execute(): arrived" << endl;
+	((static_cast<WebSocketDS *>(device))->check_poll());
+	return new CORBA::Any();
+}
+
 
 //===================================================================
 //	Properties management
@@ -770,6 +788,16 @@ void WebSocketDSClass::command_factory()
 			"",
 			Tango::OPERATOR);
 	command_list.push_back(pResetCmd);
+
+	//	Command CheckPoll
+	CheckPollClass	*pCheckPollCmd =
+		new CheckPollClass("CheckPoll",
+			Tango::DEV_VOID, Tango::DEV_VOID,
+			"",
+			"",
+			Tango::OPERATOR);
+	pCheckPollCmd->set_polling_period(10000);
+	command_list.push_back(pCheckPollCmd);
 
 	/*----- PROTECTED REGION ID(WebSocketDSClass::command_factory_after) ENABLED START -----*/
     

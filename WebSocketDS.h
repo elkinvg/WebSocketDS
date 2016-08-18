@@ -115,6 +115,7 @@ private:
     //std::unique_ptr<Tango::DeviceProxy> device;
     tango_processor processor;
     std::vector<bool>  isJsonAttribute;
+    std::chrono::seconds timeFromUpdateData;
 public:
     std::map<std::string, Tango::CommandInfo> accessibleCommandInfo;
     /*----- PROTECTED REGION END -----*/	//	WebSocketDS::Data Members
@@ -269,6 +270,13 @@ public:
 	 */
 	virtual void reset();
 	virtual bool is_Reset_allowed(const CORBA::Any &any);
+	/**
+	 *	Command CheckPoll related method
+	 *	Description: 
+	 *
+	 */
+	virtual void check_poll();
+	virtual bool is_CheckPoll_allowed(const CORBA::Any &any);
 
 
 	//--------------------------------------------------------

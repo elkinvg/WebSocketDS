@@ -162,6 +162,21 @@ bool WebSocketDS::is_Reset_allowed(TANGO_UNUSED(const CORBA::Any &any))
 	return true;
 }
 
+//--------------------------------------------------------
+/**
+ *	Method      : WebSocketDS::is_CheckPoll_allowed()
+ *	Description : Execution allowed for CheckPoll attribute
+ */
+//--------------------------------------------------------
+bool WebSocketDS::is_CheckPoll_allowed(TANGO_UNUSED(const CORBA::Any &any))
+{
+	//	Not any excluded states for CheckPoll command.
+	/*----- PROTECTED REGION ID(WebSocketDS::CheckPollStateAllowed) ENABLED START -----*/
+	
+	/*----- PROTECTED REGION END -----*/	//	WebSocketDS::CheckPollStateAllowed
+	return true;
+}
+
 
 /*----- PROTECTED REGION ID(WebSocketDS::WebSocketDSStateAllowed.AdditionalMethods) ENABLED START -----*/
 

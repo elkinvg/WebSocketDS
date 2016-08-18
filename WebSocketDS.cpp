@@ -94,6 +94,7 @@ static const char *RcsId = "$Id:  $";
 //  UpdateData           |  update_data
 //  SendCommandToDevice  |  send_command_to_device
 //  Reset                |  reset
+//  CheckPoll            |  check_poll
 //================================================================
 
 //================================================================
@@ -394,7 +395,7 @@ void WebSocketDS::get_device_property()
 //--------------------------------------------------------
 void WebSocketDS::always_executed_hook()
 {
-//	DEBUG_STREAM << "WebSocketDS::always_executed_hook()  " << device_name << endl;
+    //DEBUG_STREAM << "WebSocketDS::always_executed_hook()  " << device_name << endl;
 	/*----- PROTECTED REGION ID(WebSocketDS::always_executed_hook) ENABLED START -----*/
 
     if (device==nullptr) {
@@ -507,6 +508,7 @@ void WebSocketDS::update_data()
     //attr_MyAttr_read[0] = r;
 
     std::vector<Tango::DeviceAttribute> *attrList;
+    timeFromUpdateData = std::chrono::seconds(std::time(NULL));
 
 
     try
@@ -684,6 +686,29 @@ void WebSocketDS::reset()
     reInitDevice();
 	
 	/*----- PROTECTED REGION END -----*/	//	WebSocketDS::reset
+}
+//--------------------------------------------------------
+/**
+ *	Command CheckPoll related method
+ *	Description: 
+ *
+ */
+//--------------------------------------------------------
+void WebSocketDS::check_poll()
+{
+    //DEBUG_STREAM << "WebSocketDS::CheckPoll()  - " << device_name << endl;
+	/*----- PROTECTED REGION ID(WebSocketDS::check_poll) ENABLED START -----*/
+	
+     std::chrono::seconds  checkPollTime = std::chrono::seconds(std::time(NULL));
+     Tango::DevULong cpTime,updTime;
+     Tango::DevULong diffTime;
+     cpTime = checkPollTime.count();
+     updTime = timeFromUpdateData.count();
+     diffTime = cpTime - updTime;
+     DEBUG_STREAM << "WebSocketDS::CheckPoll()  - " << device_name << " time difference: " << diffTime  << endl;
+
+	
+	/*----- PROTECTED REGION END -----*/	//	WebSocketDS::check_poll
 }
 //--------------------------------------------------------
 /**

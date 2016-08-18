@@ -191,6 +191,29 @@ public:
 	{return (static_cast<WebSocketDS *>(dev))->is_Reset_allowed(any);}
 };
 
+//	Command CheckPoll class definition
+class CheckPollClass : public Tango::Command
+{
+public:
+	CheckPollClass(const char   *name,
+	               Tango::CmdArgType in,
+				   Tango::CmdArgType out,
+				   const char        *in_desc,
+				   const char        *out_desc,
+				   Tango::DispLevel  level)
+	:Command(name,in,out,in_desc,out_desc, level)	{};
+
+	CheckPollClass(const char   *name,
+	               Tango::CmdArgType in,
+				   Tango::CmdArgType out)
+	:Command(name,in,out)	{};
+	~CheckPollClass() {};
+	
+	virtual CORBA::Any *execute (Tango::DeviceImpl *dev, const CORBA::Any &any);
+	virtual bool is_allowed (Tango::DeviceImpl *dev, const CORBA::Any &any)
+	{return (static_cast<WebSocketDS *>(dev))->is_CheckPoll_allowed(any);}
+};
+
 
 /**
  *	The WebSocketDSClass singleton definition
