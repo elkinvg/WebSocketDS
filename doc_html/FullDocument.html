@@ -66,6 +66,7 @@
 				<li> <a href="FullDocument.html#cmdOff"> Off </a>
 				<li> <a href="FullDocument.html#cmdUpdateData"> UpdateData </a>
 				<li> <a href="FullDocument.html#cmdSendCommandToDevice"> SendCommandToDevice </a>
+				<li> <a href="FullDocument.html#cmdReset"> Reset </a>
 			</ul>
 			<li> <a href="FullDocument.html#attributes">   Attributes   </a>
 			<ul>
@@ -279,6 +280,13 @@
 		<td> DEV_STRING </td>
 		<td> OPERATOR </td>
 		<td> Command for sending command to device from property. </td>
+	</tr>
+	<tr>
+		<td> <a href="CmdReset.html"> Reset </a> </td>
+		<td> DEV_VOID </td>
+		<td> DEV_VOID </td>
+		<td> OPERATOR </td>
+		<td> Restart websocket server </td>
 	</tr>
 </table>
 <br><br><hr>
@@ -547,6 +555,55 @@ OR<Br>
 		<td> Output Argument </td>
 		<td> Tango::DEV_STRING </td>
 		<td> Output in JSON. </td>
+	</tr>
+	<tr>
+		<td> DisplayLevel </td>
+		<td> OPERATOR </td>
+		<td> .. </td>
+	</tr>
+	<tr>
+		<td> Inherited </td>
+		<td> false </td>
+		<td> .. </td>
+	</tr>
+	<tr>
+		<td> Abstract </td>
+		<td> false </td>
+		<td> .. </td>
+	</tr>
+	<tr>
+		<td> Polling Period </td>
+		<td> Not polled </td>
+		<td> .. </td>
+	</tr>
+<Tr BGCOLOR="#CCCCFF"><Td><Hr></Td><Td><Hr></Td><Td><Hr></Td></Tr>
+	<tr>
+		<td> Command allowed for </td>
+		<td> All states </td>
+		<td> .. </td>
+	</tr>
+</table>
+<br><br><hr>
+<a name="cmdReset"> </a>
+<br><br><br>
+<font size="+1"><u><b> Command Reset : </b></u></font>
+<ul>
+	Restart websocket server
+</ul>
+<br><br><br>
+<Table Border=2 Cellpadding=3 CELLSPACING=0>
+	<tr bgcolor="#CCCCFF" class="TableHeadingColor">
+	<td colspan=0> <font size=+1> <center><b> Reset Definition </b></font></center></td>
+	</tr>
+	<tr>
+		<td> Input Argument </td>
+		<td> Tango::DEV_VOID </td>
+		<td>  </td>
+	</tr>
+	<tr>
+		<td> Output Argument </td>
+		<td> Tango::DEV_VOID </td>
+		<td>  </td>
 	</tr>
 	<tr>
 		<td> DisplayLevel </td>

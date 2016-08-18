@@ -68,6 +68,17 @@ static const char *RcsId = "$Id:  $";
  *    Then you should set polling to the UpdateData command. (1000 means that all connected clients would read attributes once per second).
  *    
  *    Data format: JSON string with array of attrubute objects {atrrtibute name, attribute value, quality, timestamp};
+ *    
+ *    if you want to record in the logs, define #USELOG in makefile.
+ *    The database (defined in AuthDS) must contain a table `command_history` with columns:
+ *        // id - autoincrement
+ *        // argin[0] = timestamp_string UNIX_TIMESTAMP
+ *        // argin[1] = login
+ *        // argin[2] = deviceName
+ *        // argin[3] = IP
+ *        // argin[4] = commandName
+ *        // argin[5] = commandJson
+ *        // argin[6] = statusBool
  */
 
 //================================================================
@@ -82,6 +93,7 @@ static const char *RcsId = "$Id:  $";
 //  Off                  |  off
 //  UpdateData           |  update_data
 //  SendCommandToDevice  |  send_command_to_device
+//  Reset                |  reset
 //================================================================
 
 //================================================================
@@ -382,7 +394,7 @@ void WebSocketDS::get_device_property()
 //--------------------------------------------------------
 void WebSocketDS::always_executed_hook()
 {
-    //DEBUG_STREAM << "WebSocketDS::always_executed_hook()  " << device_name << endl;
+//	DEBUG_STREAM << "WebSocketDS::always_executed_hook()  " << device_name << endl;
 	/*----- PROTECTED REGION ID(WebSocketDS::always_executed_hook) ENABLED START -----*/
 
     if (device==nullptr) {
@@ -656,6 +668,22 @@ Tango::DevString WebSocketDS::send_command_to_device(Tango::DevString argin)
 
     /*----- PROTECTED REGION END -----*/	//	WebSocketDS::send_command_to_device
 	return argout;
+}
+//--------------------------------------------------------
+/**
+ *	Command Reset related method
+ *	Description: Restart websocket server
+ *
+ */
+//--------------------------------------------------------
+void WebSocketDS::reset()
+{
+	DEBUG_STREAM << "WebSocketDS::Reset()  - " << device_name << endl;
+	/*----- PROTECTED REGION ID(WebSocketDS::reset) ENABLED START -----*/
+
+    reInitDevice();
+	
+	/*----- PROTECTED REGION END -----*/	//	WebSocketDS::reset
 }
 //--------------------------------------------------------
 /**

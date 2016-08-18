@@ -231,6 +231,24 @@ CORBA::Any *SendCommandToDeviceClass::execute(Tango::DeviceImpl *device, const C
 	return insert((static_cast<WebSocketDS *>(device))->send_command_to_device(argin));
 }
 
+//--------------------------------------------------------
+/**
+ * method : 		ResetClass::execute()
+ * description : 	method to trigger the execution of the command.
+ *
+ * @param	device	The device on which the command must be executed
+ * @param	in_any	The command input data
+ *
+ *	returns The command output data (packed in the Any object)
+ */
+//--------------------------------------------------------
+CORBA::Any *ResetClass::execute(Tango::DeviceImpl *device, TANGO_UNUSED(const CORBA::Any &in_any))
+{
+	cout2 << "ResetClass::execute(): arrived" << endl;
+	((static_cast<WebSocketDS *>(device))->reset());
+	return new CORBA::Any();
+}
+
 
 //===================================================================
 //	Properties management
@@ -452,6 +470,17 @@ void WebSocketDSClass::write_class_property()
 	str_desc.push_back("Then you should set polling to the UpdateData command. (1000 means that all connected clients would read attributes once per second).");
 	str_desc.push_back("");
 	str_desc.push_back("Data format: JSON string with array of attrubute objects {atrrtibute name, attribute value, quality, timestamp};");
+	str_desc.push_back("");
+	str_desc.push_back("if you want to record in the logs, define #USELOG in makefile.");
+	str_desc.push_back("The database (defined in AuthDS) must contain a table `command_history` with columns:");
+	str_desc.push_back("    // id - autoincrement");
+	str_desc.push_back("    // argin[0] = timestamp_string UNIX_TIMESTAMP");
+	str_desc.push_back("    // argin[1] = login");
+	str_desc.push_back("    // argin[2] = deviceName");
+	str_desc.push_back("    // argin[3] = IP");
+	str_desc.push_back("    // argin[4] = commandName");
+	str_desc.push_back("    // argin[5] = commandJson");
+	str_desc.push_back("    // argin[6] = statusBool");
 	description << str_desc;
 	data.push_back(description);
 
@@ -732,6 +761,15 @@ void WebSocketDSClass::command_factory()
 			"Output in JSON.",
 			Tango::OPERATOR);
 	command_list.push_back(pSendCommandToDeviceCmd);
+
+	//	Command Reset
+	ResetClass	*pResetCmd =
+		new ResetClass("Reset",
+			Tango::DEV_VOID, Tango::DEV_VOID,
+			"",
+			"",
+			Tango::OPERATOR);
+	command_list.push_back(pResetCmd);
 
 	/*----- PROTECTED REGION ID(WebSocketDSClass::command_factory_after) ENABLED START -----*/
     

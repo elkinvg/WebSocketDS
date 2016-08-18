@@ -147,6 +147,21 @@ bool WebSocketDS::is_SendCommandToDevice_allowed(TANGO_UNUSED(const CORBA::Any &
 	return true;
 }
 
+//--------------------------------------------------------
+/**
+ *	Method      : WebSocketDS::is_Reset_allowed()
+ *	Description : Execution allowed for Reset attribute
+ */
+//--------------------------------------------------------
+bool WebSocketDS::is_Reset_allowed(TANGO_UNUSED(const CORBA::Any &any))
+{
+	//	Not any excluded states for Reset command.
+	/*----- PROTECTED REGION ID(WebSocketDS::ResetStateAllowed) ENABLED START -----*/
+	
+	/*----- PROTECTED REGION END -----*/	//	WebSocketDS::ResetStateAllowed
+	return true;
+}
+
 
 /*----- PROTECTED REGION ID(WebSocketDS::WebSocketDSStateAllowed.AdditionalMethods) ENABLED START -----*/
 

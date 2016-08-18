@@ -168,6 +168,29 @@ public:
 	{return (static_cast<WebSocketDS *>(dev))->is_SendCommandToDevice_allowed(any);}
 };
 
+//	Command Reset class definition
+class ResetClass : public Tango::Command
+{
+public:
+	ResetClass(const char   *name,
+	               Tango::CmdArgType in,
+				   Tango::CmdArgType out,
+				   const char        *in_desc,
+				   const char        *out_desc,
+				   Tango::DispLevel  level)
+	:Command(name,in,out,in_desc,out_desc, level)	{};
+
+	ResetClass(const char   *name,
+	               Tango::CmdArgType in,
+				   Tango::CmdArgType out)
+	:Command(name,in,out)	{};
+	~ResetClass() {};
+	
+	virtual CORBA::Any *execute (Tango::DeviceImpl *dev, const CORBA::Any &any);
+	virtual bool is_allowed (Tango::DeviceImpl *dev, const CORBA::Any &any)
+	{return (static_cast<WebSocketDS *>(dev))->is_Reset_allowed(any);}
+};
+
 
 /**
  *	The WebSocketDSClass singleton definition
