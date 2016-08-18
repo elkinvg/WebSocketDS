@@ -194,59 +194,25 @@ void WebSocketDS::init_device()
 	/*----- PROTECTED REGION ID(WebSocketDS::init_device) ENABLED START -----*/
     attr_JSON_read[0] = Tango::string_dup("[{\"success\": false}]");
 
-    try
-    {
-//        Tango::DeviceProxy *auth = new Tango::DeviceProxy(authDS);
-//        auth->ping();
-//        delete auth;
+    timeFromUpdateData = std::chrono::seconds(std::time(NULL));
 
-        if (!secure){
-            wsThread = new WSThread_plain(this/*, host*/, port);
-        } else {
-            wsThread = new WSThread_tls(this,/*host,*/port,certificate,key);
-        }
-        device = new Tango::DeviceProxy(deviceServer);
-        device->set_timeout_millis(3000);
-        set_state(Tango::ON);
-        set_status("Device is On");
-        //device = unique_ptr<Tango::DeviceProxy>(new Tango::DeviceProxy(deviceServer));
-    }
-    catch (Tango::DevFailed &e)
-    {
-        Tango::Except::print_exception(e);
-        set_state(Tango::FAULT);
-        set_status("Couldn't connect to device: " + deviceServer);
-        fromException(e,"init. new device");
-
-        return;
-    }
-    catch (...) {
-        string err = "Unknown exception after ping : " + deviceServer;
-        set_state(Tango::FAULT);
-        set_status(err.c_str());
-        ERROR_STREAM << err.c_str() << endl;
-        return;
-    }
-
-    try {
-        device->ping();
-    }
-    catch (...) {
-        if (device != nullptr) {
-            delete device;
+    bool isDsInit = initDeviceServer();
+    if (!isDsInit) {
+        if (device!= nullptr)
             device = nullptr;
-        }
-        string err = "Unknown exception after ping : " + deviceServer;
-        set_state(Tango::FAULT);
-        set_status(err.c_str());
-        ERROR_STREAM << err.c_str() << endl;
+        return;
+    }
+    bool isWsThreadInit = initWsThread();
+    if (!isWsThreadInit) {
+        if (device!= nullptr)
+            device = nullptr;
         return;
     }
 
     initAttrAndComm();
 
 //    attr_JSON_read[0] = Tango::string_dup("[{\"success\": false}]");
-    update_data();
+    //update_data();
     /*----- PROTECTED REGION END -----*/	//	WebSocketDS::init_device
 }
 
@@ -398,7 +364,7 @@ void WebSocketDS::always_executed_hook()
     //DEBUG_STREAM << "WebSocketDS::always_executed_hook()  " << device_name << endl;
 	/*----- PROTECTED REGION ID(WebSocketDS::always_executed_hook) ENABLED START -----*/
 
-    if (device==nullptr) {
+    if (device==nullptr || wsThread==nullptr) {
         reInitDevice();
         return;
     }
@@ -513,16 +479,21 @@ void WebSocketDS::update_data()
 
     try
     {
-        if (device==nullptr) {
-            return;
-        }
+//        if (device==nullptr) {
+//            return;
+//        }
         //device->ping();
         attrList = device->read_attributes(attributes);
     }
     catch (Tango::ConnectionFailed &e)
     {
         fromException(e,"update_data.read_attr ConnectionFailed ");
-        reInitDevice();
+        std::stringstream json;
+        json << "{\"event\": \"error\", \"data\":[{\"error\": \"ConnectionFailed from :";
+        json << deviceServer;
+        json << "\"} ]}";
+        wsThread->send_all(json.str().c_str());
+        //reInitDevice();
         return;
     }
     catch (Tango::CommunicationFailed &e)
@@ -763,6 +734,42 @@ void WebSocketDS::fromException(Tango::DevFailed &e, string func)
     for (int i=0;i<lnh;i++) {
         ERROR_STREAM << " From " + func + ": " << e.errors[i].desc << endl;
     }
+}
+
+bool WebSocketDS::initDeviceServer()
+{
+    device = nullptr;
+    bool isInit = false;
+    try {
+        device = new Tango::DeviceProxy(deviceServer);
+        device->set_timeout_millis(3000);
+        isInit = true;
+    }
+    catch (Tango::DevFailed &e)
+    {
+        fromException(e,"initDeviceServer(). ");
+    }
+    return isInit;
+}
+
+bool WebSocketDS::initWsThread()
+{
+    wsThread==nullptr;
+    bool isInit = false;
+    try
+    {
+        if (!secure){
+            wsThread = new WSThread_plain(this/*, host*/, port);
+        } else {
+            wsThread = new WSThread_tls(this,/*host,*/port,certificate,key);
+        }
+        isInit = true;
+    }
+    catch (Tango::DevFailed &e)
+    {
+        fromException(e,"initDeviceServer(). ");
+    }
+    return isInit;
 }
 
 /*----- PROTECTED REGION END -----*/	//	WebSocketDS::namespace_ending

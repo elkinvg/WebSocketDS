@@ -292,6 +292,9 @@ public:
     void initAttrAndComm();
     void fromException(Tango::DevFailed &e, string func);
 
+    bool initDeviceServer();
+    bool initWsThread();
+
     /*----- PROTECTED REGION END -----*/	//	WebSocketDS::Additional Method prototypes
 };
 
