@@ -204,8 +204,8 @@ void WebSocketDS::init_device()
     }
     bool isWsThreadInit = initWsThread();
     if (!isWsThreadInit) {
-        if (device!= nullptr)
-            device = nullptr;
+        if (wsThread!= nullptr)
+            wsThread = nullptr;
         return;
     }
 
@@ -754,7 +754,7 @@ bool WebSocketDS::initDeviceServer()
 
 bool WebSocketDS::initWsThread()
 {
-    wsThread==nullptr;
+    wsThread=nullptr;
     bool isInit = false;
     try
     {
