@@ -571,6 +571,7 @@ Tango::DevString WebSocketDS::send_command_to_device(Tango::DevString argin)
 	/*----- PROTECTED REGION ID(WebSocketDS::send_command_to_device) ENABLED START -----*/
 
     //    Add your own code
+    //cout << "ARGIN: " << argin << endl;
     try
     {
         /// ??? check if command.size() = 0
@@ -584,13 +585,13 @@ Tango::DevString WebSocketDS::send_command_to_device(Tango::DevString argin)
         }
 
         if (jsonArgs["argin"].size() == 0)
-            return "{\"error\": \"argin invalid\"}";
+            return CORBA::string_dup("{\"error\": \"argin invalid\"}");
 
 
         if (jsonArgs["command"] == processor.NONE)
-            return "{\"error\": \"String command not found\"}";
-        if (jsonArgs["argin"] == processor.NONE)
-            return "{\"error\": \"argin not found\"}";
+            return CORBA::string_dup("{\"error\": \"String command not found\"}");
+//        if (jsonArgs["argin"] == processor.NONE)
+//            return CORBA::string_dup("{\"error\": \"argin not found\"}");
 
 
 
@@ -602,9 +603,13 @@ Tango::DevString WebSocketDS::send_command_to_device(Tango::DevString argin)
             int type = comInfo.in_type;
             Tango::DeviceData out;
 
-            if (type == Tango::DEV_VOID)
+            if (type == Tango::DEV_VOID) {
                 out = device->command_inout(jsonArgs["command"]);
+            }
             else {
+                if (jsonArgs["argin"] == processor.NONE)
+                    return CORBA::string_dup("{\"error\": \"argin not found\"}");
+
                 if (jsonArgs["argin"] == "Array") {
                     if (!processor.isMassive(type)) return "{\"error\": \"The input data do not have to be an array\"}";
                 }
