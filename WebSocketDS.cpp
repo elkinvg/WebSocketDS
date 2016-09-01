@@ -658,8 +658,12 @@ void WebSocketDS::reset()
 {
 	DEBUG_STREAM << "WebSocketDS::Reset()  - " << device_name << endl;
 	/*----- PROTECTED REGION ID(WebSocketDS::reset) ENABLED START -----*/
+    auto instance = Tango::Util::instance();// get_dserver_device();
+    auto dsd = instance->get_dserver_device();
+    dsd->restart_server();
+    sendLogToFile();
 
-    reInitDevice();
+    //reInitDevice();
 	
 	/*----- PROTECTED REGION END -----*/	//	WebSocketDS::reset
 }
@@ -682,6 +686,9 @@ void WebSocketDS::check_poll()
      updTime = timeFromUpdateData.count();
      diffTime = cpTime - updTime;
      DEBUG_STREAM << "WebSocketDS::CheckPoll()  - " << device_name << " time difference: " << diffTime  << endl;
+
+     if (diffTime > 60)
+         reset();
 
 	
 	/*----- PROTECTED REGION END -----*/	//	WebSocketDS::check_poll
@@ -775,6 +782,18 @@ bool WebSocketDS::initWsThread()
         fromException(e,"initDeviceServer(). ");
     }
     return isInit;
+}
+
+void WebSocketDS::sendLogToFile()
+{
+    std::fstream fs;
+    fs.open ("/tmp/tango_log/web_socket/test_log.out", std::fstream::in | std::fstream::out | std::fstream::app);
+    Tango::DevULong cTime;
+    std::chrono::seconds  timeFromUpdateData= std::chrono::seconds(std::time(NULL));
+    cTime = timeFromUpdateData.count();
+    fs << cTime << " : Websocket deviceserver reloaded" << endl;
+
+    fs.close();
 }
 
 /*----- PROTECTED REGION END -----*/	//	WebSocketDS::namespace_ending

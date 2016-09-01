@@ -39,6 +39,9 @@ void WSThread::on_close(websocketpp::connection_hdl hdl) {
     m_connections.erase(hdl);
 }
 
+void  WSThread::on_fail(websocketpp::connection_hdl) {
+}
+
 
 string WSThread::parseOfAddress(string addrFromConn) {
     string out = "";
