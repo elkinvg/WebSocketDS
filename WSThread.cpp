@@ -40,6 +40,14 @@ void WSThread::on_close(websocketpp::connection_hdl hdl) {
 }
 
 void  WSThread::on_fail(websocketpp::connection_hdl) {
+    std::fstream fs;
+    fs.open ("/tmp/tango_log/web_socket/test_log.out", std::fstream::in | std::fstream::out | std::fstream::app);
+    Tango::DevULong cTime;
+    std::chrono::seconds  timeFromUpdateData= std::chrono::seconds(std::time(NULL));
+    cTime = timeFromUpdateData.count();
+    fs << cTime << " : Fail from WSThread" << endl;
+
+    fs.close();
 }
 
 
