@@ -33,7 +33,6 @@ namespace WebSocketDS_ns
         //m_server.clear_access_channels(websocketpp::log::alevel::all);
 
         m_server.init_asio();
-
         m_server.set_reuse_addr(true); // for LINUX
         m_server.listen(port);
         m_server.start_accept();
@@ -47,13 +46,97 @@ namespace WebSocketDS_ns
         cache = msg;
         //msg.clear();
         con_list::iterator it;
-        for (it = m_connections.begin(); it != m_connections.end(); ++it) {
-            m_server.send(*it, msg, websocketpp::frame::opcode::text);
+        int ii=0;
+        //for (it = m_connections.begin(); it != m_connections.end(); ++it) {
+        for (it = m_connections.begin(); it != m_connections.end();) {
+            try {
+                m_server.send(*it, msg, websocketpp::frame::opcode::text);
+                ++it;
+                ii++;
+            }
+            catch (websocketpp::exception const & e) {
+                ERROR_STREAM << "std exception caught: " << e.what() << endl;
+#ifdef TESTFAIL
+                std::fstream fs;
+                fs.open ("/tmp/tango_log/web_socket/test_log.out", std::fstream::in | std::fstream::out | std::fstream::app);
+                Tango::DevULong cTime;
+                std::chrono::seconds  timeFromUpdateData= std::chrono::seconds(std::time(NULL));
+                std::chrono::time_point<std::chrono::system_clock> end = std::chrono::system_clock::now();
+                std::time_t end_time = std::chrono::system_clock::to_time_t(end);
+                cTime = timeFromUpdateData.count();
+                //fs << cTime << " FROM it: " << ii <<  " websocketpp::exception: " << e.what() << '\n';ii++;
+                fs << std::ctime(&end_time) << " FROM it: " << ii <<  " websocketpp::exception: " << e.what() << " | wasNconn = " << m_connections.size() << endl;
+                fs << " m_code: " << e.m_code << " | m_msg" << e.m_msg << endl;
+                fs << endl;
+#endif
+                ii++;
+                on_close(*(it++));
+#ifdef TESTFAIL
+                fs << " now: " << m_connections.size() << "\n";
+
+                fs.close();
+#endif
+                //on_close(*(it++));
+            }
+            catch (std::exception& e)
+            {
+                ERROR_STREAM << "std exception caught: " << e.what() << endl;
+#ifdef TESTFAIL
+                std::fstream fs;
+                fs.open ("/tmp/tango_log/web_socket/test_log.out", std::fstream::in | std::fstream::out | std::fstream::app);
+                Tango::DevULong cTime;
+                std::chrono::seconds  timeFromUpdateData= std::chrono::seconds(std::time(NULL));
+                std::chrono::time_point<std::chrono::system_clock> end = std::chrono::system_clock::now();
+                std::time_t end_time = std::chrono::system_clock::to_time_t(end);
+                cTime = timeFromUpdateData.count();
+                //fs << cTime << " FROM it: " << ii <<  " std exception caught: " << e.what() << '\n';ii++;
+                fs << std::ctime(&end_time) << " FROM it: " << ii <<  " std exception caught: " << e.what() << " wasNconn =" << m_connections.size();
+#endif
+                ii++;
+                on_close(*(it++));
+#ifdef TESTFAIL
+                fs << " now: " << m_connections.size() << "\n";
+
+                fs.close();
+#endif
+                //on_close(*(it++));
+
+            }
+            catch (...) {
+                ERROR_STREAM << "unknown error from send_all " << endl;
+#ifdef TESTFAIL
+                std::fstream fs;
+                fs.open ("/tmp/tango_log/web_socket/test_log.out", std::fstream::in | std::fstream::out | std::fstream::app);
+                Tango::DevULong cTime;
+                std::chrono::seconds  timeFromUpdateData= std::chrono::seconds(std::time(NULL));
+                cTime = timeFromUpdateData.count();
+                fs << cTime << " : Exception from send_all " << endl;
+                fs.close();
+#endif
+                ii++;
+                on_close(*(it++));
+            }
         }
     }
 
+
+
     void WSThread_plain::send(websocketpp::connection_hdl hdl, std::string msg) {
-        m_server.send(hdl, msg, websocketpp::frame::opcode::text);
+        try {
+            m_server.send(hdl, msg, websocketpp::frame::opcode::text);
+        }
+        catch (...) {
+            ERROR_STREAM << "unknown error from send " << endl;
+#ifdef TESTFAIL
+            std::fstream fs;
+            fs.open ("/tmp/tango_log/web_socket/test_log.out", std::fstream::in | std::fstream::out | std::fstream::app);
+            Tango::DevULong cTime;
+            std::chrono::seconds  timeFromUpdateData= std::chrono::seconds(std::time(NULL));
+            cTime = timeFromUpdateData.count();
+            fs << cTime << " :Unknown Exception from send " << endl;
+            fs.close();
+#endif
+        }
     }
 
     void WSThread_plain::stop()

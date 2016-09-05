@@ -39,7 +39,8 @@ void WSThread::on_close(websocketpp::connection_hdl hdl) {
     m_connections.erase(hdl);
 }
 
-void  WSThread::on_fail(websocketpp::connection_hdl) {
+void  WSThread::on_fail(websocketpp::connection_hdl hdl) {
+#ifdef TESTFAIL
     std::fstream fs;
     fs.open ("/tmp/tango_log/web_socket/test_log.out", std::fstream::in | std::fstream::out | std::fstream::app);
     Tango::DevULong cTime;
@@ -48,6 +49,7 @@ void  WSThread::on_fail(websocketpp::connection_hdl) {
     fs << cTime << " : Fail from WSThread" << endl;
 
     fs.close();
+#endif
 }
 
 
