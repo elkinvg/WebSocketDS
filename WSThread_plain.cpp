@@ -55,7 +55,7 @@ namespace WebSocketDS_ns
                 ii++;
             }
             catch (websocketpp::exception const & e) {
-                ERROR_STREAM << "std exception caught: " << e.what() << endl;
+                ERROR_STREAM << "exception from send_all: " << e.what() << endl;
 #ifdef TESTFAIL
                 std::fstream fs;
                 fs.open ("/tmp/tango_log/web_socket/test_log.out", std::fstream::in | std::fstream::out | std::fstream::app);
@@ -80,7 +80,7 @@ namespace WebSocketDS_ns
             }
             catch (std::exception& e)
             {
-                ERROR_STREAM << "std exception caught: " << e.what() << endl;
+                ERROR_STREAM << "exception from send_all: " << e.what() << endl;
 #ifdef TESTFAIL
                 std::fstream fs;
                 fs.open ("/tmp/tango_log/web_socket/test_log.out", std::fstream::in | std::fstream::out | std::fstream::app);
@@ -125,8 +125,17 @@ namespace WebSocketDS_ns
         try {
             m_server.send(hdl, msg, websocketpp::frame::opcode::text);
         }
+        catch (websocketpp::exception const & e) {
+            ERROR_STREAM << "exception from send: " << e.what() << endl;
+            on_close(hdl);
+        }
+        catch (std::exception& e) {
+            ERROR_STREAM << "exception from send: " << e.what() << endl;
+            on_close(hdl);
+        }
         catch (...) {
             ERROR_STREAM << "unknown error from send " << endl;
+            on_close(hdl);
 #ifdef TESTFAIL
             std::fstream fs;
             fs.open ("/tmp/tango_log/web_socket/test_log.out", std::fstream::in | std::fstream::out | std::fstream::app);

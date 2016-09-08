@@ -40,6 +40,7 @@ void WSThread::on_close(websocketpp::connection_hdl hdl) {
 }
 
 void  WSThread::on_fail(websocketpp::connection_hdl hdl) {
+    ERROR_STREAM << " Fail from WSThread on_fail " << endl;
 #ifdef TESTFAIL
     std::fstream fs;
     fs.open ("/tmp/tango_log/web_socket/test_log.out", std::fstream::in | std::fstream::out | std::fstream::app);

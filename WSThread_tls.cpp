@@ -24,6 +24,7 @@ void *WSThread_tls::run_undetached(void *ptr)
     m_server.set_close_handler(websocketpp::lib::bind(&WSThread_tls::on_close,this,websocketpp::lib::placeholders::_1));
     m_server.set_message_handler(websocketpp::lib::bind(&WSThread_tls::on_message,this,websocketpp::lib::placeholders::_1,websocketpp::lib::placeholders::_2));
     m_server.set_validate_handler(bind(&WSThread_tls::on_validate, this, websocketpp::lib::placeholders::_1));
+    m_server.set_fail_handler(bind(&WSThread_tls::on_fail, this, websocketpp::lib::placeholders::_1));
     
     // this will turn off console output for frame header and payload
     m_server.clear_access_channels(websocketpp::log::alevel::frame_header | websocketpp::log::alevel::frame_payload);
@@ -53,13 +54,43 @@ void WSThread_tls::send_all(std::string msg) {
     cache = msg;
     //msg.clear();
     con_list::iterator it;
-    for (it = m_connections.begin(); it != m_connections.end(); ++it) {
-        m_server.send(*it,msg ,websocketpp::frame::opcode::text);
+    //for (it = m_connections.begin(); it != m_connections.end(); ++it) {
+    for (it = m_connections.begin(); it != m_connections.end();) {
+        try {
+            m_server.send(*it, msg, websocketpp::frame::opcode::text);
+            ++it;
+        }
+        catch (websocketpp::exception const & e) {
+            ERROR_STREAM << "exception from send_all: " << e.what() << endl;
+            on_close(*(it++));
+        }
+        catch (std::exception& e) {
+            ERROR_STREAM << "exception from send_all: " << e.what() << endl;
+            on_close(*(it++));
+        }
+        catch (...) {
+            ERROR_STREAM << "unknown error from send_all " << endl;
+            on_close(*(it++));
+        }
     }
 }
 
 void WSThread_tls::send(websocketpp::connection_hdl hdl, std::string msg) {
-    m_server.send(hdl, msg ,websocketpp::frame::opcode::text);
+    try {
+        m_server.send(hdl, msg, websocketpp::frame::opcode::text);
+    }
+    catch (websocketpp::exception const & e) {
+        ERROR_STREAM << "exception from send: " << e.what() << endl;
+        on_close(hdl);
+    }
+    catch (std::exception& e) {
+        ERROR_STREAM << "exception from send: " << e.what() << endl;
+        on_close(hdl);
+    }
+    catch (...) {
+        ERROR_STREAM << "unknown error from send " << endl;
+        on_close(hdl);
+    }
 }
 
 void WSThread_tls::stop()
