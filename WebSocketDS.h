@@ -295,6 +295,9 @@ public:
     bool initDeviceServer();
     bool initWsThread();
 
+    //TEST
+    void sendLogToFile();
+
     /*----- PROTECTED REGION END -----*/	//	WebSocketDS::Additional Method prototypes
 };
 
@@ -350,6 +353,8 @@ protected:
     void on_message(websocketpp::connection_hdl hdl, server::message_ptr msg);
     void on_open(websocketpp::connection_hdl hdl);
     void on_close(websocketpp::connection_hdl hdl);
+    //test
+    void  on_fail(websocketpp::connection_hdl);
 
     string parseOfAddress(string addrFromConn); // parsing of get_remote_endpoint-return
     // remoteEndpoint in websocket output formate[::ffff:127.0.0.1 : 11111]
