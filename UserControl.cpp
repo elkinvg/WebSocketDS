@@ -60,19 +60,38 @@ bool WebSocketDS_ns::UserControl::check_permission(map<string, string>& parsedGe
 bool WebSocketDS_ns::UserControl::check_user(map<string, string>& parsedGet) {
     bool isAuth = false;
 
+    vector<string> auth_data;
+
+#ifdef USERANDIDENT
+    if (parsedGet.find("login") == parsedGet.end() || parsedGet.find("id_ri") == parsedGet.end())
+        return isAuth;
+
+    if (parsedGet.find("rand_ident_hash") == parsedGet.end() || parsedGet.find("rand_ident") == parsedGet.end())
+        return isAuth;
+
+    auth_data.push_back(parsedGet["login"]);
+    auth_data.push_back(parsedGet["id_ri"]);
+    auth_data.push_back(parsedGet["rand_ident_hash"]);
+    auth_data.push_back(parsedGet["rand_ident"]);
+
+#else
     if (parsedGet.find("login") == parsedGet.end() || parsedGet.find("password") == parsedGet.end())
         return isAuth;
 
-    vector<string> auth_data;
     auth_data.push_back(parsedGet["login"]);
     auth_data.push_back(parsedGet["password"]);
+#endif
 
     Tango::DeviceData argin, argout;
 
     try {
         argin << auth_data;
         Tango::DeviceProxy *authProxy = new Tango::DeviceProxy(ds->authDS);
+#ifdef USERANDIDENT
+        argout = authProxy->command_inout("check_user_ident", argin);
+#else
         argout = authProxy->command_inout("check_user", argin);
+#endif
         argout >> isAuth;
         delete authProxy;
 
