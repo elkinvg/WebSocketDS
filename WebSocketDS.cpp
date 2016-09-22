@@ -475,7 +475,19 @@ void WebSocketDS::update_data()
 
     std::vector<Tango::DeviceAttribute> *attrList;
     timeFromUpdateData = std::chrono::seconds(std::time(NULL));
-
+    try {
+        device->ping();
+    }
+    catch (Tango::DevFailed &e)
+    {
+        fromException(e, "update_data.read_attr ");
+        std::stringstream json;
+        json << "{\"event\": \"error\", \"data\":[{\"error\": \"No data from :";
+        json << deviceServer;
+        json << ". Perhaps the server is down\"} ]}";
+        wsThread->send_all(json.str().c_str());
+        return;
+    }
 
     try
     {
@@ -483,14 +495,6 @@ void WebSocketDS::update_data()
 //            return;
 //        }
         //device->ping();
-        if (attributes.size() == 0) {
-            std::stringstream json;
-            json << "{\"event\": \"error\", \"data\":[{\"error\": \"No data from :";
-            json << deviceServer;
-            json << ". Perhaps the server is down\"} ]}";
-            wsThread->send_all(json.str().c_str());
-            return;
-        }
         attrList = device->read_attributes(attributes);
     }
     catch (Tango::ConnectionFailed &e)
