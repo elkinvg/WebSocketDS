@@ -16,12 +16,13 @@ void WSThread::on_message(websocketpp::connection_hdl hdl, server::message_ptr m
     INFO_STREAM << " Input message: " << msg->get_payload() << endl;
     Tango::DevString input = const_cast<Tango::DevString>(data_from_client.c_str());
     map<string, string> conf = getRemoteConf(hdl);
-    Tango::DevString output;
+    //Tango::DevString output;
+    string output;
     bool permission = uc->check_permission(conf, input);
     if (permission)
-        output = ds->send_command_to_device(input);
+        output = (string)ds->send_command_to_device(input);
     else
-        output = CORBA::string_dup("{\"error\":\"Permission denied\"}");
+        output = "{\"error\":\"Permission denied\"}";
 
     send(hdl, output);
 }
@@ -74,6 +75,14 @@ string WSThread::parseOfAddress(string addrFromConn) {
 }
 
 map<string, string> WSThread::parseOfGetQuery(string query) {
+    // For parsing of get Query
+    //
+    // ws://address?arg1=val&arg2=val&arg3=val
+    // For check_permission method Query mustcontain arguments "login" and "password"
+    // If defined #USERANDIDENT method Query must contain 
+    // arguments "login", "id_ri","rand_ident_hash" and "rand_ident"
+
+
     map<string, string> outMap;
     if (query.size() == 0)
         return outMap;

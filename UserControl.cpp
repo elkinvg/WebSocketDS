@@ -2,10 +2,21 @@
 
 bool WebSocketDS_ns::UserControl::check_permission(map<string, string>& parsedGet, Tango::DevString commandJson) {
     bool isAuth = false;
+
+
+#ifdef USERANDIDENT
+    if (parsedGet.find("login") == parsedGet.end() || parsedGet.find("id_ri") == parsedGet.end())
+        return isAuth;
+
+    if (parsedGet.find("rand_ident_hash") == parsedGet.end() || parsedGet.find("rand_ident") == parsedGet.end())
+        return isAuth;
+#else
     if (parsedGet.find("login") == parsedGet.end() || parsedGet.find("password") == parsedGet.end() || parsedGet.find("ip") == parsedGet.end()) {
         ERROR_STREAM << "login or password or ip not found" << endl;
         return isAuth;
     }
+#endif
+
     string commandName = getCommandName(commandJson);
     vector <string> permission_data;
     Tango::DbDevice* dbDev = ds->get_db_device();
@@ -15,11 +26,20 @@ bool WebSocketDS_ns::UserControl::check_permission(map<string, string>& parsedGe
     string deviceName;
     db_data[0] >> deviceName;
 
+#ifdef USERANDIDENT
+    permission_data.resize(7);
+#else
     permission_data.resize(4);
+#endif
     permission_data[0] = deviceName; // device
     permission_data[1] = commandName;
     permission_data[2] = parsedGet["ip"];
     permission_data[3] = parsedGet["login"];
+#ifdef USERANDIDENT
+    permission_data[4] = parsedGet["id_ri"];
+    permission_data[5] = parsedGet["rand_ident_hash"];
+    permission_data[6] = parsedGet["rand_ident"];
+#endif
 
 #ifdef USELOG
     Tango::DevULong tv; // TIMESTAMP
@@ -42,7 +62,11 @@ bool WebSocketDS_ns::UserControl::check_permission(map<string, string>& parsedGe
     try {
         argin << permission_data;
         Tango::DeviceProxy *authProxy = new Tango::DeviceProxy(ds->authDS);
+#ifdef USERANDIDENT
+        argout = authProxy->command_inout("check_permissions_ident", argin);
+#else
         argout = authProxy->command_inout("check_permissions", argin);
+#endif
         argout >> isAuth;
 #ifdef USELOG
         string statusBool = to_string(isAuth);
