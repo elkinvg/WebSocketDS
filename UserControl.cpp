@@ -15,6 +15,13 @@ bool WebSocketDS_ns::UserControl::check_permission(map<string, string>& parsedGe
         ERROR_STREAM << "login or password or ip not found" << endl;
         return isAuth;
     }
+
+    bool cuser = check_user(parsedGet);
+    
+    if (!cuser) {
+        ERROR_STREAM << "incorrect login or password " << endl;
+        return isAuth;
+    }
 #endif
 
     string commandName = getCommandName(commandJson);
@@ -86,7 +93,7 @@ bool WebSocketDS_ns::UserControl::check_user(map<string, string>& parsedGet) {
 
     vector<string> auth_data;
 
-#ifdef USERANDIDENT
+/*#ifdef USERANDIDENT
     if (parsedGet.find("login") == parsedGet.end() || parsedGet.find("id_ri") == parsedGet.end())
         return isAuth;
 
@@ -98,24 +105,24 @@ bool WebSocketDS_ns::UserControl::check_user(map<string, string>& parsedGet) {
     auth_data.push_back(parsedGet["rand_ident_hash"]);
     auth_data.push_back(parsedGet["rand_ident"]);
 
-#else
+#else*/
     if (parsedGet.find("login") == parsedGet.end() || parsedGet.find("password") == parsedGet.end())
         return isAuth;
 
     auth_data.push_back(parsedGet["login"]);
     auth_data.push_back(parsedGet["password"]);
-#endif
+//#endif
 
     Tango::DeviceData argin, argout;
 
     try {
         argin << auth_data;
         Tango::DeviceProxy *authProxy = new Tango::DeviceProxy(ds->authDS);
-#ifdef USERANDIDENT
+/*#ifdef USERANDIDENT
         argout = authProxy->command_inout("check_user_ident", argin);
-#else
+#else*/
         argout = authProxy->command_inout("check_user", argin);
-#endif
+//#endif
         argout >> isAuth;
         delete authProxy;
 
