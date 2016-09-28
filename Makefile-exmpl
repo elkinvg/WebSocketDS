@@ -91,7 +91,10 @@ LIB_DIR_USER= -L/usr/lib64 -lboost_thread -lboost_system -lboost_date_time -lboo
 #
 # -DACE_HAS_EXCEPTIONS -D__ACE_INLINE__ for ACE
 #
-CXXFLAGS_USR+= -Wall -D_WEBSOCKETPP_CPP11_STL_ -DUSELOG
+
+# add -DUSELOG for logging
+# add -DUSERANDIDENT for using random identification method
+CXXFLAGS_USR+= -Wall -D_WEBSOCKETPP_CPP11_STL_
 
 
 #=============================================================================
