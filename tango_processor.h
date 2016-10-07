@@ -2,6 +2,7 @@
 #define attribute_reader_H
 #include <tango.h>
 #include <array>
+#include <unordered_map>
 
 namespace WebSocketDS_ns
 {
@@ -11,6 +12,7 @@ namespace WebSocketDS_ns
         const string NONE = "\"NONE\"";
     private:
         enum class TYPE_OF_DEVICE_DATA { VOID_D = 0, DATA = 1, ARRAY = 2 };
+        unordered_map<string, unsigned short> attrsWithSetPrecision;
 
     public:
         tango_processor();
@@ -23,12 +25,14 @@ namespace WebSocketDS_ns
         //std::string gettingJsonStrFromDevData(Tango::DeviceData& devData, const string &command); // std::map<std::string,std::string>
         std::string gettingJsonStrFromDevData(Tango::DeviceData& devData,std::map<std::string,std::string> inputArgs);
 
+        void addPrecisionForAttribute(string nameAttr, unsigned short precision);
+
     private:
         std::string devAttrToStr(Tango::DeviceAttribute *attr);
         template <typename T>
         std::string attrsToString(/*T& data, */Tango::DeviceAttribute *attr);
         template <typename T>
-        void dataFromAttrsToJson(T& data, std::stringstream& ss);
+        void dataFromAttrsToJson(T& data, std::stringstream& ss, string nameOfAttr = "");
 
         template <typename T>
         Tango::DeviceData parsingJsonForGenerateData(/*T& devData,*/const std::string& jsonData, int typeForDeviceData);
@@ -47,7 +51,7 @@ namespace WebSocketDS_ns
         Tango::DeviceData getDeviceDataFromArrayType(const std::string& jsonData);
 
         template <typename T>
-        void dataArrayFromAttrsToJson(std::vector<T>& vecFromData, std::stringstream& json);
+        void dataArrayFromAttrsToJson(std::vector<T>& vecFromData, std::stringstream& json, string nameOfAttr = "");
 
 //        std::string devDataToString(Tango::DeviceData* deviceData);
 

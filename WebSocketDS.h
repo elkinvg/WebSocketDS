@@ -59,6 +59,8 @@
 
 //#define USELOG
 
+//#include <unordered_map>
+
 /*----- PROTECTED REGION END -----*/	//	WebSocketDS.h
 
 /**
@@ -115,6 +117,8 @@ private:
     //std::unique_ptr<Tango::DeviceProxy> device;
     tango_processor processor;
     std::vector<bool>  isJsonAttribute;
+
+
     std::chrono::seconds timeFromUpdateData;
 public:
     std::map<std::string, Tango::CommandInfo> accessibleCommandInfo;
@@ -295,8 +299,11 @@ public:
     bool initDeviceServer();
     bool initWsThread();
 
-    //TEST
+#ifdef TESTFAIL
     void sendLogToFile();
+#endif
+    // for getting attribute's configuration
+    void gettingAttrUserConf(string&);
 
     /*----- PROTECTED REGION END -----*/	//	WebSocketDS::Additional Method prototypes
 };

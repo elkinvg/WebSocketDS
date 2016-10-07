@@ -61,6 +61,8 @@ namespace WebSocketDS_ns
         Tango::DevState stateIn;
         string stateStr;
 
+        string nameAttr = attr->get_name();
+
         std::stringstream ss;
 
         if (format == Tango::AttrDataFormat::SPECTRUM || format == Tango::AttrDataFormat::IMAGE)
@@ -73,26 +75,32 @@ namespace WebSocketDS_ns
             if (type == Tango::DEV_STATE) {
                 (*attr) >> stateIn;
                 stateStr = tangoState[stateIn];// SwitchTangoState(stateIn);
-                dataFromAttrsToJson(stateStr, ss);
+                dataFromAttrsToJson(stateStr, ss, nameAttr);
             }
             else {
                 (*attr) >> data;
-                dataFromAttrsToJson(data, ss);
+                dataFromAttrsToJson(data, ss, nameAttr);
             }
         }
         else
             if (format == Tango::AttrDataFormat::SPECTRUM || format == Tango::AttrDataFormat::IMAGE) {
                 (*attr) >> dataVector;
                 ss << "[";
-                dataArrayFromAttrsToJson(dataVector,ss);
+                dataArrayFromAttrsToJson(dataVector,ss,nameAttr);
                 ss << "]";
             }
         return ss.str();
     }
 
     template <typename T>
-    void tango_processor::dataFromAttrsToJson(T& data, std::stringstream& ss) {
-        if (is_floating_point<T>::value) ss << std::setprecision(5) << data;
+    void tango_processor::dataFromAttrsToJson(T& data, std::stringstream& ss, string nameOfAttr) {
+        if (is_floating_point<T>::value) {
+            auto nameAt = attrsWithSetPrecision.find(nameOfAttr);
+            if (nameAt == attrsWithSetPrecision.end())
+                ss << std::setprecision(5) << data;
+            else
+                ss << std::setprecision(attrsWithSetPrecision[nameOfAttr]) << data;
+        }
         else if (std::is_same<T, bool>::value) ss << std::boolalpha << data;
         else if (std::is_same<T, const std::string>::value || std::is_same<T, std::string>::value) ss << "\"" << data << "\"";
         else ss << data;
@@ -339,6 +347,11 @@ namespace WebSocketDS_ns
         return json.str();
     }
 
+    void tango_processor::addPrecisionForAttribute(string nameAttr, unsigned short precision) {
+        std::pair<std::string, unsigned short> tmpPair(nameAttr, precision);
+        attrsWithSetPrecision.insert(tmpPair);
+    }
+
     template <typename T>
     void tango_processor::generateStringJsonFromDevData(Tango::DeviceData &devData, std::stringstream& json)
     {
@@ -366,13 +379,13 @@ namespace WebSocketDS_ns
     }
 
     template <typename T>
-    void tango_processor::dataArrayFromAttrsToJson(std::vector<T>& vecFromData,  std::stringstream& json) {
+    void tango_processor::dataArrayFromAttrsToJson(std::vector<T>& vecFromData, std::stringstream& json, string nameOfAttr) {
         bool begin = true;
 
         for (T fromData : vecFromData) {
             if (!begin) json << ", ";
             else begin = false;
-            dataFromAttrsToJson(fromData, json);
+            dataFromAttrsToJson(fromData, json, nameOfAttr);
         }
     }
 

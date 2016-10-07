@@ -673,8 +673,9 @@ void WebSocketDS::reset()
     auto instance = Tango::Util::instance();// get_dserver_device();
     auto dsd = instance->get_dserver_device();
     dsd->restart_server();
+#ifdef TESTFAIL
     sendLogToFile();
-
+#endif
     //reInitDevice();
 	
 	/*----- PROTECTED REGION END -----*/	//	WebSocketDS::reset
@@ -730,12 +731,14 @@ void WebSocketDS::reInitDevice() {
 void WebSocketDS::initAttrAndComm()
 {
     DEBUG_STREAM << "Attributes: " << endl;
-    for (int i = 0; i < attributes.size(); i++)
-    {
-        std::string at = attributes.at(i);
-        boost::to_lower(at);
-        isJsonAttribute.push_back(at.find("json") != std::string::npos);
-        DEBUG_STREAM << attributes.at(i) << endl;
+    // Method gettingAttrUserConf added for Searhing of additional options for attributes
+    // Now it is option "prec" for precision
+    for (auto& attr : attributes) {
+        gettingAttrUserConf(attr);
+        string tmpAttrName = attr;
+        boost::to_lower(tmpAttrName);
+        isJsonAttribute.push_back(tmpAttrName.find("json") != std::string::npos);
+        DEBUG_STREAM << attr << endl;
     }
 
     DEBUG_STREAM << "Commands: " << endl;
@@ -783,9 +786,9 @@ bool WebSocketDS::initWsThread()
     try
     {
         if (!secure){
-            wsThread = new WSThread_plain(this/*, host*/, port);
+            wsThread = new WSThread_plain(this, port);
         } else {
-            wsThread = new WSThread_tls(this,/*host,*/port,certificate,key);
+            wsThread = new WSThread_tls(this,port,certificate,key);
         }
         isInit = true;
     }
@@ -796,6 +799,7 @@ bool WebSocketDS::initWsThread()
     return isInit;
 }
 
+#ifdef TESTFAIL
 void WebSocketDS::sendLogToFile()
 {
     std::fstream fs;
@@ -806,6 +810,50 @@ void WebSocketDS::sendLogToFile()
     fs << cTime << " : Websocket deviceserver reloaded" << endl;
 
     fs.close();
+}
+#endif
+
+void WebSocketDS::gettingAttrUserConf(string &inp)
+{
+    // Now must be one parameter. It is  "prec" for precission. Example  'prec=15'
+    std::string delimiter = ";";
+    std::string token;
+    std::vector<std::string> gettedAttr;
+    size_t pos = 0;
+
+    string s = inp;
+
+    while ((pos = s.find(delimiter)) != std::string::npos) {
+        token = s.substr(0, pos);
+        gettedAttr.push_back(token);
+        s.erase(0, pos + delimiter.length());
+    }
+
+    if (gettedAttr.size()<1) 
+        return;
+
+    // if size >= 1
+
+    inp = gettedAttr[0];
+
+    string gPar = s;
+    delimiter = "=";
+
+    if ((pos = gPar.find(delimiter)) != std::string::npos) {
+        token = gPar.substr(0, pos);
+        if (token != "prec") 
+            return;
+
+        gPar.erase(0, pos + delimiter.length());
+        try {
+            unsigned short tmpus;
+            tmpus = (unsigned short)stoi(gPar);
+            if (tmpus < 20) {
+                processor.addPrecisionForAttribute(inp, tmpus);
+            }
+        }
+        catch (...) {}
+    }
 }
 
 /*----- PROTECTED REGION END -----*/	//	WebSocketDS::namespace_ending
