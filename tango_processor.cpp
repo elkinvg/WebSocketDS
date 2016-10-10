@@ -25,7 +25,7 @@ namespace WebSocketDS_ns
     }
 
     std::string tango_processor::process_attribute_t(Tango::DeviceAttribute& att) {
-        // Генерация JSON из DeviceAttribute
+        // Р“РµРЅРµСЂР°С†РёСЏ JSON РёР· DeviceAttribute
         std::stringstream json;
         json << "";
 
@@ -107,9 +107,9 @@ namespace WebSocketDS_ns
     }
 
     std::map<std::string,std::string> tango_processor::getCommandName(const string& jsonInput) {
-        // Проверка входных парамеров JSON.
-        // Если параметры найдены в строке будет значение параметра, иначе пустая строка
-        // Для argin, если входной параметр массив передаёт "Array", иначе просто значение
+        // РџСЂРѕРІРµСЂРєР° РІС…РѕРґРЅС‹С… РїР°СЂР°РјРµСЂРѕРІ JSON.
+        // Р•СЃР»Рё РїР°СЂР°РјРµС‚СЂС‹ РЅР°Р№РґРµРЅС‹ РІ СЃС‚СЂРѕРєРµ Р±СѓРґРµС‚ Р·РЅР°С‡РµРЅРёРµ РїР°СЂР°РјРµС‚СЂР°, РёРЅР°С‡Рµ РїСѓСЃС‚Р°СЏ СЃС‚СЂРѕРєР°
+        // Р”Р»СЏ argin, РµСЃР»Рё РІС…РѕРґРЅРѕР№ РїР°СЂР°РјРµС‚СЂ РјР°СЃСЃРёРІ РїРµСЂРµРґР°С‘С‚ "Array", РёРЅР°С‡Рµ РїСЂРѕСЃС‚Рѕ Р·РЅР°С‡РµРЅРёРµ
         boost::property_tree::ptree pt;
         std::stringstream ss;
         std::map<std::string,std::string> output;
@@ -121,9 +121,9 @@ namespace WebSocketDS_ns
             boost::property_tree::read_json(ss, pt);
 
             //pt.get_value_optional
-            // Взят boost::optional. В случае, если параметр JSON не найден присваивает этому параметру пустую строку
+            // Р’Р·СЏС‚ boost::optional. Р’ СЃР»СѓС‡Р°Рµ, РµСЃР»Рё РїР°СЂР°РјРµС‚СЂ JSON РЅРµ РЅР°Р№РґРµРЅ РїСЂРёСЃРІР°РёРІР°РµС‚ СЌС‚РѕРјСѓ РїР°СЂР°РјРµС‚СЂСѓ РїСѓСЃС‚СѓСЋ СЃС‚СЂРѕРєСѓ
 
-            // Если входная строка не JSON, возвращяет строку с ошибкой.
+            // Р•СЃР»Рё РІС…РѕРґРЅР°СЏ СЃС‚СЂРѕРєР° РЅРµ JSON, РІРѕР·РІСЂР°С‰СЏРµС‚ СЃС‚СЂРѕРєСѓ СЃ РѕС€РёР±РєРѕР№.
             vector<pair<std::string, boost::optional<std::string>>> boostOpt;
 
 
@@ -141,8 +141,8 @@ namespace WebSocketDS_ns
                 }
             }
 
-            // Здесь, если output["argin"].size() == 0, значит параметр argin найден, но формат данных не простое значение.
-            // Прводится проверка, является ли он массивом
+            // Р—РґРµСЃСЊ, РµСЃР»Рё output["argin"].size() == 0, Р·РЅР°С‡РёС‚ РїР°СЂР°РјРµС‚СЂ argin РЅР°Р№РґРµРЅ, РЅРѕ С„РѕСЂРјР°С‚ РґР°РЅРЅС‹С… РЅРµ РїСЂРѕСЃС‚РѕРµ Р·РЅР°С‡РµРЅРёРµ.
+            // РџСЂРІРѕРґРёС‚СЃСЏ РїСЂРѕРІРµСЂРєР°, СЏРІР»СЏРµС‚СЃСЏ Р»Рё РѕРЅ РјР°СЃСЃРёРІРѕРј
 
             if (output["argin"].size() == 0) {
                 int it = 0;
@@ -538,7 +538,7 @@ namespace WebSocketDS_ns
         }
         break;
         case Tango::DEV_ENCODED:
-            // посмотреть
+            // РїРѕСЃРјРѕС‚СЂРµС‚СЊ
             break;
         default:
             break;
