@@ -176,10 +176,11 @@ namespace WebSocketDS_ns
         }
 
         std::stringstream json;
-        // ??? check, if inputArgs['arg'] is empty
+
+        json << "{\"event\": \"read\", \"type_req\": \"command\", \"data\": ";
         json << "{";
-        json << "\"command\": " << "\"" << inputArgs["command"] << "\",";
-        json << "\"id\": "  << inputArgs["id"] << ",";
+        json << "\"command_name\": " << "\"" << inputArgs["command"] << "\",";
+        json << "\"id_req\": "  << inputArgs["id"] << ",";
 
         switch (type)
         {
@@ -343,6 +344,7 @@ namespace WebSocketDS_ns
         default:
             break;
         }
+        json << "} ";
         json << "}";
         return json.str();
     }
