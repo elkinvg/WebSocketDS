@@ -527,7 +527,7 @@ void WebSocketDS::update_data()
     {
         std::stringstream json;
         //json << "[";
-        json << "{\"event\": \"read\", \"data\":[";
+        json << "{\"event\": \"read\", \"type_req\": \"attribute\", \"data\":[";
         for (int i = 0; i < attributes.size(); i++)
         {
             if (i != 0) json << ", ";
