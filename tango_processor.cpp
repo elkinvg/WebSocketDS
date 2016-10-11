@@ -121,7 +121,7 @@ namespace WebSocketDS_ns
             boost::property_tree::read_json(ss, pt);
 
             //pt.get_value_optional
-            // Взят boost::optional. В случае, если параметр JSON не найден присваивает этому параметру пустую строку
+            // Взят boost::optional. В случае, если параметр JSON не найден, присваивает этому параметру пустую строку
 
             // Если входная строка не JSON, возвращяет строку с ошибкой.
             vector<pair<std::string, boost::optional<std::string>>> boostOpt;

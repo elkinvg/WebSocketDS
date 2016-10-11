@@ -1,4 +1,4 @@
-/*----- PROTECTED REGION ID(WebSocketDS.cpp) ENABLED START -----*/
+﻿/*----- PROTECTED REGION ID(WebSocketDS.cpp) ENABLED START -----*/
 static const char *RcsId = "$Id:  $";
 //=============================================================================
 //
@@ -481,11 +481,9 @@ void WebSocketDS::update_data()
     catch (Tango::DevFailed &e)
     {
         fromException(e, "update_data.read_attr ");
-        std::stringstream json;
-        json << "{\"event\": \"error\", \"data\":[{\"error\": \"No data from :";
-        json << deviceServer;
-        json << ". Perhaps the server is down\"} ]}";
-        wsThread->send_all(json.str().c_str());
+        string mes = "No data from : " + deviceServer + ".Perhaps the server is down";
+        string excOut = exceptionStringOut(mes);
+        wsThread->send_all(excOut);
         return;
     }
 
@@ -500,22 +498,18 @@ void WebSocketDS::update_data()
     catch (Tango::ConnectionFailed &e)
     {
         fromException(e,"update_data.read_attr ConnectionFailed ");
-        std::stringstream json;
-        json << "{\"event\": \"error\", \"data\":[{\"error\": \"ConnectionFailed from :";
-        json << deviceServer;
-        json << "\"} ]}";
-        wsThread->send_all(json.str().c_str());
+        string mes = "ConnectionFailed from :" + deviceServer;
+        string excOut = exceptionStringOut(mes);
+        wsThread->send_all(excOut);
         //reInitDevice();
         return;
     }
     catch (Tango::CommunicationFailed &e)
     {
         fromException(e,"update_data.read_attr CommunicationFailed ");
-        std::stringstream json;
-        json << "{\"event\": \"error\", \"data\":[{\"error\": \"CommunicationFailed from :";
-        json << deviceServer;
-        json << "\"} ]}";
-        wsThread->send_all(json.str().c_str());
+        string mes = "CommunicationFailed from :" + deviceServer;
+        string excOut = exceptionStringOut(mes);
+        wsThread->send_all(excOut);
         //reInitDevice();
         return;
     }
@@ -555,11 +549,9 @@ void WebSocketDS::update_data()
     catch (Tango::DevFailed &e)
     {
         Tango::Except::print_exception(e);
-        //set_state(Tango::FAULT);
-        //set_status("Couldn't read attribute from device: " + deviceServer);
-        std::string error = "{\"error\": \"Couldn't read attribute from device:" + deviceServer + "\"}";
-        //            wsThread->send_all(error.c_str());
-        wsThread->send_all(error.c_str());
+        string mes = "Couldn't read attribute from device: " + deviceServer;
+        string excOut = exceptionStringOut(mes);
+        wsThread->send_all(excOut);
     }
 
     /*----- PROTECTED REGION END -----*/	//	WebSocketDS::update_data
@@ -583,29 +575,20 @@ Tango::DevString WebSocketDS::send_command_to_device(Tango::DevString argin)
 	/*----- PROTECTED REGION ID(WebSocketDS::send_command_to_device) ENABLED START -----*/
 
     //    Add your own code
-    //cout << "ARGIN: " << argin << endl;
+
+    std::map<std::string, std::string> jsonArgs = processor.getCommandName(argin);
+    
     try
     {
-        /// ??? check if command.size() = 0
-        //            string command = processor.getCommandName(argin);
-        std::map<std::string, std::string> jsonArgs = processor.getCommandName(argin);
-
-        if (jsonArgs.find("error") != jsonArgs.end()) {
-            std::string tmp = "{\"error\":";
-            tmp += "\"" + jsonArgs["error"] + "\"}";
-            return CORBA::string_dup(tmp.c_str());
-        }
+        // Если в jsonArgs найден error
+        if (jsonArgs.find("error") != jsonArgs.end()) 
+            return CORBA::string_dup(exceptionStringOut("\"NONE\"", "unknown_command", jsonArgs["error"], TYPE_WS_REQ::COMMAND).c_str());
 
         if (jsonArgs["argin"].size() == 0)
-            return CORBA::string_dup("{\"error\": \"argin invalid\"}");
-
+            return CORBA::string_dup(exceptionStringOut(jsonArgs["id"], jsonArgs["command"], "argin invalid", TYPE_WS_REQ::COMMAND).c_str());
 
         if (jsonArgs["command"] == processor.NONE)
-            return CORBA::string_dup("{\"error\": \"String command not found\"}");
-//        if (jsonArgs["argin"] == processor.NONE)
-//            return CORBA::string_dup("{\"error\": \"argin not found\"}");
-
-
+            return CORBA::string_dup(exceptionStringOut(jsonArgs["id"], jsonArgs["command"], "Command (String) not found ", TYPE_WS_REQ::COMMAND).c_str());
 
 
         bool isCommandAccessible = processor.checkCommand(jsonArgs["command"], accessibleCommandInfo);
@@ -615,45 +598,40 @@ Tango::DevString WebSocketDS::send_command_to_device(Tango::DevString argin)
             int type = comInfo.in_type;
             Tango::DeviceData out;
 
+            // Вызов правильного метода  command_inout
+            // Проверка типа входных аргументов Void, Array, Data
             if (type == Tango::DEV_VOID) {
                 out = device->command_inout(jsonArgs["command"]);
             }
             else {
                 if (jsonArgs["argin"] == processor.NONE)
-                    return CORBA::string_dup("{\"error\": \"argin not found\"}");
-
-                if (jsonArgs["argin"] == "Array") {
-                    if (!processor.isMassive(type)) return "{\"error\": \"The input data do not have to be an array\"}";
+                    return CORBA::string_dup(exceptionStringOut(jsonArgs["id"], jsonArgs["command"], "argin not found", TYPE_WS_REQ::COMMAND).c_str());
+                
+                    if (jsonArgs["argin"] == "Array") {
+                        if (!processor.isMassive(type))
+                            return CORBA::string_dup(exceptionStringOut(jsonArgs["id"], jsonArgs["command"], "The input data do not have to be an array", TYPE_WS_REQ::COMMAND).c_str());
                 }
                 Tango::DeviceData deviceData = processor.gettingDevDataFromJsonStr(argin, type);
 
-                /// ??? check string(argin)
-                /// ??? check if wrong input data
                 try {
                     out = device->command_inout(jsonArgs["command"], deviceData);
                 }
                 catch (Tango::DevFailed &e) {
-                    argout = CORBA::string_dup("{\"error\": \"Exception from command_inout. Check the format of the data\"}");
-                    return argout;
+                    return CORBA::string_dup(exceptionStringOut(jsonArgs["id"], jsonArgs["command"], "Exception from command_inout.Check the format of the data", TYPE_WS_REQ::COMMAND).c_str());
                 }
             }
 
+            // Преобразование полученных данных в Json-формат
             string fromDevData = processor.gettingJsonStrFromDevData(out, jsonArgs);
             argout = CORBA::string_dup(fromDevData.c_str());
         }
         else {
-            argout = CORBA::string_dup("{\"error\": \"Command not found on DeviceServer\"}");
+            return CORBA::string_dup(exceptionStringOut(jsonArgs["id"], jsonArgs["command"], "Command not found on DeviceServer", TYPE_WS_REQ::COMMAND).c_str());
         }
     }
     catch (Tango::DevFailed &e) {
         Tango::Except::print_exception(e);
-        std::string exc;
-        exc = "{\"error\":" + (std::string)"\"" + (string)(e.errors[0].desc) + "\"}";
-        //CORBA::string_dup(e.errors[0].desc);
-        //argout = CORBA::string_dup("{\"error\": \"Exception from send_command_to_device\"}");
-        argout = CORBA::string_dup(exc.c_str());
-        return argout;
-        // ADD MESSAGE ???
+        return CORBA::string_dup(exceptionStringOut(jsonArgs["id"], jsonArgs["command"], (string)(e.errors[0].desc), TYPE_WS_REQ::COMMAND).c_str());
     }
 
     /*----- PROTECTED REGION END -----*/	//	WebSocketDS::send_command_to_device
@@ -742,8 +720,11 @@ void WebSocketDS::initAttrAndComm()
     }
 
     DEBUG_STREAM << "Commands: " << endl;
+
     for (auto& com : commands) {
         try {
+            // Getting CommandInfo
+            // cmd_name , cmd_tag, in_type, in_type_desc, out_type, out_type_desc
             Tango::CommandInfo info = device->command_query(com);
             accessibleCommandInfo.insert(std::pair<std::string, Tango::CommandInfo>(com, info));
             DEBUG_STREAM << com << endl;
@@ -813,6 +794,39 @@ void WebSocketDS::sendLogToFile()
 }
 #endif
 
+string WebSocketDS::exceptionStringOut(string id, string commandName, string errorMessage, TYPE_WS_REQ type_req)
+{
+    string type_req_str;
+    if (type_req == TYPE_WS_REQ::COMMAND)
+        type_req_str = "command";
+
+    stringstream ss;
+    ss << "{\"event\": \"error\", \"data\": [{";
+    ss << "\"error\": \"" << errorMessage << "\",";
+    ss << "\"" << type_req_str << "_name" << "\": \"" << commandName << "\", ";
+    ss << "\"type_req\": \"" << type_req_str << "\", ";
+    ss << "\"id_req\": " << id;
+    ss << "}] }";
+
+    return ss.str();
+}
+
+string WebSocketDS::exceptionStringOut(string errorMessage) {
+    stringstream ss;
+    ss << "{\"event\": \"error\", \"data\": [{";
+    ss << "\"error\": \"" << errorMessage << "\",";
+    ss << "\"type_req\": \"" << "attribute" << "\"";
+    ss << "}] }";
+
+    return ss.str();
+}
+
+//--------------------------------------------------------
+/** 
+ * Method      : WebSocketDS::gettingAttrUserConf(string &inp)
+ * Description : Method for getting of user-configuration for attributes.
+ */
+//--------------------------------------------------------
 void WebSocketDS::gettingAttrUserConf(string &inp)
 {
     // Now must be one parameter. It is  "prec" for precission. Example  'prec=15'

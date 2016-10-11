@@ -1,4 +1,4 @@
-/*----- PROTECTED REGION ID(WebSocketDS.h) ENABLED START -----*/
+﻿/*----- PROTECTED REGION ID(WebSocketDS.h) ENABLED START -----*/
 //=============================================================================
 //
 // file :        WebSocketDS.h
@@ -117,6 +117,9 @@ private:
     //std::unique_ptr<Tango::DeviceProxy> device;
     tango_processor processor;
     std::vector<bool>  isJsonAttribute;
+
+    // тип запроса. Пока только команда. Для атрибута тип не нужен
+    enum class TYPE_WS_REQ {COMMAND};
 
 
     std::chrono::seconds timeFromUpdateData;
@@ -292,6 +295,7 @@ public:
 	void add_dynamic_commands();
 
 /*----- PROTECTED REGION ID(WebSocketDS::Additional Method prototypes) ENABLED START -----*/
+private:
     void reInitDevice();
     void initAttrAndComm();
     void fromException(Tango::DevFailed &e, string func);
@@ -304,6 +308,10 @@ public:
 #endif
     // for getting attribute's configuration
     void gettingAttrUserConf(string&);
+    // exception for command
+    string exceptionStringOut(string id, string commandName, string errorMessage, TYPE_WS_REQ type_req);
+    // exception for attribute
+    string exceptionStringOut(string errorMessage);
 
     /*----- PROTECTED REGION END -----*/	//	WebSocketDS::Additional Method prototypes
 };

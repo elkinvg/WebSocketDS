@@ -22,7 +22,8 @@ void WSThread::on_message(websocketpp::connection_hdl hdl, server::message_ptr m
     if (permission)
         output = (string)ds->send_command_to_device(input);
     else
-        output = "{\"error\":\"Permission denied\"}";
+        output = "{\"event\": \"error\", \"data\": [{\"error\":\"Permission denied\", \"type_req\": \"command\"}] }";
+        //output = "{\"error\":\"Permission denied\"}";
 
     send(hdl, output);
 }
