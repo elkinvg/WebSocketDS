@@ -306,8 +306,8 @@ private:
 #ifdef TESTFAIL
     void sendLogToFile();
 #endif
-    // for getting attribute's configuration
-    void gettingAttrUserConf(string&);
+    // for getting command or attribute's configuration
+    void gettingAttrOrCommUserConf(string&);
     // exception for command
     string exceptionStringOut(string id, string commandName, string errorMessage, TYPE_WS_REQ type_req);
     // exception for attribute

@@ -12,6 +12,10 @@
 #include <type_traits>
 //#include <typeinfo>
 
+#include <algorithm>
+//#include <unordered_set>
+typedef std::unordered_multimap < std::string, std::string > stringmap;
+
 namespace WebSocketDS_ns
 {
     tango_processor::tango_processor() {
@@ -95,11 +99,69 @@ namespace WebSocketDS_ns
     template <typename T>
     void tango_processor::dataFromAttrsToJson(T& data, std::stringstream& ss, string nameOfAttr) {
         if (is_floating_point<T>::value) {
-            auto nameAt = attrsWithSetPrecision.find(nameOfAttr);
-            if (nameAt == attrsWithSetPrecision.end())
+            auto nameAtOrCom = optsForAttributes.find(nameOfAttr);
+            if (nameAtOrCom == optsForAttributes.end())
                 ss << std::setprecision(5) << data;
-            else
-                ss << std::setprecision(attrsWithSetPrecision[nameOfAttr]) << data;
+            else {
+                auto opts = optsForAttributes.equal_range(nameOfAttr);
+                /*unordered_set<string> gettedOpts;*/
+                string gettedOpt;
+                
+                for_each(
+                    opts.first,
+                    opts.second,
+                    [&](stringmap::value_type& x){gettedOpt = x.second; }
+                );
+
+                // пока проверяется один конф из имени атрибута
+                // AttrDevDouble;prec=10;opt2=12
+                // Считывается только prec=10
+                // gettedOpt - определён как стринг. Если опций будет больше одной
+                // можно будет использовать set
+
+                size_t pos=0;
+                string delimiter = "=";
+                std::string token;
+
+                if ((pos = gettedOpt.find(delimiter)) != std::string::npos) {
+                    token = gettedOpt.substr(0, pos);
+                    gettedOpt.erase(0, pos + delimiter.length());
+
+                    if (token == "prec" ||
+                        token == "precf" ||
+                        token == "precs") {
+                        unsigned short tmpus;
+                        try {
+                            tmpus = (unsigned short)stoi(gettedOpt);
+                            if (tmpus > 20 || tmpus < 0 ) {
+                                tmpus = 0;
+                            }
+                        }
+                        catch (...) {
+                            ss << std::setprecision(5) << data;
+                            return;
+                        }
+                        if (token == "prec")
+                            ss << std::setprecision(tmpus) << data;
+                        if (token == "precf")
+                            ss << std::fixed << std::setprecision(tmpus) << data;
+                        if (token == "precs")
+                            ss << std::scientific << std::setprecision(tmpus) << data;
+                    }
+                    else {
+                        ss << std::setprecision(5) << data;
+                    }
+                }
+                else {
+                    if (gettedOpt == "precs")
+                        ss << std::scientific << data;
+                    else if (gettedOpt == "precf")
+                        ss << std::fixed << data;
+                    else
+                        ss << std::setprecision(5) << data;
+                }
+            }
+            
         }
         else if (std::is_same<T, bool>::value) ss << std::boolalpha << data;
         else if (std::is_same<T, const std::string>::value || std::is_same<T, std::string>::value) ss << "\"" << data << "\"";
@@ -349,10 +411,10 @@ namespace WebSocketDS_ns
         return json.str();
     }
 
-    void tango_processor::addPrecisionForAttribute(string nameAttr, unsigned short precision) {
-        std::pair<std::string, unsigned short> tmpPair(nameAttr, precision);
-        attrsWithSetPrecision.insert(tmpPair);
+    void  tango_processor::addOptsForAttribute(string nameAttr, string option) {
+        optsForAttributes.insert(make_pair(nameAttr, option));
     }
+
 
     template <typename T>
     void tango_processor::generateStringJsonFromDevData(Tango::DeviceData &devData, std::stringstream& json)

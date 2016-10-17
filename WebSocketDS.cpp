@@ -712,7 +712,7 @@ void WebSocketDS::initAttrAndComm()
     // Method gettingAttrUserConf added for Searhing of additional options for attributes
     // Now it is option "prec" for precision
     for (auto& attr : attributes) {
-        gettingAttrUserConf(attr);
+        gettingAttrOrCommUserConf(attr);
         string tmpAttrName = attr;
         boost::to_lower(tmpAttrName);
         isJsonAttribute.push_back(tmpAttrName.find("json") != std::string::npos);
@@ -827,46 +827,42 @@ string WebSocketDS::exceptionStringOut(string errorMessage) {
  * Description : Method for getting of user-configuration for attributes.
  */
 //--------------------------------------------------------
-void WebSocketDS::gettingAttrUserConf(string &inp)
+void WebSocketDS::gettingAttrOrCommUserConf(string &inp)
 {
-    // Now must be one parameter. It is  "prec" for precission. Example  'prec=15'
+    // Now must be one parameter. It is  "prec", "procf" or "procs" for precission.
+    //Example  'prec=15'
     std::string delimiter = ";";
     std::string token;
     std::vector<std::string> gettedAttr;
     size_t pos = 0;
+    bool firstiter = true;
+    string nameAttr;
 
     string s = inp;
 
     while ((pos = s.find(delimiter)) != std::string::npos) {
         token = s.substr(0, pos);
-        gettedAttr.push_back(token);
+        if (firstiter) {
+            firstiter = false;
+            nameAttr = token;
+        }
+        else
+            gettedAttr.push_back(token);        
         s.erase(0, pos + delimiter.length());
     }
 
-    if (gettedAttr.size()<1) 
+    if (!firstiter)
+        gettedAttr.push_back(s);
+
+    if (gettedAttr.size() == 0) {
+        inp = s;
         return;
+    }
 
-    // if size >= 1
+    inp = nameAttr;
 
-    inp = gettedAttr[0];
-
-    string gPar = s;
-    delimiter = "=";
-
-    if ((pos = gPar.find(delimiter)) != std::string::npos) {
-        token = gPar.substr(0, pos);
-        if (token != "prec") 
-            return;
-
-        gPar.erase(0, pos + delimiter.length());
-        try {
-            unsigned short tmpus;
-            tmpus = (unsigned short)stoi(gPar);
-            if (tmpus < 20) {
-                processor.addPrecisionForAttribute(inp, tmpus);
-            }
-        }
-        catch (...) {}
+    for (auto att : gettedAttr) {
+        processor.addOptsForAttribute(inp,att);
     }
 }
 
