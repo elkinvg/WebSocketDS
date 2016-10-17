@@ -712,7 +712,7 @@ void WebSocketDS::initAttrAndComm()
     // Method gettingAttrUserConf added for Searhing of additional options for attributes
     // Now it is option "prec" for precision
     for (auto& attr : attributes) {
-        gettingAttrOrCommUserConf(attr);
+        gettingAttrOrCommUserConf(attr,TYPE_WS_REQ::ATTRIBUTE);
         string tmpAttrName = attr;
         boost::to_lower(tmpAttrName);
         isJsonAttribute.push_back(tmpAttrName.find("json") != std::string::npos);
@@ -827,13 +827,13 @@ string WebSocketDS::exceptionStringOut(string errorMessage) {
  * Description : Method for getting of user-configuration for attributes.
  */
 //--------------------------------------------------------
-void WebSocketDS::gettingAttrOrCommUserConf(string &inp)
+void WebSocketDS::gettingAttrOrCommUserConf(string &inp, TYPE_WS_REQ type_req)
 {
     // Now must be one parameter. It is  "prec", "procf" or "procs" for precission.
     //Example  'prec=15'
     std::string delimiter = ";";
     std::string token;
-    std::vector<std::string> gettedAttr;
+    std::vector<std::string> gettedAttrOrComm;
     size_t pos = 0;
     bool firstiter = true;
     string nameAttr;
@@ -847,22 +847,25 @@ void WebSocketDS::gettingAttrOrCommUserConf(string &inp)
             nameAttr = token;
         }
         else
-            gettedAttr.push_back(token);        
+            gettedAttrOrComm.push_back(token);
         s.erase(0, pos + delimiter.length());
     }
 
     if (!firstiter)
-        gettedAttr.push_back(s);
+        gettedAttrOrComm.push_back(s);
 
-    if (gettedAttr.size() == 0) {
+    if (gettedAttrOrComm.size() == 0) {
         inp = s;
         return;
     }
 
     inp = nameAttr;
 
-    for (auto att : gettedAttr) {
-        processor.addOptsForAttribute(inp,att);
+    for (auto att : gettedAttrOrComm) {
+        if (type_req == TYPE_WS_REQ::ATTRIBUTE)
+            processor.addOptsForAttribute(inp,att);
+        if (type_req == TYPE_WS_REQ::COMMAND)
+            processor.addOptsForCommand(inp,att);
     }
 }
 

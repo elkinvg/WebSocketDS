@@ -19,3 +19,4 @@ SOURCES += main.cpp \
     WSThread_plain.cpp
 
 HEADERS += \
+    common.h

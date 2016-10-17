@@ -14,7 +14,7 @@
 
 #include <algorithm>
 //#include <unordered_set>
-typedef std::unordered_multimap < std::string, std::string > stringmap;
+
 
 namespace WebSocketDS_ns
 {
@@ -79,89 +79,41 @@ namespace WebSocketDS_ns
             if (type == Tango::DEV_STATE) {
                 (*attr) >> stateIn;
                 stateStr = tangoState[stateIn];// SwitchTangoState(stateIn);
-                dataFromAttrsToJson(stateStr, ss, nameAttr);
+                dataFromAttrsOrCommToJson(stateStr, ss,TYPE_WS_REQ::ATTRIBUTE, nameAttr);
             }
             else {
                 (*attr) >> data;
-                dataFromAttrsToJson(data, ss, nameAttr);
+                dataFromAttrsOrCommToJson(data, ss, TYPE_WS_REQ::ATTRIBUTE, nameAttr);
             }
         }
         else
             if (format == Tango::AttrDataFormat::SPECTRUM || format == Tango::AttrDataFormat::IMAGE) {
                 (*attr) >> dataVector;
                 ss << "[";
-                dataArrayFromAttrsToJson(dataVector,ss,nameAttr);
+                dataArrayFromAttrOrCommToJson(dataVector,ss,TYPE_WS_REQ::ATTRIBUTE,nameAttr);
                 ss << "]";
             }
         return ss.str();
     }
 
     template <typename T>
-    void tango_processor::dataFromAttrsToJson(T& data, std::stringstream& ss, string nameOfAttr) {
+    void tango_processor::dataFromAttrsOrCommToJson(T& data, std::stringstream& ss, TYPE_WS_REQ type_req, string nameOfAttrOrComm) {
         if (is_floating_point<T>::value) {
-            auto nameAtOrCom = optsForAttributes.find(nameOfAttr);
-            if (nameAtOrCom == optsForAttributes.end())
-                ss << std::setprecision(5) << data;
-            else {
-                auto opts = optsForAttributes.equal_range(nameOfAttr);
-                /*unordered_set<string> gettedOpts;*/
-                string gettedOpt;
-                
-                for_each(
-                    opts.first,
-                    opts.second,
-                    [&](stringmap::value_type& x){gettedOpt = x.second; }
-                );
-
-                // пока проверяется один конф из имени атрибута
-                // AttrDevDouble;prec=10;opt2=12
-                // Считывается только prec=10
-                // gettedOpt - определён как стринг. Если опций будет больше одной
-                // можно будет использовать set
-
-                size_t pos=0;
-                string delimiter = "=";
-                std::string token;
-
-                if ((pos = gettedOpt.find(delimiter)) != std::string::npos) {
-                    token = gettedOpt.substr(0, pos);
-                    gettedOpt.erase(0, pos + delimiter.length());
-
-                    if (token == "prec" ||
-                        token == "precf" ||
-                        token == "precs") {
-                        unsigned short tmpus;
-                        try {
-                            tmpus = (unsigned short)stoi(gettedOpt);
-                            if (tmpus > 20 || tmpus < 0 ) {
-                                tmpus = 0;
-                            }
-                        }
-                        catch (...) {
+            typename stringmap::iterator iterMap;
+            if (type_req == TYPE_WS_REQ::ATTRIBUTE) {
+                iterMap = optsForAttributes.find(nameOfAttrOrComm);
+                if (iterMap == optsForAttributes.end())
                             ss << std::setprecision(5) << data;
-                            return;
-                        }
-                        if (token == "prec")
-                            ss << std::setprecision(tmpus) << data;
-                        if (token == "precf")
-                            ss << std::fixed << std::setprecision(tmpus) << data;
-                        if (token == "precs")
-                            ss << std::scientific << std::setprecision(tmpus) << data;
-                    }
-                    else {
-                        ss << std::setprecision(5) << data;
-                    }
-                }
-                else {
-                    if (gettedOpt == "precs")
-                        ss << std::scientific << data;
-                    else if (gettedOpt == "precf")
-                        ss << std::fixed << data;
-                    else
-                        ss << std::setprecision(5) << data;
-                }
+                else
+                    addOutToStringStream(data,ss,optsForAttributes,nameOfAttrOrComm);
             }
-            
+            else if (type_req == TYPE_WS_REQ::COMMAND) {
+                iterMap = optsForCommands.find(nameOfAttrOrComm);
+                if (iterMap == optsForCommands.end())
+                            ss << std::setprecision(5) << data;
+                else
+                    addOutToStringStream(data,ss,optsForCommands, nameOfAttrOrComm);
+            }
         }
         else if (std::is_same<T, bool>::value) ss << std::boolalpha << data;
         else if (std::is_same<T, const std::string>::value || std::is_same<T, std::string>::value) ss << "\"" << data << "\"";
@@ -244,6 +196,8 @@ namespace WebSocketDS_ns
         json << "\"command_name\": " << "\"" << inputArgs["command"] << "\",";
         json << "\"id_req\": "  << inputArgs["id"] << ",";
 
+        string command_name = inputArgs["command"];
+
         switch (type)
         {
         case Tango::DEV_VOID:
@@ -254,42 +208,42 @@ namespace WebSocketDS_ns
             Tango::DevBoolean bl;
             devData >> bl;
             json << "\"argout\": ";
-            dataFromAttrsToJson(bl, json);
+            dataFromAttrsOrCommToJson(bl, json,TYPE_WS_REQ::COMMAND,command_name);
         }
         break;
         case Tango::DEV_SHORT:
         {
-            generateStringJsonFromDevData<Tango::DevShort>(devData, json);
+            generateStringJsonFromDevData<Tango::DevShort>(devData, json,command_name);
         }
         break;
         case Tango::DEV_LONG:
         {
-            generateStringJsonFromDevData<Tango::DevLong>(devData, json);
+            generateStringJsonFromDevData<Tango::DevLong>(devData, json,command_name);
         }
         break;
         case Tango::DEV_FLOAT:
         {
-            generateStringJsonFromDevData<Tango::DevFloat>(devData, json);
+            generateStringJsonFromDevData<Tango::DevFloat>(devData, json,command_name);
         }
         break;
         case Tango::DEV_DOUBLE:
         {
-            generateStringJsonFromDevData<Tango::DevDouble>(devData, json);
+            generateStringJsonFromDevData<Tango::DevDouble>(devData, json,command_name);
         }
         break;
         case Tango::DEV_USHORT:
         {
-            generateStringJsonFromDevData<Tango::DevUShort>(devData, json);
+            generateStringJsonFromDevData<Tango::DevUShort>(devData, json,command_name);
         }
         break;
         case Tango::DEV_ULONG:
         {
-            generateStringJsonFromDevData<Tango::DevULong>(devData, json);
+            generateStringJsonFromDevData<Tango::DevULong>(devData, json,command_name);
         }
         break;
         case Tango::DEV_STRING:
         {
-            generateStringJsonFromDevData<std::string>(devData, json);
+            generateStringJsonFromDevData<std::string>(devData, json,command_name);
         }
         break;
         case Tango::DEVVAR_CHARARRAY: // ??? why not DEVVAR_CHARARRAY
@@ -303,7 +257,7 @@ namespace WebSocketDS_ns
                 if (!begin) json << ", ";                
                 else begin = false;
                 tmp = (unsigned short int)fromData;
-                dataFromAttrsToJson(tmp, json);
+                dataFromAttrsOrCommToJson(tmp, json,TYPE_WS_REQ::COMMAND,command_name);
             }
             json << " ]";
 
@@ -315,37 +269,37 @@ namespace WebSocketDS_ns
             break;
         case Tango::DEVVAR_SHORTARRAY:
         {
-            generateStringJsonFromDevData<Tango::DevShort>(devData, json);
+            generateStringJsonFromDevData<Tango::DevShort>(devData, json,command_name);
         }
         break;
         case Tango::DEVVAR_LONGARRAY:
         {
-            generateStringJsonFromDevData<Tango::DevLong>(devData, json);
+            generateStringJsonFromDevData<Tango::DevLong>(devData, json,command_name);
         }
         break;
         case Tango::DEVVAR_FLOATARRAY:
         {
-            generateStringJsonFromDevData<Tango::DevFloat>(devData, json);
+            generateStringJsonFromDevData<Tango::DevFloat>(devData, json,command_name);
         }
         break;
         case Tango::DEVVAR_DOUBLEARRAY:
         {
-            generateStringJsonFromDevData<Tango::DevDouble>(devData, json);
+            generateStringJsonFromDevData<Tango::DevDouble>(devData, json,command_name);
         }
         break;
         case Tango::DEVVAR_USHORTARRAY:
         {
-            generateStringJsonFromDevData<Tango::DevUShort>(devData, json);
+            generateStringJsonFromDevData<Tango::DevUShort>(devData, json,command_name);
         }
         break;
         case Tango::DEVVAR_ULONGARRAY:
         {
-            generateStringJsonFromDevData<Tango::DevULong>(devData, json);
+            generateStringJsonFromDevData<Tango::DevULong>(devData, json,command_name);
         }
         break;
         case Tango::DEVVAR_STRINGARRAY:
         {
-            generateStringJsonFromDevData<std::string>(devData, json);
+            generateStringJsonFromDevData<std::string>(devData, json,command_name);
         }
         break;
         case Tango::DEVVAR_LONGSTRINGARRAY:
@@ -376,22 +330,22 @@ namespace WebSocketDS_ns
             break;
         case Tango::DEV_LONG64:
         {
-            generateStringJsonFromDevData<Tango::DevLong64>(devData, json);
+            generateStringJsonFromDevData<Tango::DevLong64>(devData, json,command_name);
         }
         break;
         case Tango::DEV_ULONG64:
         {
-            generateStringJsonFromDevData<Tango::DevULong64>(devData, json);
+            generateStringJsonFromDevData<Tango::DevULong64>(devData, json,command_name);
         }
         break;
         case Tango::DEVVAR_LONG64ARRAY:
         {
-            generateStringJsonFromDevData<Tango::DevLong64>(devData, json);
+            generateStringJsonFromDevData<Tango::DevLong64>(devData, json,command_name);
         }
         break;
         case Tango::DEVVAR_ULONG64ARRAY:
         {
-            generateStringJsonFromDevData<Tango::DevULong64>(devData, json);
+            generateStringJsonFromDevData<Tango::DevULong64>(devData, json,command_name);
         }
         break;
         //case Tango::DEV_INT:
@@ -415,9 +369,14 @@ namespace WebSocketDS_ns
         optsForAttributes.insert(make_pair(nameAttr, option));
     }
 
+    void tango_processor::addOptsForCommand(string nameComm, string option)
+    {
+        optsForCommands.insert(make_pair(nameComm, option));
+    }
+
 
     template <typename T>
-    void tango_processor::generateStringJsonFromDevData(Tango::DeviceData &devData, std::stringstream& json)
+    void tango_processor::generateStringJsonFromDevData(Tango::DeviceData &devData, std::stringstream& json, string command_name)
     {
         TYPE_OF_DEVICE_DATA type = typeOfData[devData.get_type()];
 
@@ -434,22 +393,22 @@ namespace WebSocketDS_ns
 
         if (type == TYPE_OF_DEVICE_DATA::DATA) {
             json << "\"argout\": ";
-            dataFromAttrsToJson(data,json);
+            dataFromAttrsOrCommToJson(data,json, TYPE_WS_REQ::COMMAND, command_name);
         } else if (type == TYPE_OF_DEVICE_DATA::ARRAY) {
             json << "\"argout\": [";
-            dataArrayFromAttrsToJson(vecFromData,json);
+            dataArrayFromAttrOrCommToJson(vecFromData,json, TYPE_WS_REQ::COMMAND, command_name);
             json << " ]";
         }
     }
 
     template <typename T>
-    void tango_processor::dataArrayFromAttrsToJson(std::vector<T>& vecFromData, std::stringstream& json, string nameOfAttr) {
+    void tango_processor::dataArrayFromAttrOrCommToJson(std::vector<T>& vecFromData, std::stringstream& json,  TYPE_WS_REQ type_req, string nameOfAttrOrComm) {
         bool begin = true;
 
         for (T fromData : vecFromData) {
             if (!begin) json << ", ";
             else begin = false;
-            dataFromAttrsToJson(fromData, json, nameOfAttr);
+            dataFromAttrsOrCommToJson(fromData, json, type_req, nameOfAttrOrComm);
         }
     }
 
@@ -548,6 +507,7 @@ namespace WebSocketDS_ns
         {
             std::stringstream ss;
             Tango::AttrDataFormat format = attr->get_data_format();
+            string nameAttr = attr->get_name();
             if (format == Tango::AttrDataFormat::SPECTRUM || format == Tango::AttrDataFormat::IMAGE)
                 ss << "\"dimX\": " << attr->dim_x << ", ";
             if (format == Tango::AttrDataFormat::IMAGE)
@@ -561,7 +521,7 @@ namespace WebSocketDS_ns
             if (format == Tango::AttrDataFormat::SCALAR) {
                 (*attr) >> data;
                 tmp = (unsigned short)data;                
-                dataFromAttrsToJson(tmp, ss);
+                dataFromAttrsOrCommToJson(tmp, ss,TYPE_WS_REQ::ATTRIBUTE,nameAttr);
             }
             else
                 if (format == Tango::AttrDataFormat::SPECTRUM || format == Tango::AttrDataFormat::IMAGE) {
@@ -570,7 +530,7 @@ namespace WebSocketDS_ns
                         tmpVec.push_back((unsigned short)i);
                     }
                     ss << "[";
-                    dataArrayFromAttrsToJson(tmpVec, ss);
+                    dataArrayFromAttrOrCommToJson(tmpVec, ss,TYPE_WS_REQ::ATTRIBUTE,nameAttr);
                     ss << "]";
                 }
             out = ss.str();
@@ -836,5 +796,67 @@ namespace WebSocketDS_ns
         std::string argout;
         (data) >> argout;
         return argout;
+    }
+
+    template <typename T>
+    void tango_processor::addOutToStringStream(T &data, stringstream &ss, stringmap &options, string nameOfAttrOrComm)
+    {
+        auto opts = options.equal_range(nameOfAttrOrComm);
+        /*unordered_set<string> gettedOpts;*/
+        string gettedOpt;
+
+        for_each(
+                    opts.first,
+                    opts.second,
+                    [&](stringmap::value_type& x){gettedOpt = x.second; }
+        );
+
+        // пока проверяется один конф из имени атрибута
+        // AttrDevDouble;prec=10;opt2=12
+        // Считывается только prec=10
+        // gettedOpt - определён как стринг. Если опций будет больше одной
+        // можно будет использовать set
+
+        size_t pos=0;
+        string delimiter = "=";
+        std::string token;
+
+        if ((pos = gettedOpt.find(delimiter)) != std::string::npos) {
+            token = gettedOpt.substr(0, pos);
+            gettedOpt.erase(0, pos + delimiter.length());
+
+            if (token == "prec" ||
+                    token == "precf" ||
+                    token == "precs") {
+                unsigned short tmpus;
+                try {
+                    tmpus = (unsigned short)stoi(gettedOpt);
+                    if (tmpus > 20 || tmpus < 0 ) {
+                        tmpus = 0;
+                    }
+                }
+                catch (...) {
+                    ss << std::setprecision(5) << data;
+                    return;
+                }
+                if (token == "prec")
+                    ss << std::setprecision(tmpus) << data;
+                if (token == "precf")
+                    ss << std::fixed << std::setprecision(tmpus) << data;
+                if (token == "precs")
+                    ss << std::scientific << std::setprecision(tmpus) << data;
+            }
+            else {
+                ss << std::setprecision(5) << data;
+            }
+        }
+        else {
+            if (gettedOpt == "precs")
+                ss << std::scientific << data;
+            else if (gettedOpt == "precf")
+                ss << std::fixed << data;
+            else
+                ss << std::setprecision(5) << data;
+        }
     }
 }

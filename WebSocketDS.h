@@ -58,6 +58,7 @@
 #include "tango_processor.h"
 
 //#define USELOG
+#include "common.h"
 
 //#include <unordered_map>
 
@@ -118,8 +119,8 @@ private:
     tango_processor processor;
     std::vector<bool>  isJsonAttribute;
 
-    // тип запроса. Пока только команда. Для атрибута тип не нужен
-    enum class TYPE_WS_REQ {COMMAND};
+//    // тип запроса. Пока только команда. Для атрибута тип не нужен
+//    enum class TYPE_WS_REQ {ATTRIBUTE, COMMAND};
 
 
     std::chrono::seconds timeFromUpdateData;
@@ -307,7 +308,7 @@ private:
     void sendLogToFile();
 #endif
     // for getting command or attribute's configuration
-    void gettingAttrOrCommUserConf(string&);
+    void gettingAttrOrCommUserConf(string&, TYPE_WS_REQ type_req);
     // exception for command
     string exceptionStringOut(string id, string commandName, string errorMessage, TYPE_WS_REQ type_req);
     // exception for attribute
