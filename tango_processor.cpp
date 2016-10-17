@@ -104,15 +104,19 @@ namespace WebSocketDS_ns
                 iterMap = optsForAttributes.find(nameOfAttrOrComm);
                 if (iterMap == optsForAttributes.end())
                             ss << std::setprecision(5) << data;
-                else
-                    addOutToStringStream(data,ss,optsForAttributes,nameOfAttrOrComm);
+                else {
+                    auto opts = optsForAttributes.equal_range(nameOfAttrOrComm);
+                    addOutToStringStream(data, ss, opts);
+                }
             }
             else if (type_req == TYPE_WS_REQ::COMMAND) {
                 iterMap = optsForCommands.find(nameOfAttrOrComm);
                 if (iterMap == optsForCommands.end())
                             ss << std::setprecision(5) << data;
-                else
-                    addOutToStringStream(data,ss,optsForCommands, nameOfAttrOrComm);
+                else {
+                    auto opts = optsForCommands.equal_range(nameOfAttrOrComm);
+                    addOutToStringStream(data, ss, opts);
+                }
             }
         }
         else if (std::is_same<T, bool>::value) ss << std::boolalpha << data;
@@ -799,9 +803,8 @@ namespace WebSocketDS_ns
     }
 
     template <typename T>
-    void tango_processor::addOutToStringStream(T &data, stringstream &ss, stringmap &options, string nameOfAttrOrComm)
+    void tango_processor::addOutToStringStream(T &data, stringstream &ss, stringmap_iter opts)
     {
-        auto opts = options.equal_range(nameOfAttrOrComm);
         /*unordered_set<string> gettedOpts;*/
         string gettedOpt;
 

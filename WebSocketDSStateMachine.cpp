@@ -142,7 +142,11 @@ bool WebSocketDS::is_SendCommandToDevice_allowed(TANGO_UNUSED(const CORBA::Any &
 {
 	//	Not any excluded states for SendCommandToDevice command.
 	/*----- PROTECTED REGION ID(WebSocketDS::SendCommandToDeviceStateAllowed) ENABLED START -----*/
-    
+    if (get_state() == Tango::OFF ||
+        get_state() == Tango::FAULT)
+    {
+        return false;
+    }
     /*----- PROTECTED REGION END -----*/	//	WebSocketDS::SendCommandToDeviceStateAllowed
 	return true;
 }

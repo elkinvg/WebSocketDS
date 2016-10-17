@@ -200,14 +200,21 @@ void WebSocketDS::init_device()
     if (!isDsInit) {
         if (device!= nullptr)
             device = nullptr;
+        set_state(Tango::FAULT);
+        set_status("Couldn't connect to device: " + deviceServer);
         return;
     }
     bool isWsThreadInit = initWsThread();
     if (!isWsThreadInit) {
         if (wsThread!= nullptr)
             wsThread = nullptr;
+        set_state(Tango::FAULT);
+        set_status("Couldn't connect to device: " + deviceServer);
         return;
     }
+
+    set_state(Tango::ON);
+    set_status("Device is On");
 
     initAttrAndComm();
 
@@ -481,7 +488,7 @@ void WebSocketDS::update_data()
     catch (Tango::DevFailed &e)
     {
         fromException(e, "update_data.read_attr ");
-        string mes = "No data from : " + deviceServer + ".Perhaps the server is down";
+        string mes = "No data from : " + deviceServer + " Perhaps the server is down";
         string excOut = exceptionStringOut(mes);
         wsThread->send_all(excOut);
         return;
@@ -725,6 +732,7 @@ void WebSocketDS::initAttrAndComm()
         try {
             // Getting CommandInfo
             // cmd_name , cmd_tag, in_type, in_type_desc, out_type, out_type_desc
+            gettingAttrOrCommUserConf(com, TYPE_WS_REQ::COMMAND);
             Tango::CommandInfo info = device->command_query(com);
             accessibleCommandInfo.insert(std::pair<std::string, Tango::CommandInfo>(com, info));
             DEBUG_STREAM << com << endl;

@@ -6,6 +6,7 @@
 
 #include "common.h"
 typedef std::unordered_multimap < std::string, std::string > stringmap;
+typedef std::pair<stringmap::iterator, stringmap::iterator> stringmap_iter;
 
 namespace WebSocketDS_ns
 {
@@ -56,7 +57,7 @@ namespace WebSocketDS_ns
         void dataArrayFromAttrOrCommToJson(std::vector<T>& vecFromData, std::stringstream& json,  TYPE_WS_REQ type_req, string nameOfAttrOrComm);
 
         template <typename T>
-        void addOutToStringStream(T& data, std::stringstream& ss,stringmap& options, string nameOfAttrOrComm);
+        void addOutToStringStream(T &data, stringstream &ss, stringmap_iter opts/*, stringmap &options, string nameOfAttrOrComm*/);
 
         //EGOR
     public:
