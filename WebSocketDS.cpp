@@ -200,14 +200,21 @@ void WebSocketDS::init_device()
     if (!isDsInit) {
         if (device!= nullptr)
             device = nullptr;
+        set_state(Tango::FAULT);
+        set_status("Couldn't connect to device: " + deviceServer);
         return;
     }
     bool isWsThreadInit = initWsThread();
     if (!isWsThreadInit) {
         if (wsThread!= nullptr)
             wsThread = nullptr;
+        set_state(Tango::FAULT);
+        set_status("Couldn't connect to device: " + deviceServer);
         return;
     }
+
+    set_state(Tango::ON);
+    set_status("Device is On");
 
     initAttrAndComm();
 
@@ -481,7 +488,7 @@ void WebSocketDS::update_data()
     catch (Tango::DevFailed &e)
     {
         fromException(e, "update_data.read_attr ");
-        string mes = "No data from : " + deviceServer + ".Perhaps the server is down";
+        string mes = "No data from : " + deviceServer + " Perhaps the server is down";
         string excOut = exceptionStringOut(mes);
         wsThread->send_all(excOut);
         return;
@@ -712,7 +719,7 @@ void WebSocketDS::initAttrAndComm()
     // Method gettingAttrUserConf added for Searhing of additional options for attributes
     // Now it is option "prec" for precision
     for (auto& attr : attributes) {
-        gettingAttrOrCommUserConf(attr);
+        gettingAttrOrCommUserConf(attr,TYPE_WS_REQ::ATTRIBUTE);
         string tmpAttrName = attr;
         boost::to_lower(tmpAttrName);
         isJsonAttribute.push_back(tmpAttrName.find("json") != std::string::npos);
@@ -725,6 +732,7 @@ void WebSocketDS::initAttrAndComm()
         try {
             // Getting CommandInfo
             // cmd_name , cmd_tag, in_type, in_type_desc, out_type, out_type_desc
+            gettingAttrOrCommUserConf(com, TYPE_WS_REQ::COMMAND);
             Tango::CommandInfo info = device->command_query(com);
             accessibleCommandInfo.insert(std::pair<std::string, Tango::CommandInfo>(com, info));
             DEBUG_STREAM << com << endl;
@@ -827,13 +835,13 @@ string WebSocketDS::exceptionStringOut(string errorMessage) {
  * Description : Method for getting of user-configuration for attributes.
  */
 //--------------------------------------------------------
-void WebSocketDS::gettingAttrOrCommUserConf(string &inp)
+void WebSocketDS::gettingAttrOrCommUserConf(string &inp, TYPE_WS_REQ type_req)
 {
     // Now must be one parameter. It is  "prec", "procf" or "procs" for precission.
     //Example  'prec=15'
     std::string delimiter = ";";
     std::string token;
-    std::vector<std::string> gettedAttr;
+    std::vector<std::string> gettedAttrOrComm;
     size_t pos = 0;
     bool firstiter = true;
     string nameAttr;
@@ -847,22 +855,25 @@ void WebSocketDS::gettingAttrOrCommUserConf(string &inp)
             nameAttr = token;
         }
         else
-            gettedAttr.push_back(token);        
+            gettedAttrOrComm.push_back(token);
         s.erase(0, pos + delimiter.length());
     }
 
     if (!firstiter)
-        gettedAttr.push_back(s);
+        gettedAttrOrComm.push_back(s);
 
-    if (gettedAttr.size() == 0) {
+    if (gettedAttrOrComm.size() == 0) {
         inp = s;
         return;
     }
 
     inp = nameAttr;
 
-    for (auto att : gettedAttr) {
-        processor.addOptsForAttribute(inp,att);
+    for (auto att : gettedAttrOrComm) {
+        if (type_req == TYPE_WS_REQ::ATTRIBUTE)
+            processor.addOptsForAttribute(inp,att);
+        if (type_req == TYPE_WS_REQ::COMMAND)
+            processor.addOptsForCommand(inp,att);
     }
 }
 
