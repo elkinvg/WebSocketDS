@@ -216,7 +216,8 @@ void WebSocketDS::init_device()
     set_state(Tango::ON);
     set_status("Device is On");
 
-    initAttrAndComm();
+    initAttr();
+    initComm();
 
 //    attr_JSON_read[0] = Tango::string_dup("[{\"success\": false}]");
     //update_data();
@@ -501,6 +502,11 @@ void WebSocketDS::update_data()
 //        }
         //device->ping();
         attrList = device->read_attributes(attributes);
+
+        // reinit initComm if commands have not been initialized
+        if (commands.size() != 0 && accessibleCommandInfo.size() == 0) {
+            initComm();
+        }
     }
     catch (Tango::ConnectionFailed &e)
     {
@@ -713,7 +719,7 @@ void WebSocketDS::reInitDevice() {
     init_device();
 }
 
-void WebSocketDS::initAttrAndComm()
+void WebSocketDS::initAttr()
 {
     DEBUG_STREAM << "Attributes: " << endl;
     // Method gettingAttrUserConf added for Searhing of additional options for attributes
@@ -725,8 +731,15 @@ void WebSocketDS::initAttrAndComm()
         isJsonAttribute.push_back(tmpAttrName.find("json") != std::string::npos);
         DEBUG_STREAM << attr << endl;
     }
+}
 
+void WebSocketDS::initComm()
+{
     DEBUG_STREAM << "Commands: " << endl;
+    // Method gettingAttrUserConf added for Searhing of additional options for attributes
+    // Now it is option "prec" for precision
+
+    accessibleCommandInfo.clear();
 
     for (auto& com : commands) {
         try {

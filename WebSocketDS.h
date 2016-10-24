@@ -298,7 +298,8 @@ public:
 /*----- PROTECTED REGION ID(WebSocketDS::Additional Method prototypes) ENABLED START -----*/
 private:
     void reInitDevice();
-    void initAttrAndComm();
+    void initAttr();
+    void initComm();
     void fromException(Tango::DevFailed &e, string func);
 
     bool initDeviceServer();
