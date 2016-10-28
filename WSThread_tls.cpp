@@ -10,10 +10,20 @@ namespace WebSocketDS_ns
 {
 
 bool WSThread_tls::on_validate(websocketpp::connection_hdl hdl) {
+    DEBUG_STREAM << "Check validate WSTHREAD_TLS" << endl;
 
-    map<string, string> conf = getRemoteConf(hdl);
+    auto conSize = m_connections.size();
+    DEBUG_STREAM << "Number of connections: " << conSize << endl;
+    if (ds->maxNumberOfConnections == 0)
+        return true;
 
-    return forValidate(conf);
+    if (conSize >= ds->maxNumberOfConnections)
+        return false;
+
+    return true;
+
+    //map<string, string> conf = getRemoteConf(hdl);
+    //return forValidate(conf);
 }
 
 void *WSThread_tls::run_undetached(void *ptr)
@@ -23,7 +33,7 @@ void *WSThread_tls::run_undetached(void *ptr)
     m_server.set_open_handler(websocketpp::lib::bind(&WSThread_tls::on_open,this,websocketpp::lib::placeholders::_1));
     m_server.set_close_handler(websocketpp::lib::bind(&WSThread_tls::on_close,this,websocketpp::lib::placeholders::_1));
     m_server.set_message_handler(websocketpp::lib::bind(&WSThread_tls::on_message,this,websocketpp::lib::placeholders::_1,websocketpp::lib::placeholders::_2));
-    //m_server.set_validate_handler(bind(&WSThread_tls::on_validate, this, websocketpp::lib::placeholders::_1));
+    m_server.set_validate_handler(bind(&WSThread_tls::on_validate, this, websocketpp::lib::placeholders::_1));
     m_server.set_fail_handler(bind(&WSThread_tls::on_fail, this, websocketpp::lib::placeholders::_1));
     
     // this will turn off console output for frame header and payload
@@ -55,41 +65,68 @@ void WSThread_tls::send_all(std::string msg) {
     //msg.clear();
     con_list::iterator it;
     //for (it = m_connections.begin(); it != m_connections.end(); ++it) {
+    
+    unsigned int maxBuffSize = ds->maximumBufferSize;
+    if (maxBuffSize < maximumBufferSizeMin || maxBuffSize > maximumBufferSizeMax)
+        maxBuffSize = maximumBufferSizeDef * 1024;
+    else
+        maxBuffSize = maxBuffSize * 1024;
+
     for (it = m_connections.begin(); it != m_connections.end();) {
         try {
-            m_server.send(*it, msg, websocketpp::frame::opcode::text);
+            size_t buffered_amount = get_buffered_amount(*(it));
+
+            if (buffered_amount<maxBuffSize)
+                m_server.send(*it, msg, websocketpp::frame::opcode::text);
+            else {
+                close_from_server(*(it++));
+                continue;
+            }
+
             ++it;
         }
         catch (websocketpp::exception const & e) {
             ERROR_STREAM << "exception from send_all: " << e.what() << endl;
-            on_close(*(it++));
+            close_from_server(*(it++));
         }
         catch (std::exception& e) {
             ERROR_STREAM << "exception from send_all: " << e.what() << endl;
-            on_close(*(it++));
+            close_from_server(*(it++));
         }
         catch (...) {
             ERROR_STREAM << "unknown error from send_all " << endl;
-            on_close(*(it++));
+            close_from_server(*(it++));
         }
     }
 }
 
 void WSThread_tls::send(websocketpp::connection_hdl hdl, std::string msg) {
     try {
-        m_server.send(hdl, msg, websocketpp::frame::opcode::text);
+        size_t buffered_amount = get_buffered_amount(hdl);
+
+        unsigned int maxBuffSize = ds->maximumBufferSize;
+        if (maxBuffSize < maximumBufferSizeMin || maxBuffSize > maximumBufferSizeMax)
+            maxBuffSize = maximumBufferSizeDef * 1024;
+        else
+            maxBuffSize = maxBuffSize * 1024;
+
+        if (buffered_amount<maxBuffSize)
+            m_server.send(hdl, msg, websocketpp::frame::opcode::text);
+        else
+            close_from_server(hdl);
+
     }
     catch (websocketpp::exception const & e) {
         ERROR_STREAM << "exception from send: " << e.what() << endl;
-        on_close(hdl);
+        close_from_server(hdl);
     }
     catch (std::exception& e) {
         ERROR_STREAM << "exception from send: " << e.what() << endl;
-        on_close(hdl);
+        close_from_server(hdl);
     }
     catch (...) {
         ERROR_STREAM << "unknown error from send " << endl;
-        on_close(hdl);
+        close_from_server(hdl);
     }
 }
 
@@ -137,6 +174,18 @@ context_ptr WSThread_tls::on_tls_init(websocketpp::connection_hdl hdl) {
         std::cout << e.what() << std::endl;
     }
     return ctx;
+}
+
+void WSThread_tls::close_from_server(websocketpp::connection_hdl hdl) {
+    websocketpp::lib::unique_lock<websocketpp::lib::mutex> con_lock(m_connection_lock);
+    websocketpp::server<websocketpp::config::asio_tls>::connection_ptr con = m_server.get_con_from_hdl(hdl);
+    con->close(websocketpp::close::status::normal, "");
+    m_connections.erase(hdl);
+}
+
+size_t WSThread_tls::get_buffered_amount(websocketpp::connection_hdl hdl) {
+    websocketpp::server<websocketpp::config::asio_tls>::connection_ptr con = m_server.get_con_from_hdl(hdl);
+    return con->get_buffered_amount();
 }
 
 }

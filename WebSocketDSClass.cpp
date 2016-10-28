@@ -444,6 +444,48 @@ void WebSocketDSClass::set_default_property()
 	}
 	else
 		add_wiz_dev_prop(prop_name, prop_desc);
+	prop_name = "MaxNumberOfConnections";
+	prop_desc = "Maximum number of WebSocket connections (clients)\n(If == 0) An unlimited number of connections";
+	prop_def  = "0";
+	vect_data.clear();
+	vect_data.push_back("0");
+	if (prop_def.length()>0)
+	{
+		Tango::DbDatum	data(prop_name);
+		data << vect_data ;
+		dev_def_prop.push_back(data);
+		add_wiz_dev_prop(prop_name, prop_desc,  prop_def);
+	}
+	else
+		add_wiz_dev_prop(prop_name, prop_desc);
+	prop_name = "MaximumBufferSize";
+	prop_desc = "The maximum size of the buffer (in KiB) after which the socket is closed\nValue must be from 1 to 10000";
+	prop_def  = "1000";
+	vect_data.clear();
+	vect_data.push_back("1000");
+	if (prop_def.length()>0)
+	{
+		Tango::DbDatum	data(prop_name);
+		data << vect_data ;
+		dev_def_prop.push_back(data);
+		add_wiz_dev_prop(prop_name, prop_desc,  prop_def);
+	}
+	else
+		add_wiz_dev_prop(prop_name, prop_desc);
+	prop_name = "ResetTimestampDifference";
+	prop_desc = "Timestamp difference after which reloads the server. (seconds)\nDefault and MinValue = 60";
+	prop_def  = "60";
+	vect_data.clear();
+	vect_data.push_back("60");
+	if (prop_def.length()>0)
+	{
+		Tango::DbDatum	data(prop_name);
+		data << vect_data ;
+		dev_def_prop.push_back(data);
+		add_wiz_dev_prop(prop_name, prop_desc,  prop_def);
+	}
+	else
+		add_wiz_dev_prop(prop_name, prop_desc);
 }
 
 //--------------------------------------------------------
@@ -697,6 +739,54 @@ void WebSocketDSClass::attribute_factory(vector<Tango::Attr *> &att_list)
 	json->set_disp_level(Tango::OPERATOR);
 	//	Not Memorized
 	att_list.push_back(json);
+
+	//	Attribute : TimestampDiff
+	TimestampDiffAttrib	*timestampdiff = new TimestampDiffAttrib();
+	Tango::UserDefaultAttrProp	timestampdiff_prop;
+	timestampdiff_prop.set_description("The difference between the timestamps from UpdateData and CheckPoll");
+	timestampdiff_prop.set_label("TimestampDifference");
+	timestampdiff_prop.set_unit("s");
+	//	standard_unit	not set for TimestampDiff
+	//	display_unit	not set for TimestampDiff
+	//	format	not set for TimestampDiff
+	//	max_value	not set for TimestampDiff
+	//	min_value	not set for TimestampDiff
+	//	max_alarm	not set for TimestampDiff
+	//	min_alarm	not set for TimestampDiff
+	//	max_warning	not set for TimestampDiff
+	//	min_warning	not set for TimestampDiff
+	//	delta_t	not set for TimestampDiff
+	//	delta_val	not set for TimestampDiff
+	
+	timestampdiff->set_default_properties(timestampdiff_prop);
+	//	Not Polled
+	timestampdiff->set_disp_level(Tango::OPERATOR);
+	//	Not Memorized
+	att_list.push_back(timestampdiff);
+
+	//	Attribute : NumberOfConnections
+	NumberOfConnectionsAttrib	*numberofconnections = new NumberOfConnectionsAttrib();
+	Tango::UserDefaultAttrProp	numberofconnections_prop;
+	numberofconnections_prop.set_description("Number of WS clients");
+	//	label	not set for NumberOfConnections
+	//	unit	not set for NumberOfConnections
+	//	standard_unit	not set for NumberOfConnections
+	//	display_unit	not set for NumberOfConnections
+	//	format	not set for NumberOfConnections
+	//	max_value	not set for NumberOfConnections
+	//	min_value	not set for NumberOfConnections
+	//	max_alarm	not set for NumberOfConnections
+	//	min_alarm	not set for NumberOfConnections
+	//	max_warning	not set for NumberOfConnections
+	//	min_warning	not set for NumberOfConnections
+	//	delta_t	not set for NumberOfConnections
+	//	delta_val	not set for NumberOfConnections
+	
+	numberofconnections->set_default_properties(numberofconnections_prop);
+	//	Not Polled
+	numberofconnections->set_disp_level(Tango::OPERATOR);
+	//	Not Memorized
+	att_list.push_back(numberofconnections);
 
 
 	//	Create a list of static attributes

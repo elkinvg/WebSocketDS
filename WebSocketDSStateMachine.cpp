@@ -69,6 +69,38 @@ bool WebSocketDS::is_JSON_allowed(TANGO_UNUSED(Tango::AttReqType type))
 	return true;
 }
 
+//--------------------------------------------------------
+/**
+ *	Method      : WebSocketDS::is_TimestampDiff_allowed()
+ *	Description : Execution allowed for TimestampDiff attribute
+ */
+//--------------------------------------------------------
+bool WebSocketDS::is_TimestampDiff_allowed(TANGO_UNUSED(Tango::AttReqType type))
+{
+
+	//	Not any excluded states for TimestampDiff attribute in read access.
+	/*----- PROTECTED REGION ID(WebSocketDS::TimestampDiffStateAllowed_READ) ENABLED START -----*/
+	
+	/*----- PROTECTED REGION END -----*/	//	WebSocketDS::TimestampDiffStateAllowed_READ
+	return true;
+}
+
+//--------------------------------------------------------
+/**
+ *	Method      : WebSocketDS::is_NumberOfConnections_allowed()
+ *	Description : Execution allowed for NumberOfConnections attribute
+ */
+//--------------------------------------------------------
+bool WebSocketDS::is_NumberOfConnections_allowed(TANGO_UNUSED(Tango::AttReqType type))
+{
+
+	//	Not any excluded states for NumberOfConnections attribute in read access.
+	/*----- PROTECTED REGION ID(WebSocketDS::NumberOfConnectionsStateAllowed_READ) ENABLED START -----*/
+	
+	/*----- PROTECTED REGION END -----*/	//	WebSocketDS::NumberOfConnectionsStateAllowed_READ
+	return true;
+}
+
 
 //=================================================
 //		Commands Allowed Methods
@@ -176,7 +208,10 @@ bool WebSocketDS::is_CheckPoll_allowed(TANGO_UNUSED(const CORBA::Any &any))
 {
 	//	Not any excluded states for CheckPoll command.
 	/*----- PROTECTED REGION ID(WebSocketDS::CheckPollStateAllowed) ENABLED START -----*/
-	
+    if (get_state() == Tango::OFF )
+    {
+        return false;
+    }
 	/*----- PROTECTED REGION END -----*/	//	WebSocketDS::CheckPollStateAllowed
 	return true;
 }

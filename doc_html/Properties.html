@@ -69,6 +69,27 @@
 		<td> String </td>
 		<td> auth/web/1 <br> </td>
 	</tr>
+	<tr>
+		<td> MaxNumberOfConnections </td>
+		<td> Maximum number of WebSocket connections (clients)<Br>
+			(If == 0) An unlimited number of connections </td>
+		<td> short </td>
+		<td> 0 <br> </td>
+	</tr>
+	<tr>
+		<td> MaximumBufferSize </td>
+		<td> The maximum size of the buffer (in KiB) after which the socket is closed<Br>
+			Value must be from 1 to 100000 </td>
+		<td> int </td>
+		<td> 1000 <br> </td>
+	</tr>
+	<tr>
+		<td> ResetTimestampDifference </td>
+		<td> Timestamp difference after which reloads the server. (seconds)<Br>
+			Default and MinValue = 60 </td>
+		<td> short </td>
+		<td> 60 <br> </td>
+	</tr>
 </table>
 </body>
 </html>

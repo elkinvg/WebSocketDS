@@ -1,4 +1,4 @@
-﻿/*----- PROTECTED REGION ID(WebSocketDS.h) ENABLED START -----*/
+/*----- PROTECTED REGION ID(WebSocketDS.h) ENABLED START -----*/
 //=============================================================================
 //
 // file :        WebSocketDS.h
@@ -149,10 +149,21 @@ public:
 	string	key;
 	//	AuthDS:	Tango web authentication device server (TangoWebAuth ) name.
 	string	authDS;
+	//	MaxNumberOfConnections:	Maximum number of WebSocket connections (clients)
+	//  (If == 0) An unlimited number of connections
+	Tango::DevUShort	maxNumberOfConnections;
+	//	MaximumBufferSize:	The maximum size of the buffer (in KiB) after which the socket is closed
+	//  Value must be from 1 to 10000
+	Tango::DevUShort	maximumBufferSize;
+	//	ResetTimestampDifference:	Timestamp difference after which reloads the server. (seconds)
+	//  Default and MinValue = 60
+	Tango::DevUShort	resetTimestampDifference;
 
 //	Attribute data members
 public:
 	Tango::DevString	*attr_JSON_read;
+	Tango::DevULong	*attr_TimestampDiff_read;
+	Tango::DevULong	*attr_NumberOfConnections_read;
 
 //	Constructors and destructors
 public:
@@ -223,6 +234,24 @@ public:
  */
 	virtual void read_JSON(Tango::Attribute &attr);
 	virtual bool is_JSON_allowed(Tango::AttReqType type);
+/**
+ *	Attribute TimestampDiff related methods
+ *	Description: The difference between the timestamps from UpdateData and CheckPoll
+ *
+ *	Data type:	Tango::DevULong
+ *	Attr type:	Scalar
+ */
+	virtual void read_TimestampDiff(Tango::Attribute &attr);
+	virtual bool is_TimestampDiff_allowed(Tango::AttReqType type);
+/**
+ *	Attribute NumberOfConnections related methods
+ *	Description: Number of WS clients
+ *
+ *	Data type:	Tango::DevULong
+ *	Attr type:	Scalar
+ */
+	virtual void read_NumberOfConnections(Tango::Attribute &attr);
+	virtual bool is_NumberOfConnections_allowed(Tango::AttReqType type);
 
 
 	//--------------------------------------------------------
@@ -365,6 +394,7 @@ public:
     virtual void send_all(std::string msg) = 0;
     virtual void send(websocketpp::connection_hdl hdl, std::string msg) = 0;
 protected:
+    WebSocketDS *ds;
     std::string cache;
     virtual bool on_validate(websocketpp::connection_hdl hdl) = 0;
     void on_message(websocketpp::connection_hdl hdl, server::message_ptr msg);
@@ -372,6 +402,8 @@ protected:
     void on_close(websocketpp::connection_hdl hdl);
     //test
     void  on_fail(websocketpp::connection_hdl);
+    virtual void close_from_server(websocketpp::connection_hdl hdl) = 0;
+    virtual size_t get_buffered_amount(websocketpp::connection_hdl hdl) = 0;
 
     string parseOfAddress(string addrFromConn); // parsing of get_remote_endpoint-return
     // remoteEndpoint in websocket output formate[::ffff:127.0.0.1 : 11111]
@@ -383,20 +415,25 @@ protected:
     bool forValidate(map<string, string> remoteConf);
     int port;
 
+    const Tango::DevULong maximumBufferSizeMin = 1;
+    const Tango::DevULong maximumBufferSizeMax = 10000;
+    const Tango::DevULong maximumBufferSizeDef = 1000;
+
     typedef std::set<websocketpp::connection_hdl,std::owner_less<websocketpp::connection_hdl> > con_list;
     con_list m_connections;
     unique_ptr<UserControl> uc;
+
+    websocketpp::lib::mutex m_connection_lock;
     
 private:
     vector<string> &split(const string &s, char delim, vector<string> &elems);
     vector<string> split(const string &s, char delim);
 
     websocketpp::lib::mutex m_action_lock;
-    websocketpp::lib::mutex m_connection_lock;
     websocketpp::lib::condition_variable m_action_cond;
     bool local_th_exit;
 
-    WebSocketDS *ds;
+//    WebSocketDS *ds;
 
 //    std::string host;
 
@@ -418,6 +455,8 @@ public:
     virtual void send(websocketpp::connection_hdl hdl, std::string msg) override;
     virtual bool on_validate(websocketpp::connection_hdl hdl) override;
 private:
+    virtual void close_from_server(websocketpp::connection_hdl hdl) override;
+    virtual size_t get_buffered_amount(websocketpp::connection_hdl hdl) override;
     virtual map<string, string> getRemoteConf(websocketpp::connection_hdl hdl) override;
     server m_server;
 };
@@ -446,7 +485,8 @@ private:
     context_ptr on_tls_init(websocketpp::connection_hdl hdl);
     std::string get_password();
     virtual map<string, string> getRemoteConf(websocketpp::connection_hdl hdl) override;
-
+    virtual void close_from_server(websocketpp::connection_hdl hdl) override;
+    virtual size_t get_buffered_amount(websocketpp::connection_hdl hdl) override;
     server_tls m_server;
 
     std::string certificate_;

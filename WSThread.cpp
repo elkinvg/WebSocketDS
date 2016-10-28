@@ -32,6 +32,7 @@ void WSThread::on_open(websocketpp::connection_hdl hdl) {
     DEBUG_STREAM << "New user has been connected!!" << endl;
     websocketpp::lib::unique_lock<websocketpp::lib::mutex> con_lock(m_connection_lock);
     m_connections.insert(hdl);
+    ds->attr_NumberOfConnections_read[0] = m_connections.size();
     send(hdl, cache);
 }
 
@@ -39,10 +40,11 @@ void WSThread::on_close(websocketpp::connection_hdl hdl) {
     DEBUG_STREAM << "User has been disconnected!!" << endl;
     websocketpp::lib::unique_lock<websocketpp::lib::mutex> con_lock(m_connection_lock);
     m_connections.erase(hdl);
+    ds->attr_NumberOfConnections_read[0] = m_connections.size();
 }
 
 void  WSThread::on_fail(websocketpp::connection_hdl hdl) {
-    ERROR_STREAM << " Fail from WSThread on_fail " << endl;
+    //ERROR_STREAM << " Fail from WSThread on_fail " << endl;
 #ifdef TESTFAIL
     std::fstream fs;
     fs.open ("/tmp/tango_log/web_socket/test_log.out", std::fstream::in | std::fstream::out | std::fstream::app);

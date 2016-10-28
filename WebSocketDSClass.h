@@ -72,6 +72,32 @@ public:
 		{return (static_cast<WebSocketDS *>(dev))->is_JSON_allowed(ty);}
 };
 
+//	Attribute TimestampDiff class definition
+class TimestampDiffAttrib: public Tango::Attr
+{
+public:
+	TimestampDiffAttrib():Attr("TimestampDiff",
+			Tango::DEV_ULONG, Tango::READ) {};
+	~TimestampDiffAttrib() {};
+	virtual void read(Tango::DeviceImpl *dev,Tango::Attribute &att)
+		{(static_cast<WebSocketDS *>(dev))->read_TimestampDiff(att);}
+	virtual bool is_allowed(Tango::DeviceImpl *dev,Tango::AttReqType ty)
+		{return (static_cast<WebSocketDS *>(dev))->is_TimestampDiff_allowed(ty);}
+};
+
+//	Attribute NumberOfConnections class definition
+class NumberOfConnectionsAttrib: public Tango::Attr
+{
+public:
+	NumberOfConnectionsAttrib():Attr("NumberOfConnections",
+			Tango::DEV_ULONG, Tango::READ) {};
+	~NumberOfConnectionsAttrib() {};
+	virtual void read(Tango::DeviceImpl *dev,Tango::Attribute &att)
+		{(static_cast<WebSocketDS *>(dev))->read_NumberOfConnections(att);}
+	virtual bool is_allowed(Tango::DeviceImpl *dev,Tango::AttReqType ty)
+		{return (static_cast<WebSocketDS *>(dev))->is_NumberOfConnections_allowed(ty);}
+};
+
 
 //=========================================
 //	Define classes for commands

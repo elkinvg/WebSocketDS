@@ -1,4 +1,4 @@
-﻿/*----- PROTECTED REGION ID(WebSocketDS.cpp) ENABLED START -----*/
+/*----- PROTECTED REGION ID(WebSocketDS.cpp) ENABLED START -----*/
 static const char *RcsId = "$Id:  $";
 //=============================================================================
 //
@@ -98,9 +98,11 @@ static const char *RcsId = "$Id:  $";
 //================================================================
 
 //================================================================
-//  Attributes managed is:
+//  Attributes managed are:
 //================================================================
-//  JSON  |  Tango::DevString	Scalar
+//  JSON                 |  Tango::DevString	Scalar
+//  TimestampDiff        |  Tango::DevULong	Scalar
+//  NumberOfConnections  |  Tango::DevULong	Scalar
 //================================================================
 
 namespace WebSocketDS_ns
@@ -169,6 +171,8 @@ void WebSocketDS::delete_device()
 
     /*----- PROTECTED REGION END -----*/	//	WebSocketDS::delete_device
 	delete[] attr_JSON_read;
+	delete[] attr_TimestampDiff_read;
+	delete[] attr_NumberOfConnections_read;
 }
 
 //--------------------------------------------------------
@@ -191,10 +195,16 @@ void WebSocketDS::init_device()
 	get_device_property();
 	
 	attr_JSON_read = new Tango::DevString[1];
+	attr_TimestampDiff_read = new Tango::DevULong[1];
+	attr_NumberOfConnections_read = new Tango::DevULong[1];
 	/*----- PROTECTED REGION ID(WebSocketDS::init_device) ENABLED START -----*/
     attr_JSON_read[0] = Tango::string_dup("[{\"success\": false}]");
 
     timeFromUpdateData = std::chrono::seconds(std::time(NULL));
+    attr_TimestampDiff_read[0] = 0;
+
+    if (resetTimestampDifference < 60)
+        resetTimestampDifference = 60;
 
     bool isDsInit = initDeviceServer();
     if (!isDsInit) {
@@ -250,6 +260,9 @@ void WebSocketDS::get_device_property()
 	dev_prop.push_back(Tango::DbDatum("Certificate"));
 	dev_prop.push_back(Tango::DbDatum("Key"));
 	dev_prop.push_back(Tango::DbDatum("AuthDS"));
+	dev_prop.push_back(Tango::DbDatum("MaxNumberOfConnections"));
+	dev_prop.push_back(Tango::DbDatum("MaximumBufferSize"));
+	dev_prop.push_back(Tango::DbDatum("ResetTimestampDifference"));
 
 	//	is there at least one property to be read ?
 	if (dev_prop.size()>0)
@@ -352,6 +365,39 @@ void WebSocketDS::get_device_property()
 		//	And try to extract AuthDS value from database
 		if (dev_prop[i].is_empty()==false)	dev_prop[i]  >>  authDS;
 
+		//	Try to initialize MaxNumberOfConnections from class property
+		cl_prop = ds_class->get_class_property(dev_prop[++i].name);
+		if (cl_prop.is_empty()==false)	cl_prop  >>  maxNumberOfConnections;
+		else {
+			//	Try to initialize MaxNumberOfConnections from default device value
+			def_prop = ds_class->get_default_device_property(dev_prop[i].name);
+			if (def_prop.is_empty()==false)	def_prop  >>  maxNumberOfConnections;
+		}
+		//	And try to extract MaxNumberOfConnections value from database
+		if (dev_prop[i].is_empty()==false)	dev_prop[i]  >>  maxNumberOfConnections;
+
+		//	Try to initialize MaximumBufferSize from class property
+		cl_prop = ds_class->get_class_property(dev_prop[++i].name);
+		if (cl_prop.is_empty()==false)	cl_prop  >>  maximumBufferSize;
+		else {
+			//	Try to initialize MaximumBufferSize from default device value
+			def_prop = ds_class->get_default_device_property(dev_prop[i].name);
+			if (def_prop.is_empty()==false)	def_prop  >>  maximumBufferSize;
+		}
+		//	And try to extract MaximumBufferSize value from database
+		if (dev_prop[i].is_empty()==false)	dev_prop[i]  >>  maximumBufferSize;
+
+		//	Try to initialize ResetTimestampDifference from class property
+		cl_prop = ds_class->get_class_property(dev_prop[++i].name);
+		if (cl_prop.is_empty()==false)	cl_prop  >>  resetTimestampDifference;
+		else {
+			//	Try to initialize ResetTimestampDifference from default device value
+			def_prop = ds_class->get_default_device_property(dev_prop[i].name);
+			if (def_prop.is_empty()==false)	def_prop  >>  resetTimestampDifference;
+		}
+		//	And try to extract ResetTimestampDifference value from database
+		if (dev_prop[i].is_empty()==false)	dev_prop[i]  >>  resetTimestampDifference;
+
 	}
 
 	/*----- PROTECTED REGION ID(WebSocketDS::get_device_property_after) ENABLED START -----*/
@@ -414,6 +460,42 @@ void WebSocketDS::read_JSON(Tango::Attribute &attr)
     attr.set_value(attr_JSON_read);
 
     /*----- PROTECTED REGION END -----*/	//	WebSocketDS::read_JSON
+}
+//--------------------------------------------------------
+/**
+ *	Read attribute TimestampDiff related method
+ *	Description: The difference between the timestamps from UpdateData and CheckPoll
+ *
+ *	Data type:	Tango::DevULong
+ *	Attr type:	Scalar
+ */
+//--------------------------------------------------------
+void WebSocketDS::read_TimestampDiff(Tango::Attribute &attr)
+{
+	DEBUG_STREAM << "WebSocketDS::read_TimestampDiff(Tango::Attribute &attr) entering... " << endl;
+	/*----- PROTECTED REGION ID(WebSocketDS::read_TimestampDiff) ENABLED START -----*/
+	//	Set the attribute value
+	attr.set_value(attr_TimestampDiff_read);
+	
+	/*----- PROTECTED REGION END -----*/	//	WebSocketDS::read_TimestampDiff
+}
+//--------------------------------------------------------
+/**
+ *	Read attribute NumberOfConnections related method
+ *	Description: Number of WS clients
+ *
+ *	Data type:	Tango::DevULong
+ *	Attr type:	Scalar
+ */
+//--------------------------------------------------------
+void WebSocketDS::read_NumberOfConnections(Tango::Attribute &attr)
+{
+	DEBUG_STREAM << "WebSocketDS::read_NumberOfConnections(Tango::Attribute &attr) entering... " << endl;
+	/*----- PROTECTED REGION ID(WebSocketDS::read_NumberOfConnections) ENABLED START -----*/
+	//	Set the attribute value
+	attr.set_value(attr_NumberOfConnections_read);
+	
+	/*----- PROTECTED REGION END -----*/	//	WebSocketDS::read_NumberOfConnections
 }
 
 //--------------------------------------------------------
@@ -680,18 +762,18 @@ void WebSocketDS::reset()
 //--------------------------------------------------------
 void WebSocketDS::check_poll()
 {
-    //DEBUG_STREAM << "WebSocketDS::CheckPoll()  - " << device_name << endl;
+	DEBUG_STREAM << "WebSocketDS::CheckPoll()  - " << device_name << endl;
 	/*----- PROTECTED REGION ID(WebSocketDS::check_poll) ENABLED START -----*/
 	
      std::chrono::seconds  checkPollTime = std::chrono::seconds(std::time(NULL));
      Tango::DevULong cpTime,updTime;
-     Tango::DevULong diffTime;
+     //Tango::DevULong diffTime;
      cpTime = checkPollTime.count();
      updTime = timeFromUpdateData.count();
-     diffTime = cpTime - updTime;
-     DEBUG_STREAM << "WebSocketDS::CheckPoll()  - " << device_name << " time difference: " << diffTime  << endl;
+     attr_TimestampDiff_read[0] = cpTime - updTime;
+     DEBUG_STREAM << "WebSocketDS::CheckPoll()  - " << device_name << " time difference: " << attr_TimestampDiff_read[0]  << endl;
 
-     if (diffTime > 60)
+     if (attr_TimestampDiff_read[0] > resetTimestampDifference)
          reset();
 
 	
