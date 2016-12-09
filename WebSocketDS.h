@@ -119,6 +119,11 @@ private:
     tango_processor processor;
     std::vector<bool>  isJsonAttribute;
 
+    //std::vector<unsigned short> nIters;
+    std::vector<std::pair<unsigned short, unsigned short>> nIters;
+    //std::streamsize maxNiter{ 0 };
+    unsigned long long iterator{ 0 };
+
 //    // тип запроса. Пока только команда. Для атрибута тип не нужен
 //    enum class TYPE_WS_REQ {ATTRIBUTE, COMMAND};
 

@@ -34,6 +34,10 @@ namespace WebSocketDS_ns
         void addOptsForAttribute(string nameAttr, string option);
         void addOptsForCommand(string nameComm, string option);
 
+        // For getting option 
+        std::unordered_map<string, string> getOpts(string nameOfAttrOrComm, TYPE_WS_REQ type_req);
+
+
     private:
         std::string devAttrToStr(Tango::DeviceAttribute *attr);
         template <typename T>
@@ -56,8 +60,9 @@ namespace WebSocketDS_ns
         template <typename T>
         void dataArrayFromAttrOrCommToJson(std::vector<T>& vecFromData, std::stringstream& json,  TYPE_WS_REQ type_req, string nameOfAttrOrComm);
 
+        // getting ios options for floating type
         template <typename T>
-        void addOutToStringStream(T &data, stringstream &ss, stringmap_iter opts/*, stringmap &options, string nameOfAttrOrComm*/);
+        void outForFloat(T &data, stringstream &ss, TYPE_IOS_OPT ios_opt, std::streamsize precIn = 0);
 
         //EGOR
     public:

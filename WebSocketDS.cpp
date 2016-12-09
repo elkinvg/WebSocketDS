@@ -621,11 +621,21 @@ void WebSocketDS::update_data()
     try
     {
         std::stringstream json;
-        //json << "[";
+
         json << "{\"event\": \"read\", \"type_req\": \"attribute\", \"data\":[";
+
+        int it=0;
         for (int i = 0; i < attributes.size(); i++)
         {
-            if (i != 0) json << ", ";
+            // Если задан niter для данного атрибута 
+            // Вывод будет только если iterator кратно nIters
+            if (nIters[i].first != 0) {
+                if ((iterator + (nIters[i].first - nIters[i].second)) % nIters[i].first != 0)
+                    continue;
+            }
+            auto gettedOpts = processor.getOpts(attributes[i], TYPE_WS_REQ::ATTRIBUTE);
+            if (it != 0) json << ", ";
+            it++;
             Tango::DeviceAttribute att = attrList->at(i);
             if (isJsonAttribute.at(i))
                 json << processor.process_device_attribute_json(att);
@@ -633,12 +643,13 @@ void WebSocketDS::update_data()
                 //json << processor.process_attribute(att);
                 json << processor.process_attribute_t(att);
         }
+        iterator++;
         json << "]}";
-        //json << "]";
+
         delete attrList;
         CORBA::string_free(*attr_JSON_read);
         attr_JSON_read[0] = Tango::string_dup(json.str().c_str());
-        //            wsThread->send_all(json.str().c_str());
+
         wsThread->send_all(json.str().c_str());
     }
     catch (Tango::DevFailed &e)
@@ -805,13 +816,64 @@ void WebSocketDS::initAttr()
 {
     DEBUG_STREAM << "Attributes: " << endl;
     // Method gettingAttrUserConf added for Searhing of additional options for attributes
-    // Now it is option "prec" for precision
+    // Now it is options "prec", "precf", "precs" for precision
+    // And "niter"
+    nIters.clear();
+    nIters.reserve(attributes.size());
+
+    // Лямда функция для парсинга niter. Формат niter=N niter=N/M
+    // N - периодичность (unsigned short) вывода 
+    // M (unsigned short) - смещение относительно первой итерации периода
+    // M < N
+    auto getPairOfParams = [](string inp_param) {
+        std::pair<unsigned short, unsigned short> outPair;
+        outPair = std::make_pair(0, 0);
+        size_t pos = 0;
+        string delimiter = "/";
+
+        if ((pos = inp_param.find(delimiter)) != std::string::npos) {
+            string first = inp_param.substr(0, pos);
+            inp_param.erase(0, pos + delimiter.length());
+            try {
+                unsigned short tmp1 = stoi(first);
+                unsigned short tmp2 = stoi(inp_param);
+                if (tmp1 > tmp2) {
+                    outPair.first = tmp1;
+                    outPair.second = tmp2;
+                }                
+            }
+            catch (...) {
+            }
+        }
+        else {
+            unsigned short tmpsz = 0;
+            try {
+                tmpsz = stoi(inp_param);
+                outPair.first = tmpsz;
+            }
+            catch (...) {
+            }
+        }
+        return outPair;
+    };
+
     for (auto& attr : attributes) {
         gettingAttrOrCommUserConf(attr,TYPE_WS_REQ::ATTRIBUTE);
         string tmpAttrName = attr;
         boost::to_lower(tmpAttrName);
         isJsonAttribute.push_back(tmpAttrName.find("json") != std::string::npos);
         DEBUG_STREAM << attr << endl;
+        auto gettedOpts = processor.getOpts(attr, TYPE_WS_REQ::ATTRIBUTE);
+
+        std::pair<unsigned short, unsigned short> tmpsz; 
+        tmpsz = std::make_pair(0, 0);
+        
+        // Если задан niter, производится парсинг, иначе (0,0)
+        if (gettedOpts.find("niter") != gettedOpts.end() ) {
+            string niter = gettedOpts["niter"];
+            tmpsz = getPairOfParams(niter);
+        }
+        nIters.push_back(tmpsz);
     }
 }
 
@@ -821,6 +883,9 @@ void WebSocketDS::initComm()
     // Method gettingAttrUserConf added for Searhing of additional options for attributes
     // Now it is option "prec" for precision
 
+    // Список команд, доступных для выполения
+    // При каждой попытке запуска команды, проверяются права на выполение, 
+    // а также наличие данной команды в accessibleCommandInfo
     accessibleCommandInfo.clear();
 
     for (auto& com : commands) {

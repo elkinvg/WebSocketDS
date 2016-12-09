@@ -98,26 +98,58 @@ namespace WebSocketDS_ns
 
     template <typename T>
     void tango_processor::dataFromAttrsOrCommToJson(T& data, std::stringstream& ss, TYPE_WS_REQ type_req, string nameOfAttrOrComm) {
+        auto gettedOpts = getOpts(nameOfAttrOrComm, type_req);
         if (is_floating_point<T>::value) {
-            typename stringmap::iterator iterMap;
-            if (type_req == TYPE_WS_REQ::ATTRIBUTE) {
-                iterMap = optsForAttributes.find(nameOfAttrOrComm);
-                if (iterMap == optsForAttributes.end())
-                            ss << std::setprecision(5) << data;
-                else {
-                    auto opts = optsForAttributes.equal_range(nameOfAttrOrComm);
-                    addOutToStringStream(data, ss, opts);
+
+            // Лямбда-функция для получения числа для std::setprecision
+            auto get_srsz = [](string fromOptStr) {
+                std::streamsize tmpsz = 0;
+                if (fromOptStr != "") {
+                    try {
+                        tmpsz = (std::streamsize)stoi(fromOptStr);
+                    }
+                    catch (...) {
+                        tmpsz = 0;
+                    }
                 }
+                return tmpsz;
+            };
+
+            bool hasIosOpt = false;
+            TYPE_IOS_OPT ios_opt;
+
+            // default streamsize. Was 5. From get_srsz return 0 if optStr = ""
+            std::streamsize srsz = 0;
+
+            string optStr = ""; // string from getted opt
+
+            if (gettedOpts.find("prec") != gettedOpts.end()) {
+                hasIosOpt = true;
+                ios_opt = TYPE_IOS_OPT::PREC;
+                optStr = gettedOpts["prec"];
             }
-            else if (type_req == TYPE_WS_REQ::COMMAND) {
-                iterMap = optsForCommands.find(nameOfAttrOrComm);
-                if (iterMap == optsForCommands.end())
-                            ss << std::setprecision(5) << data;
-                else {
-                    auto opts = optsForCommands.equal_range(nameOfAttrOrComm);
-                    addOutToStringStream(data, ss, opts);
+            else
+                if (gettedOpts.find("precf") != gettedOpts.end()) {
+                    hasIosOpt = true;
+                    ios_opt = TYPE_IOS_OPT::PRECF;
+                    optStr = gettedOpts["precf"];
                 }
+                else
+                    if (gettedOpts.find("precs") != gettedOpts.end()) {
+                        hasIosOpt = true;
+                        ios_opt = TYPE_IOS_OPT::PRECS;
+                        optStr = gettedOpts["precs"];
+                    }
+
+            if (!hasIosOpt) {
+                ios_opt = TYPE_IOS_OPT::PREC;
             }
+            else {
+                srsz = get_srsz(optStr);
+            }
+
+            outForFloat(data, ss, ios_opt, srsz);
+            return;
         }
         else if (std::is_same<T, bool>::value) ss << std::boolalpha << data;
         else if (std::is_same<T, const std::string>::value || std::is_same<T, std::string>::value) ss << "\"" << data << "\"";
@@ -802,64 +834,78 @@ namespace WebSocketDS_ns
         return argout;
     }
 
+    //--------------------------------------------------------
+    /**
+    *	Method      : tango_processor::getOpts()
+    *	Description : Getting option from name of attribute or command
+    */
+    //--------------------------------------------------------
+
+    std::unordered_map<string, string> tango_processor::getOpts(string nameOfAttrOrComm, TYPE_WS_REQ type_req) {
+        stringmap_iter opts;
+
+        /**
+        Получение дополнительных опций из прописанных команд или атрибутов.
+        Формат для дополнения опций
+        Attrname;opt1=10;opt2=12;opt3
+        Здесь AttrDevDouble - имя атрибута
+        Остальное опции. Либо имя опции, либо опция со значением через "="
+        */
+
+        // лямбда-функция для получения map опций. 
+        // Для opt1=10 map["opt1"]="10", для opt3 map["opt3"]=""
+
+        // typedef in "tango_processor.h"
+        // typedef std::unordered_multimap < std::string, std::string > stringmap;
+        // typedef std::pair<stringmap::iterator, stringmap::iterator> stringmap_iter;
+        auto optsMap = [](stringmap_iter opts_in) {
+            std::unordered_map<string, string> outMap;
+
+            for_each(
+                opts_in.first,
+                opts_in.second,
+                [&](stringmap::value_type& x){
+                size_t pos = 0;
+                string delimiter = "=";
+
+                string tmpPars = x.second;
+
+                if ((pos = tmpPars.find(delimiter)) != std::string::npos) {
+                    string keyM = tmpPars.substr(0, pos);
+                    tmpPars.erase(0, pos + delimiter.length());
+                    outMap.insert(std::make_pair(keyM, tmpPars));
+                }
+                else {
+                    outMap.insert(std::make_pair(tmpPars, ""));
+                }
+            }
+            );
+
+            return outMap;
+        };
+
+        if (type_req == TYPE_WS_REQ::COMMAND) {
+            opts = optsForCommands.equal_range(nameOfAttrOrComm);
+        }
+        if (type_req == TYPE_WS_REQ::ATTRIBUTE) {
+            opts = optsForAttributes.equal_range(nameOfAttrOrComm);
+        }
+
+        //std::unordered_map<string, string> forRet = optsMap(opts);
+        return optsMap(opts);
+    }
+
     template <typename T>
-    void tango_processor::addOutToStringStream(T &data, stringstream &ss, stringmap_iter opts)
-    {
-        /*unordered_set<string> gettedOpts;*/
-        string gettedOpt;
+    void tango_processor::outForFloat(T &data, stringstream &ss, TYPE_IOS_OPT ios_opt, std::streamsize precIn) {
 
-        for_each(
-                    opts.first,
-                    opts.second,
-                    [&](stringmap::value_type& x){gettedOpt = x.second; }
-        );
+        if (precIn > 20 || precIn < 0)
+            precIn = 0;
 
-        // пока проверяется один конф из имени атрибута
-        // AttrDevDouble;prec=10;opt2=12
-        // Считывается только prec=10
-        // gettedOpt - определён как стринг. Если опций будет больше одной
-        // можно будет использовать set
-
-        size_t pos=0;
-        string delimiter = "=";
-        std::string token;
-
-        if ((pos = gettedOpt.find(delimiter)) != std::string::npos) {
-            token = gettedOpt.substr(0, pos);
-            gettedOpt.erase(0, pos + delimiter.length());
-
-            if (token == "prec" ||
-                    token == "precf" ||
-                    token == "precs") {
-                unsigned short tmpus;
-                try {
-                    tmpus = (unsigned short)stoi(gettedOpt);
-                    if (tmpus > 20 || tmpus < 0 ) {
-                        tmpus = 0;
-                    }
-                }
-                catch (...) {
-                    ss << std::setprecision(5) << data;
-                    return;
-                }
-                if (token == "prec")
-                    ss << std::setprecision(tmpus) << data;
-                if (token == "precf")
-                    ss << std::fixed << std::setprecision(tmpus) << data;
-                if (token == "precs")
-                    ss << std::scientific << std::setprecision(tmpus) << data;
-            }
-            else {
-                ss << std::setprecision(5) << data;
-            }
-        }
-        else {
-            if (gettedOpt == "precs")
-                ss << std::scientific << data;
-            else if (gettedOpt == "precf")
-                ss << std::fixed << data;
-            else
-                ss << std::setprecision(5) << data;
-        }
+        if (ios_opt == TYPE_IOS_OPT::PREC)
+            ss << std::setprecision(precIn) << data;
+        if (ios_opt == TYPE_IOS_OPT::PRECF)
+            ss << std::fixed << std::setprecision(precIn) << data;
+        if (ios_opt == TYPE_IOS_OPT::PRECS)
+            ss << std::scientific << std::setprecision(precIn) << data;
     }
 }
