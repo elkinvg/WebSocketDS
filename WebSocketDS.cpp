@@ -199,6 +199,7 @@ void WebSocketDS::init_device()
 	attr_NumberOfConnections_read = new Tango::DevULong[1];
 	/*----- PROTECTED REGION ID(WebSocketDS::init_device) ENABLED START -----*/
     attr_JSON_read[0] = Tango::string_dup("[{\"success\": false}]");
+    attr_NumberOfConnections_read[0] = 0;
 
     timeFromUpdateData = std::chrono::seconds(std::time(NULL));
     attr_TimestampDiff_read[0] = 0;
