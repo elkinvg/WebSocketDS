@@ -37,7 +37,7 @@
   "event": "read",
   "type_req":"attribute",
 	"data": [
-		{"attr": "имя_атрибута", "qual": "VALID", "time": 1475580424, "data_type": 2, "data_format": 0, "data": 128},
+		{"attr": "имя_атрибута", "qual": "VALID", "time": 1475580424, "data": 128},
 		{…}
 	]
 }
@@ -49,8 +49,6 @@
  * **"attr"** — имя прослушиваемого атрибута.
  * **"qual"** — `Tango::AttrQuality` Возможные значения: `"VALID`", `"INVALID"`,`"ALARM"`, `"CHANGING"`, `"WARNING"`;
  * **"time"** — UNIX_TIMESTAMP
- * **"data_type"** - тип возвращаемых данных. Подробнее [здесь](http://www.esrf.eu/computing/cs/tango/tango_doc/kernel_doc/pytango/latest/client_api/other.html#PyTango.CmdArgType) (с++ enum аналогичен) (int)
- * **"data_format"** - формат возвращаемых данных. Подробнее [здесь](http://www.esrf.eu/computing/cs/tango/tango_doc/kernel_doc/pytango/latest/client_api/other.html#PyTango.AttrDataFormat) (с++ enum аналогичен) (int)
  * **"data"** — Данные. В зависимости от читаемых атрибутов (Scalar, Spectrum,  Image) меняется выводимый формат. Для Scalar — это единственное значение в виде строки, числа или булевого значения. Для  Spectrum — это массив вида [ … ], также определено значение "dimX" размерность спектра. Для  Image— это это массив вида [ … ], также определено значение "dimX" и "dimY" -  размерность Image.
 
 В случае ошибок выводится сообщение вида
@@ -126,14 +124,12 @@ argin, в зависимости от метода, отправлять в ви
   "data": {
     "command_name": "имя команды",
     "id_req": "id запроса запуска команды",
-    "data_type": "тип возвращаемых данных в формате int",
     "argout": "Данные. Единственное значение
     или массив в зависимости возвращаемых данных. В случае
     массива [...]"
   }  
 }
 ```
-**"data_type"** - тип возвращаемых данных. Подробнее [здесь](http://www.esrf.eu/computing/cs/tango/tango_doc/kernel_doc/pytango/latest/client_api/other.html#PyTango.CmdArgType) (с++ enum аналогичен) (int)
 
 В случае ошибки таким:
 ```json

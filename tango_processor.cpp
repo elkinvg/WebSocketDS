@@ -38,11 +38,11 @@ namespace WebSocketDS_ns
         json << "\"attr\": \"" << att.get_name() << "\", ";
         json << "\"qual\": \"" << quality << "\", ";
         json << "\"time\": " << att.time.tv_sec << ", ";
-        json << "\"data_type\": " << att.get_type() << ", ";
+        //json << "\"data_type\": " << att.get_type() << ", ";
         
 
-        Tango::AttrDataFormat format = att.get_data_format();
-        json << "\"data_format\": " << format << ", ";
+        //Tango::AttrDataFormat format = att.get_data_format();
+        //json << "\"data_format\": " << format << ", ";
 
         if (quality == "INVALID")
             json << "\"data\": \"NONE\"";
@@ -235,7 +235,7 @@ namespace WebSocketDS_ns
         json << "{";
         json << "\"command_name\": " << "\"" << inputArgs["command"] << "\",";
         json << "\"id_req\": "  << inputArgs["id"] << ",";
-        json << "\"data_type\": " << type << ",";
+        //json << "\"data_type\": " << type << ",";
 
         string command_name = inputArgs["command"];
 
