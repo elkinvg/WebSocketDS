@@ -235,7 +235,13 @@ namespace WebSocketDS_ns
         json << "{\"event\": \"read\", \"type_req\": \"command\", \"data\": ";
         json << "{";
         json << "\"command_name\": " << "\"" << inputArgs["command"] << "\",";
-        json << "\"id_req\": "  << inputArgs["id"] << ",";
+        try {
+            auto idTmp = stoi(inputArgs["id"]);
+            json << "\"id_req\": "  << idTmp << ",";
+        }
+        catch (...) {
+            json << "\"id_req\": \""  << inputArgs["id"] << "\",";
+        }
         //json << "\"data_type\": " << type << ",";
 
         string command_name = inputArgs["command"];

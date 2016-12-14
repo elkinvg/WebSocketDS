@@ -974,7 +974,14 @@ string WebSocketDS::exceptionStringOut(string id, string commandName, string err
     ss << "\"error\": \"" << errorMessage << "\",";
     ss << "\"" << type_req_str << "_name" << "\": \"" << commandName << "\", ";
     ss << "\"type_req\": \"" << type_req_str << "\", ";
-    ss << "\"id_req\": " << id;
+
+    try {
+        auto idTmp = stoi(id);
+        ss << "\"id_req\": "  << idTmp;
+    }
+    catch (...) {
+        ss << "\"id_req\": \""  << id << "\"";
+    }
     ss << "}] }";
 
     return ss.str();
