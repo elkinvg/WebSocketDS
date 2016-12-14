@@ -230,6 +230,7 @@ namespace WebSocketDS_ns
         }
 
         std::stringstream json;
+        string noneComm = "\"argout\": \"This type Not supported\"";
 
         json << "{\"event\": \"read\", \"type_req\": \"command\", \"data\": ";
         json << "{";
@@ -348,8 +349,10 @@ namespace WebSocketDS_ns
             //            Tango::DevLong parsed;
             //            deviceData = generateStringJsonFromDevData(jsonData,typeForDeviceData);
             //        }
+            json << noneComm;
             break;
         case Tango::DEVVAR_DOUBLESTRINGARRAY:
+            json << noneComm;
             break;
             //        case Tango::DEV_STATE:
             //            json << devStateToStr(&data);
@@ -357,17 +360,24 @@ namespace WebSocketDS_ns
             //        case Tango::CONST_DEV_STRING:
             //            json << devConstStringToStr(&data);
             //            break;
+        case Tango::DEV_STATE:
+            Tango::DevState stateIn;
+            devData >> stateIn;
+            json << "\"argout\": \"" << tangoState[stateIn] << "\"";
+            break;
         case Tango::DEVVAR_BOOLEANARRAY:
             //        {
             //            Tango::DevBoolean parsed;
             //            deviceData = generateStringJsonFromDevData(jsonData,typeForDeviceData);
             //        }
+            json << noneComm;
             break;
         case Tango::DEV_UCHAR:
             //        {
             //            Tango::DevUChar parsed;
             //            deviceData = generateStringJsonFromDevData(jsonData,typeForDeviceData);
             //        }
+            json << noneComm;
             break;
         case Tango::DEV_LONG64:
         {
@@ -399,6 +409,7 @@ namespace WebSocketDS_ns
         ////            json << devEncodedToStr(&data);
         ////            break;
         default:
+            json << noneComm;
             break;
         }
         json << "} ";
