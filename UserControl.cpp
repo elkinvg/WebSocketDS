@@ -75,6 +75,7 @@ bool WebSocketDS_ns::UserControl::check_permission(map<string, string>& parsedGe
         argout = authProxy->command_inout("check_permissions", argin);
 #endif
         argout >> isAuth;
+        INFO_STREAM << "User " << permission_data[3] << " tried to run the command " << commandName  <<". Access status is " << std::boolalpha << isAuth << endl;
 #ifdef USELOG
         string statusBool = to_string(isAuth);
         permission_data_for_log.push_back(statusBool);
@@ -126,7 +127,7 @@ bool WebSocketDS_ns::UserControl::check_user(map<string, string>& parsedGet) {
         argout >> isAuth;
         delete authProxy;
 
-        INFO_STREAM << "User " << auth_data[0] << " tried to connect. Connect status is " << std::boolalpha << isAuth << endl;
+        //INFO_STREAM << "User " << auth_data[0] << " tried to connect. Connect status is " << std::boolalpha << isAuth << endl;
     }
     catch (Tango::DevFailed &e) {
         ERROR_STREAM << "Could not connect to device-server '" << ds->authDS << "'.. Desc: " << e.errors[0].desc.in();
