@@ -179,8 +179,8 @@ argin, в зависимости от метода, отправлять в ви
  - **permission_data[2]** = `parsedGet["ip"]`; // айпишник пользователя
  - **permission_data[3]** = `parsedGet["login"]`; // логин пользователя
  - **permission_data[4]** = `parsedGet["id_ri"]`; // идентификатор случайного числа
- - **permission_data[5]** = `parsedGet["rand_ident_hash"]`; // случайное число/слово
- - **permission_data[6]** = `parsedGet["rand_ident"]`; // хэш
+ - **permission_data[5]** = `parsedGet["rand_ident_hash"]`; // хэш
+ - **permission_data[6]** = `parsedGet["rand_ident"]`; // случайное число/слово
 
 В общем представлении процесс выглядит так:
 
