@@ -240,7 +240,10 @@ namespace WebSocketDS_ns
             json << "\"id_req\": "  << idTmp << ",";
         }
         catch (...) {
-            json << "\"id_req\": \""  << inputArgs["id"] << "\",";
+            if (inputArgs["id"] == NONE)
+                json << "\"id_req\": "  << inputArgs["id"] << ",";
+            else
+                json << "\"id_req\": \""  << inputArgs["id"] << "\",";
         }
         //json << "\"data_type\": " << type << ",";
 
