@@ -980,7 +980,10 @@ string WebSocketDS::exceptionStringOut(string id, string commandName, string err
         ss << "\"id_req\": "  << idTmp;
     }
     catch (...) {
-        ss << "\"id_req\": \""  << id << "\"";
+        if (id == "\"NONE\"")
+            ss << "\"id_req\": " << id;
+        else
+            ss << "\"id_req\": \"" << id << "\"";
     }
     ss << "}] }";
 
