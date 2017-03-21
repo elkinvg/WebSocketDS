@@ -171,11 +171,11 @@ public:
 	{return (static_cast<WebSocketDS *>(dev))->is_UpdateData_allowed(any);}
 };
 
-//	Command SendCommandToDevice class definition
-class SendCommandToDeviceClass : public Tango::Command
+//	Command SendCommand class definition
+class SendCommandClass : public Tango::Command
 {
 public:
-	SendCommandToDeviceClass(const char   *name,
+	SendCommandClass(const char   *name,
 	               Tango::CmdArgType in,
 				   Tango::CmdArgType out,
 				   const char        *in_desc,
@@ -183,15 +183,15 @@ public:
 				   Tango::DispLevel  level)
 	:Command(name,in,out,in_desc,out_desc, level)	{};
 
-	SendCommandToDeviceClass(const char   *name,
+	SendCommandClass(const char   *name,
 	               Tango::CmdArgType in,
 				   Tango::CmdArgType out)
 	:Command(name,in,out)	{};
-	~SendCommandToDeviceClass() {};
+	~SendCommandClass() {};
 	
 	virtual CORBA::Any *execute (Tango::DeviceImpl *dev, const CORBA::Any &any);
 	virtual bool is_allowed (Tango::DeviceImpl *dev, const CORBA::Any &any)
-	{return (static_cast<WebSocketDS *>(dev))->is_SendCommandToDevice_allowed(any);}
+	{return (static_cast<WebSocketDS *>(dev))->is_SendCommand_allowed(any);}
 };
 
 //	Command Reset class definition
@@ -238,6 +238,29 @@ public:
 	virtual CORBA::Any *execute (Tango::DeviceImpl *dev, const CORBA::Any &any);
 	virtual bool is_allowed (Tango::DeviceImpl *dev, const CORBA::Any &any)
 	{return (static_cast<WebSocketDS *>(dev))->is_CheckPoll_allowed(any);}
+};
+
+//	Command SendCommandBin class definition
+class SendCommandBinClass : public Tango::Command
+{
+public:
+	SendCommandBinClass(const char   *name,
+	               Tango::CmdArgType in,
+				   Tango::CmdArgType out,
+				   const char        *in_desc,
+				   const char        *out_desc,
+				   Tango::DispLevel  level)
+	:Command(name,in,out,in_desc,out_desc, level)	{};
+
+	SendCommandBinClass(const char   *name,
+	               Tango::CmdArgType in,
+				   Tango::CmdArgType out)
+	:Command(name,in,out)	{};
+	~SendCommandBinClass() {};
+	
+	virtual CORBA::Any *execute (Tango::DeviceImpl *dev, const CORBA::Any &any);
+	virtual bool is_allowed (Tango::DeviceImpl *dev, const CORBA::Any &any)
+	{return (static_cast<WebSocketDS *>(dev))->is_SendCommandBin_allowed(any);}
 };
 
 

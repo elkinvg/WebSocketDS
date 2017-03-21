@@ -6,8 +6,18 @@
 #include <locale.h>
 #include <boost/lexical_cast.hpp>
 #include <boost/asio.hpp>
+
+//#include "UserControl.h"
+#include "WSThread_tls.h"
 namespace WebSocketDS_ns
 {
+    WSThread_tls::WSThread_tls(WebSocketDS *dev/*, std::string hostName*/, int portNumber, string cert, string key) :
+        WSThread(dev/*,hostName*/, portNumber)
+    {
+        certificate_ = cert;
+        key_ = key;
+        start_undetached();
+    }
 
 bool WSThread_tls::on_validate(websocketpp::connection_hdl hdl) {
     DEBUG_STREAM << "Check validate WSTHREAD_TLS" << endl;
@@ -128,6 +138,11 @@ void WSThread_tls::send(websocketpp::connection_hdl hdl, std::string msg) {
         ERROR_STREAM << "unknown error from send " << endl;
         close_from_server(hdl);
     }
+}
+
+void WSThread_tls::send(websocketpp::connection_hdl hdl, const void *data, size_t len)
+{
+    m_server.send(hdl, data, len, websocketpp::frame::opcode::binary);
 }
 
 void WSThread_tls::stop()

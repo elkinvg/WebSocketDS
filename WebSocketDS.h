@@ -43,24 +43,12 @@
 #define WINVER 0x0A00
 #endif
 
-//#define _WIN32_WINNT_WIN7 0x0601
-//#define _MSC_VER 1600
-//#define WINVER 0x0601
-//#define _WEBSOCKETPP_CPP11_STRICT_
-//#include <websocketpp/config/asio_no_tls.hpp>
-//#include <websocketpp/config/asio.hpp>
-#include <websocketpp/config/asio.hpp>
-#include <websocketpp/server.hpp>
-#include <iostream>
-#include <set>
-#include <sstream>
-#include <websocketpp/common/thread.hpp>
-#include "tango_processor.h"
+#include "GroupOrDeviceForWs.h"
 
-//#define USELOG
+#include <chrono>
+
 #include "common.h"
 
-//#include <unordered_map>
 
 /*----- PROTECTED REGION END -----*/	//	WebSocketDS.h
 
@@ -98,10 +86,14 @@
 namespace WebSocketDS_ns
 {
 /*----- PROTECTED REGION ID(WebSocketDS::Additional Class Declarations) ENABLED START -----*/
-
+class UserControl;
 class WSThread;
-class WSThread_tls;
-class WSThread_plain;
+
+class GroupOrDeviceForWs;
+//class DeviceForWs;
+//class GroupForWs;
+
+
 
 /*----- PROTECTED REGION END -----*/	//	WebSocketDS::Additional Class Declarations
 
@@ -110,23 +102,14 @@ class WebSocketDS : public TANGO_BASE_CLASS
 
 /*----- PROTECTED REGION ID(WebSocketDS::Data Members) ENABLED START -----*/
 
-    //    Add your own data members
 private:
-    //WSThread *wsThread;
     WSThread *wsThread;
-    Tango::DeviceProxy *device;
-    //std::unique_ptr<Tango::DeviceProxy> device;
-    tango_processor processor;
-    std::vector<bool>  isJsonAttribute;
+    std::unique_ptr<GroupOrDeviceForWs> groupOrDevice;
 
-    //std::vector<unsigned short> nIters;
-    std::vector<std::pair<unsigned short, unsigned short>> nIters;
-    //std::streamsize maxNiter{ 0 };
-    unsigned long long iterator{ 0 };
 
-//    // тип запроса. Пока только команда. Для атрибута тип не нужен
-//    enum class TYPE_WS_REQ {ATTRIBUTE, COMMAND};
-
+    bool _isGroup{false};
+    bool _isLogActive {false};
+    TYPE_OF_IDENT typeOfIdent{TYPE_OF_IDENT::SIMPLE};
 
     std::chrono::seconds timeFromUpdateData;
 public:
@@ -163,6 +146,10 @@ public:
 	//	ResetTimestampDifference:	Timestamp difference after which reloads the server. (seconds)
 	//  Default and MinValue = 60
 	Tango::DevUShort	resetTimestampDifference;
+	//	Options:	Options for device.
+	//  Format of options:
+	//  	opt1;opt2=val
+	string	options;
 
 //	Attribute data members
 public:
@@ -294,7 +281,7 @@ public:
 	virtual void update_data();
 	virtual bool is_UpdateData_allowed(const CORBA::Any &any);
 	/**
-	 *	Command SendCommandToDevice related method
+	 *	Command SendCommand related method
 	 *	Description: Command for sending command to device from property.
 	 *
 	 *	@param argin input argument must be in JSON. Command must be included to device property ``Commands``
@@ -303,8 +290,8 @@ public:
 	 *               {``command`` : ``nameOfCommand``, ``argin`` : ``1``}
 	 *	@returns Output in JSON.
 	 */
-	virtual Tango::DevString send_command_to_device(Tango::DevString argin);
-	virtual bool is_SendCommandToDevice_allowed(const CORBA::Any &any);
+	virtual Tango::DevString send_command(Tango::DevString argin);
+	virtual bool is_SendCommand_allowed(const CORBA::Any &any);
 	/**
 	 *	Command Reset related method
 	 *	Description: Restart websocket server
@@ -319,6 +306,18 @@ public:
 	 */
 	virtual void check_poll();
 	virtual bool is_CheckPoll_allowed(const CORBA::Any &any);
+	/**
+	 *	Command SendCommandBin related method
+	 *	Description: Command for sending command to device from property.
+	 *
+	 *	@param argin input argument must be in JSON. Command must be included to device property ``Commands``
+	 *               {``command`` : ``nameOfCommand``, ``argin`` : [``1``,``2``,``3``]}
+	 *               OR
+	 *               {``command`` : ``nameOfCommand``, ``argin`` : ``1``}
+	 *	@returns Output in binary data
+	 */
+	virtual Tango::DevVarCharArray *send_command_bin(Tango::DevString argin);
+	virtual bool is_SendCommandBin_allowed(const CORBA::Any &any);
 
 
 	//--------------------------------------------------------
@@ -330,173 +329,34 @@ public:
 	void add_dynamic_commands();
 
 /*----- PROTECTED REGION ID(WebSocketDS::Additional Method prototypes) ENABLED START -----*/
+public:
+    // From Property "Options" of tango_device
+    // format opt1;opt2=val;opt3
+    OUTPUT_DATA_TYPE check_type_of_data(const string& commandName);
+    // opt = tident=[smpl or rndid] example tident=rndid
+    TYPE_OF_IDENT check_type_of_ident(){ return typeOfIdent; };
+    // opt = group
+    bool isGroup() { return _isGroup; };
+    // opt = uselog
+    bool isLogActive() { return _isLogActive; };
+
 private:
     void reInitDevice();
-    void initAttr();
-    void initComm();
     void fromException(Tango::DevFailed &e, string func);
 
     bool initDeviceServer();
     bool initWsThread();
 
+
 #ifdef TESTFAIL
     void sendLogToFile();
 #endif
-    // for getting command or attribute's configuration
-    void gettingAttrOrCommUserConf(string&, TYPE_WS_REQ type_req);
-    // exception for command
-    string exceptionStringOut(string id, string commandName, string errorMessage, TYPE_WS_REQ type_req);
-    // exception for attribute
-    string exceptionStringOut(string errorMessage);
 
     /*----- PROTECTED REGION END -----*/	//	WebSocketDS::Additional Method prototypes
 };
 
 /*----- PROTECTED REGION ID(WebSocketDS::Additional Classes Definitions) ENABLED START -----*/
 
-//    Additional Classes Definitions
-
-class UserControl: public Tango::LogAdapter
-{
-public:
-    UserControl(WebSocketDS *dev):
-        Tango::LogAdapter(dev)
-    {
-        ds = dev;
-    }
-    ~UserControl(){};
-
-    bool check_permission(map<string, string>& parsedGet, Tango::DevString commandJson);
-    bool check_user(map<string, string>& parsedGet);
-private:
-    WebSocketDS *ds;
-#ifdef USELOG
-    bool sendLogCommand(vector <string> toLogData, Tango::DeviceProxy *authProxy);
-#endif
-    string getCommandName(const string& commandJson);
-
-};
-
-typedef websocketpp::lib::shared_ptr<websocketpp::lib::asio::ssl::context> context_ptr;
-typedef websocketpp::server<websocketpp::config::asio> server;
-typedef websocketpp::server<websocketpp::config::asio_tls> server_tls;
-
-class WSThread: public omni_thread, public Tango::LogAdapter
-{
-public:
-    WSThread(WebSocketDS *dev/*, std::string hostName*/,int portNumber): omni_thread(), Tango::LogAdapter(dev)
-    {
-        //host = hostName;
-        port = portNumber;
-        ds = dev;
-        uc = unique_ptr<UserControl>(new UserControl(dev));
-    }
-    virtual ~WSThread();
-
-    virtual void *run_undetached(void *) = 0;
-
-    virtual  void stop() = 0;
-    virtual void send_all(std::string msg) = 0;
-    virtual void send(websocketpp::connection_hdl hdl, std::string msg) = 0;
-protected:
-    WebSocketDS *ds;
-    std::string cache;
-    virtual bool on_validate(websocketpp::connection_hdl hdl) = 0;
-    void on_message(websocketpp::connection_hdl hdl, server::message_ptr msg);
-    void on_open(websocketpp::connection_hdl hdl);
-    void on_close(websocketpp::connection_hdl hdl);
-    //test
-    void  on_fail(websocketpp::connection_hdl);
-    virtual void close_from_server(websocketpp::connection_hdl hdl) = 0;
-    virtual size_t get_buffered_amount(websocketpp::connection_hdl hdl) = 0;
-
-    string parseOfAddress(string addrFromConn); // parsing of get_remote_endpoint-return
-    // remoteEndpoint in websocket output formate[::ffff:127.0.0.1 : 11111]
-
-    map<string, string> parseOfGetQuery(string query);
-
-    virtual map<string, string> getRemoteConf(websocketpp::connection_hdl hdl) = 0;
-
-    bool forValidate(map<string, string> remoteConf);
-    int port;
-
-    const Tango::DevULong maximumBufferSizeMin = 1;
-    const Tango::DevULong maximumBufferSizeMax = 10000;
-    const Tango::DevULong maximumBufferSizeDef = 1000;
-
-    typedef std::set<websocketpp::connection_hdl,std::owner_less<websocketpp::connection_hdl> > con_list;
-    con_list m_connections;
-    unique_ptr<UserControl> uc;
-
-    websocketpp::lib::mutex m_connection_lock;
-    
-private:
-    vector<string> &split(const string &s, char delim, vector<string> &elems);
-    vector<string> split(const string &s, char delim);
-
-    websocketpp::lib::mutex m_action_lock;
-    websocketpp::lib::condition_variable m_action_cond;
-    bool local_th_exit;
-
-//    WebSocketDS *ds;
-
-//    std::string host;
-
-};
-
-class WSThread_plain: public WSThread
-{
-public:
-    WSThread_plain(WebSocketDS *dev/*, std::string hostName*/,int portNumber):
-        WSThread(dev/*,hostName*/,portNumber)
-    {
-        start_undetached();
-    }
-
-    virtual ~WSThread_plain();
-    virtual void *run_undetached(void *) override;
-    virtual void stop() override;
-    virtual void send_all(std::string msg) override;
-    virtual void send(websocketpp::connection_hdl hdl, std::string msg) override;
-    virtual bool on_validate(websocketpp::connection_hdl hdl) override;
-private:
-    virtual void close_from_server(websocketpp::connection_hdl hdl) override;
-    virtual size_t get_buffered_amount(websocketpp::connection_hdl hdl) override;
-    virtual map<string, string> getRemoteConf(websocketpp::connection_hdl hdl) override;
-    server m_server;
-};
-
-
-
-class WSThread_tls: public WSThread
-{
-public:
-    WSThread_tls(WebSocketDS *dev/*, std::string hostName*/,int portNumber, string cert, string key):
-        WSThread(dev/*,hostName*/,portNumber)
-    {
-        certificate_ = cert;
-        key_ = key;
-        start_undetached();
-    }
-
-    virtual ~WSThread_tls();
-    virtual void *run_undetached(void *) override;
-
-    virtual  void stop() override;
-    virtual void send_all(std::string msg) override;
-    virtual void send(websocketpp::connection_hdl hdl, std::string msg) override;
-    virtual bool on_validate(websocketpp::connection_hdl hdl) override;
-private:
-    context_ptr on_tls_init(websocketpp::connection_hdl hdl);
-    std::string get_password();
-    virtual map<string, string> getRemoteConf(websocketpp::connection_hdl hdl) override;
-    virtual void close_from_server(websocketpp::connection_hdl hdl) override;
-    virtual size_t get_buffered_amount(websocketpp::connection_hdl hdl) override;
-    server_tls m_server;
-
-    std::string certificate_;
-    std::string key_;
-};
 
 /*----- PROTECTED REGION END -----*/	//	WebSocketDS::Additional Classes Definitions
 

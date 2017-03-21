@@ -1,13 +1,26 @@
+#include "WSThread_plain.h"
+#include "WebSocketDS.h"
+
 #include <tango.h>
 #include <omnithread.h>
 #include <log4tango.h>
 #include <cmath>
-#include "WebSocketDS.h"
+
 #include <locale.h>
 #include <boost/lexical_cast.hpp>
 #include <boost/asio.hpp>
+
+//#include "UserControl.h"
+
+
 namespace WebSocketDS_ns
 {
+    WSThread_plain::WSThread_plain(WebSocketDS *dev/*, std::string hostName*/, int portNumber) :
+        WSThread(dev/*,hostName*/, portNumber)
+    {
+        start_undetached();
+    }
+
     bool WSThread_plain::on_validate(websocketpp::connection_hdl hdl) {
         DEBUG_STREAM << "Check validate WSTHREAD_PLAIN" << endl;
         
@@ -194,6 +207,11 @@ namespace WebSocketDS_ns
             fs.close();
 #endif
         }
+    }
+
+    void WSThread_plain::send(websocketpp::connection_hdl hdl, const void *data, size_t len)
+    {
+        m_server.send(hdl,data,len,websocketpp::frame::opcode::binary);
     }
 
     void WSThread_plain::stop()

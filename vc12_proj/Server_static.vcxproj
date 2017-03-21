@@ -68,7 +68,7 @@
       <UseLibraryDependencyInputs>false</UseLibraryDependencyInputs>
     </ProjectReference>
     <Link>
-      <AdditionalDependencies>WebSocketDSd.lib;omniORB4d.lib;omniDynamic4d.lib;COS4d.lib;omnithreadd.lib;tangod.lib;log4tangod.lib;zmqd.lib;comctl32.lib;ws2_32.lib;mswsock.lib;advapi32.lib;libboost_thread-vc120-mt-sgd-1_59.lib;libboost_system-vc120-mt-sgd-1_59.lib;ssleay32MTd.lib;libeay32MTd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>WebSocketDSd.lib;omniORB4d.lib;omniDynamic4d.lib;COS4d.lib;omnithreadd.lib;tangod.lib;log4tangod.lib;zmqd.lib;comctl32.lib;ws2_32.lib;mswsock.lib;advapi32.lib;libboost_system-vc120-mt-sgd-1_59.lib;ssleay32MTd.lib;libeay32MTd.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ShowProgress>NotSet</ShowProgress>
       <OutputFile>$(OutDir)WebSocketDS.exe</OutputFile>
       <AdditionalLibraryDirectories>..\lib\win64\vc12;$(TANGO_ROOT)\win64\lib\vc12;$(TANGO_ROOT)\classes\win64\lib\vc12;$(BOOST_LIBS_12_64);$(OPENSSL_ROOT_64)\lib64\VC;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>

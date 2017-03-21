@@ -46,7 +46,12 @@ static const char *RcsId = "$Id:  $";
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string.hpp>    
 
+#include "WSThread_plain.h"
+#include "WSThread_tls.h"
 
+#include "StringProc.h"
+#include "DeviceForWs.h"
+#include "GroupForWs.h"
 
 /*----- PROTECTED REGION END -----*/	//	WebSocketDS.cpp
 
@@ -85,16 +90,17 @@ static const char *RcsId = "$Id:  $";
 //  The following table gives the correspondence
 //  between command and method names.
 //
-//  Command name         |  Method name
+//  Command name    |  Method name
 //================================================================
-//  State                |  Inherited (no method)
-//  Status               |  Inherited (no method)
-//  On                   |  on
-//  Off                  |  off
-//  UpdateData           |  update_data
-//  SendCommandToDevice  |  send_command_to_device
-//  Reset                |  reset
-//  CheckPoll            |  check_poll
+//  State           |  Inherited (no method)
+//  Status          |  Inherited (no method)
+//  On              |  on
+//  Off             |  off
+//  UpdateData      |  update_data
+//  SendCommand     |  send_command
+//  Reset           |  reset
+//  CheckPoll       |  check_poll
+//  SendCommandBin  |  send_command_bin
 //================================================================
 
 //================================================================
@@ -158,16 +164,14 @@ void WebSocketDS::delete_device()
 	DEBUG_STREAM << "WebSocketDS::delete_device() " << device_name << endl;
 	/*----- PROTECTED REGION ID(WebSocketDS::delete_device) ENABLED START -----*/
 
-    //    Delete device allocated objects
-    wsThread->stop();
-    void *ptr;
-    DEBUG_STREAM << "Waiting for the thread to exit" << endl;
-    //        wsThread->join(&ptr);
-    wsThread->join(&ptr);
+    if (wsThread != nullptr) {
+        wsThread->stop();
+        void *ptr;
+        DEBUG_STREAM << "Waiting for the thread to exit" << endl;
+        wsThread->join(&ptr);
+    }  
 
     CORBA::string_free(*attr_JSON_read);
-    if (device!=nullptr)
-        delete device;
 
     /*----- PROTECTED REGION END -----*/	//	WebSocketDS::delete_device
 	delete[] attr_JSON_read;
@@ -200,6 +204,7 @@ void WebSocketDS::init_device()
 	/*----- PROTECTED REGION ID(WebSocketDS::init_device) ENABLED START -----*/
     attr_JSON_read[0] = Tango::string_dup("[{\"success\": false}]");
     attr_NumberOfConnections_read[0] = 0;
+    
 
     timeFromUpdateData = std::chrono::seconds(std::time(NULL));
     attr_TimestampDiff_read[0] = 0;
@@ -207,31 +212,27 @@ void WebSocketDS::init_device()
     if (resetTimestampDifference < 60)
         resetTimestampDifference = 60;
 
+    wsThread = nullptr;
     bool isDsInit = initDeviceServer();
+
     if (!isDsInit) {
-        if (device!= nullptr)
-            device = nullptr;
         set_state(Tango::FAULT);
         set_status("Couldn't connect to device: " + deviceServer);
         return;
     }
+
     bool isWsThreadInit = initWsThread();
     if (!isWsThreadInit) {
-        if (wsThread!= nullptr)
-            wsThread = nullptr;
         set_state(Tango::FAULT);
-        set_status("Couldn't connect to device: " + deviceServer);
+        set_status("Couldn't init wsThread");
         return;
     }
 
     set_state(Tango::ON);
     set_status("Device is On");
 
-    initAttr();
-    initComm();
+    groupOrDevice->initAttrComm(attributes, commands);
 
-//    attr_JSON_read[0] = Tango::string_dup("[{\"success\": false}]");
-    //update_data();
     /*----- PROTECTED REGION END -----*/	//	WebSocketDS::init_device
 }
 
@@ -264,6 +265,7 @@ void WebSocketDS::get_device_property()
 	dev_prop.push_back(Tango::DbDatum("MaxNumberOfConnections"));
 	dev_prop.push_back(Tango::DbDatum("MaximumBufferSize"));
 	dev_prop.push_back(Tango::DbDatum("ResetTimestampDifference"));
+	dev_prop.push_back(Tango::DbDatum("Options"));
 
 	//	is there at least one property to be read ?
 	if (dev_prop.size()>0)
@@ -399,6 +401,17 @@ void WebSocketDS::get_device_property()
 		//	And try to extract ResetTimestampDifference value from database
 		if (dev_prop[i].is_empty()==false)	dev_prop[i]  >>  resetTimestampDifference;
 
+		//	Try to initialize Options from class property
+		cl_prop = ds_class->get_class_property(dev_prop[++i].name);
+		if (cl_prop.is_empty()==false)	cl_prop  >>  options;
+		else {
+			//	Try to initialize Options from default device value
+			def_prop = ds_class->get_default_device_property(dev_prop[i].name);
+			if (def_prop.is_empty()==false)	def_prop  >>  options;
+		}
+		//	And try to extract Options value from database
+		if (dev_prop[i].is_empty()==false)	dev_prop[i]  >>  options;
+
 	}
 
 	/*----- PROTECTED REGION ID(WebSocketDS::get_device_property_after) ENABLED START -----*/
@@ -416,14 +429,13 @@ void WebSocketDS::get_device_property()
 //--------------------------------------------------------
 void WebSocketDS::always_executed_hook()
 {
-    //DEBUG_STREAM << "WebSocketDS::always_executed_hook()  " << device_name << endl;
+	//DEBUG_STREAM << "WebSocketDS::always_executed_hook()  " << device_name << endl;
 	/*----- PROTECTED REGION ID(WebSocketDS::always_executed_hook) ENABLED START -----*/
 
-    if (device==nullptr || wsThread==nullptr) {
+    if (groupOrDevice == nullptr || wsThread == nullptr) {
         reInitDevice();
         return;
     }
-    //    code always executed before all requests
 
     /*----- PROTECTED REGION END -----*/	//	WebSocketDS::always_executed_hook
 }
@@ -530,7 +542,6 @@ void WebSocketDS::on()
     set_state(Tango::ON);
     set_status("Device is On");
 
-
     /*----- PROTECTED REGION END -----*/	//	WebSocketDS::on
 }
 //--------------------------------------------------------
@@ -561,111 +572,45 @@ void WebSocketDS::update_data()
 {
 	DEBUG_STREAM << "WebSocketDS::UpdateData()  - " << device_name << endl;
 	/*----- PROTECTED REGION ID(WebSocketDS::update_data) ENABLED START -----*/
-    //double r = rand_float(0,100);
-    //attr_MyAttr_read[0] = r;
 
-    std::vector<Tango::DeviceAttribute> *attrList;
     timeFromUpdateData = std::chrono::seconds(std::time(NULL));
+    string jsonStrOut;
     try {
-        device->ping();
+        jsonStrOut = groupOrDevice->generateJsonForUpdate();
+
+        CORBA::string_free(*attr_JSON_read);
+        attr_JSON_read[0] = Tango::string_dup(jsonStrOut.c_str());
+    }
+    catch (Tango::ConnectionFailed &e)
+    {
+        fromException(e, "update_data.read_attr ConnectionFailed ");
+        string mes = "ConnectionFailed from: " + deviceServer;
+        jsonStrOut = StringProc::exceptionStringOut(mes);
+    }
+    catch (Tango::CommunicationFailed &e)
+    {
+        fromException(e, "update_data.read_attr CommunicationFailed ");
+        string mes = "CommunicationFailed from: " + deviceServer;
+        jsonStrOut = StringProc::exceptionStringOut(mes);
     }
     catch (Tango::DevFailed &e)
     {
         fromException(e, "update_data.read_attr ");
-        string mes = "No data from : " + deviceServer + " Perhaps the server is down";
-        string excOut = exceptionStringOut(mes);
-        wsThread->send_all(excOut);
-        return;
-    }
-
-    try
-    {
-//        if (device==nullptr) {
-//            return;
-//        }
-        //device->ping();
-        attrList = device->read_attributes(attributes);
-
-        // reinit initComm if commands have not been initialized
-        if (commands.size() != 0 && accessibleCommandInfo.size() == 0) {
-            initComm();
-        }
-    }
-    catch (Tango::ConnectionFailed &e)
-    {
-        fromException(e,"update_data.read_attr ConnectionFailed ");
-        string mes = "ConnectionFailed from :" + deviceServer;
-        string excOut = exceptionStringOut(mes);
-        wsThread->send_all(excOut);
-        //reInitDevice();
-        return;
-    }
-    catch (Tango::CommunicationFailed &e)
-    {
-        fromException(e,"update_data.read_attr CommunicationFailed ");
-        string mes = "CommunicationFailed from :" + deviceServer;
-        string excOut = exceptionStringOut(mes);
-        wsThread->send_all(excOut);
-        //reInitDevice();
-        return;
-    }
-    catch (Tango::DevFailed &e)
-    {
-        fromException(e,"update_data.read_attr ");
         reInitDevice();
         return;
     }
     catch (...) {
+        reInitDevice();
         return;
     }
 
-    try
-    {
-        std::stringstream json;
-
-        json << "{\"event\": \"read\", \"type_req\": \"attribute\", \"data\":[";
-
-        int it=0;
-        for (int i = 0; i < attributes.size(); i++)
-        {
-            // Если задан niter для данного атрибута 
-            // Вывод будет только если iterator кратно nIters
-            if (nIters[i].first != 0) {
-                if ((iterator + (nIters[i].first - nIters[i].second)) % nIters[i].first != 0)
-                    continue;
-            }
-            auto gettedOpts = processor.getOpts(attributes[i], TYPE_WS_REQ::ATTRIBUTE);
-            if (it != 0) json << ", ";
-            it++;
-            Tango::DeviceAttribute att = attrList->at(i);
-            if (isJsonAttribute.at(i))
-                json << processor.process_device_attribute_json(att);
-            else
-                //json << processor.process_attribute(att);
-                json << processor.process_attribute_t(att);
-        }
-        iterator++;
-        json << "]}";
-
-        delete attrList;
-        CORBA::string_free(*attr_JSON_read);
-        attr_JSON_read[0] = Tango::string_dup(json.str().c_str());
-
-        wsThread->send_all(json.str().c_str());
-    }
-    catch (Tango::DevFailed &e)
-    {
-        Tango::Except::print_exception(e);
-        string mes = "Couldn't read attribute from device: " + deviceServer;
-        string excOut = exceptionStringOut(mes);
-        wsThread->send_all(excOut);
-    }
+    wsThread->send_all(jsonStrOut.c_str());
 
     /*----- PROTECTED REGION END -----*/	//	WebSocketDS::update_data
 }
 //--------------------------------------------------------
 /**
- *	Command SendCommandToDevice related method
+ *	Command SendCommand related method
  *	Description: Command for sending command to device from property.
  *
  *	@param argin input argument must be in JSON. Command must be included to device property ``Commands``
@@ -675,73 +620,15 @@ void WebSocketDS::update_data()
  *	@returns Output in JSON.
  */
 //--------------------------------------------------------
-Tango::DevString WebSocketDS::send_command_to_device(Tango::DevString argin)
+Tango::DevString WebSocketDS::send_command(Tango::DevString argin)
 {
 	Tango::DevString argout;
-	DEBUG_STREAM << "WebSocketDS::SendCommandToDevice()  - " << device_name << endl;
-	/*----- PROTECTED REGION ID(WebSocketDS::send_command_to_device) ENABLED START -----*/
+	DEBUG_STREAM << "WebSocketDS::SendCommand()  - " << device_name << endl;
+	/*----- PROTECTED REGION ID(WebSocketDS::send_command) ENABLED START -----*/
 
-    //    Add your own code
+    argout = groupOrDevice->sendCommand(argin);
 
-    std::map<std::string, std::string> jsonArgs = processor.getCommandName(argin);
-    
-    try
-    {
-        // Если в jsonArgs найден error
-        if (jsonArgs.find("error") != jsonArgs.end()) 
-            return CORBA::string_dup(exceptionStringOut("\"NONE\"", "unknown_command", jsonArgs["error"], TYPE_WS_REQ::COMMAND).c_str());
-
-        if (jsonArgs["argin"].size() == 0)
-            return CORBA::string_dup(exceptionStringOut(jsonArgs["id"], jsonArgs["command"], "argin invalid", TYPE_WS_REQ::COMMAND).c_str());
-
-        if (jsonArgs["command"] == processor.NONE)
-            return CORBA::string_dup(exceptionStringOut(jsonArgs["id"], jsonArgs["command"], "Command (String) not found ", TYPE_WS_REQ::COMMAND).c_str());
-
-
-        bool isCommandAccessible = processor.checkCommand(jsonArgs["command"], accessibleCommandInfo);
-
-        if (isCommandAccessible) {
-            Tango::CommandInfo comInfo = accessibleCommandInfo[jsonArgs["command"]];
-            int type = comInfo.in_type;
-            Tango::DeviceData out;
-
-            // Вызов правильного метода  command_inout
-            // Проверка типа входных аргументов Void, Array, Data
-            if (type == Tango::DEV_VOID) {
-                out = device->command_inout(jsonArgs["command"]);
-            }
-            else {
-                if (jsonArgs["argin"] == processor.NONE)
-                    return CORBA::string_dup(exceptionStringOut(jsonArgs["id"], jsonArgs["command"], "argin not found", TYPE_WS_REQ::COMMAND).c_str());
-                
-                    if (jsonArgs["argin"] == "Array") {
-                        if (!processor.isMassive(type))
-                            return CORBA::string_dup(exceptionStringOut(jsonArgs["id"], jsonArgs["command"], "The input data do not have to be an array", TYPE_WS_REQ::COMMAND).c_str());
-                }
-                Tango::DeviceData deviceData = processor.gettingDevDataFromJsonStr(argin, type);
-
-                try {
-                    out = device->command_inout(jsonArgs["command"], deviceData);
-                }
-                catch (Tango::DevFailed &e) {
-                    return CORBA::string_dup(exceptionStringOut(jsonArgs["id"], jsonArgs["command"], "Exception from command_inout.Check the format of the data", TYPE_WS_REQ::COMMAND).c_str());
-                }
-            }
-
-            // Преобразование полученных данных в Json-формат
-            string fromDevData = processor.gettingJsonStrFromDevData(out, jsonArgs);
-            argout = CORBA::string_dup(fromDevData.c_str());
-        }
-        else {
-            return CORBA::string_dup(exceptionStringOut(jsonArgs["id"], jsonArgs["command"], "Command not found on DeviceServer", TYPE_WS_REQ::COMMAND).c_str());
-        }
-    }
-    catch (Tango::DevFailed &e) {
-        Tango::Except::print_exception(e);
-        return CORBA::string_dup(exceptionStringOut(jsonArgs["id"], jsonArgs["command"], (string)(e.errors[0].desc), TYPE_WS_REQ::COMMAND).c_str());
-    }
-
-    /*----- PROTECTED REGION END -----*/	//	WebSocketDS::send_command_to_device
+	/*----- PROTECTED REGION END -----*/	//	WebSocketDS::send_command
 	return argout;
 }
 //--------------------------------------------------------
@@ -793,6 +680,29 @@ void WebSocketDS::check_poll()
 }
 //--------------------------------------------------------
 /**
+ *	Command SendCommandBin related method
+ *	Description: Command for sending command to device from property.
+ *
+ *	@param argin input argument must be in JSON. Command must be included to device property ``Commands``
+ *               {``command`` : ``nameOfCommand``, ``argin`` : [``1``,``2``,``3``]}
+ *               OR
+ *               {``command`` : ``nameOfCommand``, ``argin`` : ``1``}
+ *	@returns Output in binary data
+ */
+//--------------------------------------------------------
+Tango::DevVarCharArray *WebSocketDS::send_command_bin(Tango::DevString argin)
+{
+	Tango::DevVarCharArray *argout;
+	DEBUG_STREAM << "WebSocketDS::SendCommandBin()  - " << device_name << endl;
+	/*----- PROTECTED REGION ID(WebSocketDS::send_command_bin) ENABLED START -----*/
+
+    argout = groupOrDevice->sendCommandBin(argin);
+    
+	/*----- PROTECTED REGION END -----*/	//	WebSocketDS::send_command_bin
+	return argout;
+}
+//--------------------------------------------------------
+/**
  *	Method      : WebSocketDS::add_dynamic_commands()
  *	Description : Create the dynamic commands if any
  *                for specified device.
@@ -808,101 +718,14 @@ void WebSocketDS::add_dynamic_commands()
 }
 
 /*----- PROTECTED REGION ID(WebSocketDS::namespace_ending) ENABLED START -----*/
+OUTPUT_DATA_TYPE WebSocketDS::check_type_of_data(const string& commandName) {
+    //groupOrDevice->checkOption();
+    return groupOrDevice->checkDataType(commandName);
+}
+
 void WebSocketDS::reInitDevice() {
     delete_device();
     init_device();
-}
-
-void WebSocketDS::initAttr()
-{
-    DEBUG_STREAM << "Attributes: " << endl;
-    // Method gettingAttrUserConf added for Searhing of additional options for attributes
-    // Now it is options "prec", "precf", "precs" for precision
-    // And "niter"
-    nIters.clear();
-    nIters.reserve(attributes.size());
-
-    // Лямда функция для парсинга niter. Формат niter=N niter=N/M
-    // N - периодичность (unsigned short) вывода 
-    // M (unsigned short) - смещение относительно первой итерации периода
-    // M < N
-    auto getPairOfParams = [](string inp_param) {
-        std::pair<unsigned short, unsigned short> outPair;
-        outPair = std::make_pair(0, 0);
-        size_t pos = 0;
-        string delimiter = "/";
-
-        if ((pos = inp_param.find(delimiter)) != std::string::npos) {
-            string first = inp_param.substr(0, pos);
-            inp_param.erase(0, pos + delimiter.length());
-            try {
-                unsigned short tmp1 = stoi(first);
-                unsigned short tmp2 = stoi(inp_param);
-                if (tmp1 > tmp2) {
-                    outPair.first = tmp1;
-                    outPair.second = tmp2;
-                }                
-            }
-            catch (...) {
-            }
-        }
-        else {
-            unsigned short tmpsz = 0;
-            try {
-                tmpsz = stoi(inp_param);
-                outPair.first = tmpsz;
-            }
-            catch (...) {
-            }
-        }
-        return outPair;
-    };
-
-    for (auto& attr : attributes) {
-        gettingAttrOrCommUserConf(attr,TYPE_WS_REQ::ATTRIBUTE);
-        string tmpAttrName = attr;
-        boost::to_lower(tmpAttrName);
-        isJsonAttribute.push_back(tmpAttrName.find("json") != std::string::npos);
-        DEBUG_STREAM << attr << endl;
-        auto gettedOpts = processor.getOpts(attr, TYPE_WS_REQ::ATTRIBUTE);
-
-        std::pair<unsigned short, unsigned short> tmpsz; 
-        tmpsz = std::make_pair(0, 0);
-        
-        // Если задан niter, производится парсинг, иначе (0,0)
-        if (gettedOpts.find("niter") != gettedOpts.end() ) {
-            string niter = gettedOpts["niter"];
-            tmpsz = getPairOfParams(niter);
-        }
-        nIters.push_back(tmpsz);
-    }
-}
-
-void WebSocketDS::initComm()
-{
-    DEBUG_STREAM << "Commands: " << endl;
-    // Method gettingAttrUserConf added for Searhing of additional options for attributes
-    // Now it is option "prec" for precision
-
-    // Список команд, доступных для выполения
-    // При каждой попытке запуска команды, проверяются права на выполение, 
-    // а также наличие данной команды в accessibleCommandInfo
-    accessibleCommandInfo.clear();
-
-    for (auto& com : commands) {
-        try {
-            // Getting CommandInfo
-            // cmd_name , cmd_tag, in_type, in_type_desc, out_type, out_type_desc
-            gettingAttrOrCommUserConf(com, TYPE_WS_REQ::COMMAND);
-            Tango::CommandInfo info = device->command_query(com);
-            accessibleCommandInfo.insert(std::pair<std::string, Tango::CommandInfo>(com, info));
-            DEBUG_STREAM << com << endl;
-        }
-        catch (Tango::DevFailed &e)
-        {
-            ERROR_STREAM << "command " << com << " not found" << endl;
-        }
-    }
 }
 
 void WebSocketDS::fromException(Tango::DevFailed &e, string func)
@@ -915,11 +738,35 @@ void WebSocketDS::fromException(Tango::DevFailed &e, string func)
 
 bool WebSocketDS::initDeviceServer()
 {
-    device = nullptr;
+    groupOrDevice = nullptr;
     bool isInit = false;
     try {
-        device = new Tango::DeviceProxy(deviceServer);
-        device->set_timeout_millis(3000);
+        if (options.size()) {
+            std::vector<std::string> gettedOptions = StringProc::parseInputString(options, ";", true);
+            for (auto& opt : gettedOptions) {
+                if (opt == "group")
+                    _isGroup = true;
+                if (opt == "uselog")
+                    _isLogActive = true;
+                if (opt.find("tident") != string::npos) {
+                    auto gettedIdentOpt = StringProc::parseInputString(opt, "=", true);
+                    if (gettedIdentOpt.size() > 1) {
+                        if (gettedIdentOpt[1] == "rndid")
+                            typeOfIdent = TYPE_OF_IDENT::RANDIDENT;
+                        if (gettedIdentOpt[1] == "smpl")
+                            typeOfIdent = TYPE_OF_IDENT::SIMPLE;
+                        else
+                            typeOfIdent = TYPE_OF_IDENT::SIMPLE;
+                    }
+                }
+            }
+        }
+
+        if (_isGroup) {
+            groupOrDevice = unique_ptr<GroupForWs>(new GroupForWs(this, deviceServer));
+        }
+        else 
+            groupOrDevice = unique_ptr<DeviceForWs>(new DeviceForWs(this, deviceServer));
         isInit = true;
     }
     catch (Tango::DevFailed &e)
@@ -931,7 +778,6 @@ bool WebSocketDS::initDeviceServer()
 
 bool WebSocketDS::initWsThread()
 {
-    wsThread=nullptr;
     bool isInit = false;
     try
     {
@@ -962,91 +808,6 @@ void WebSocketDS::sendLogToFile()
     fs.close();
 }
 #endif
-
-string WebSocketDS::exceptionStringOut(string id, string commandName, string errorMessage, TYPE_WS_REQ type_req)
-{
-    string type_req_str;
-    if (type_req == TYPE_WS_REQ::COMMAND)
-        type_req_str = "command";
-
-    stringstream ss;
-    ss << "{\"event\": \"error\", \"data\": [{";
-    ss << "\"error\": \"" << errorMessage << "\",";
-    ss << "\"" << type_req_str << "_name" << "\": \"" << commandName << "\", ";
-    ss << "\"type_req\": \"" << type_req_str << "\", ";
-
-    try {
-        auto idTmp = stoi(id);
-        ss << "\"id_req\": "  << idTmp;
-    }
-    catch (...) {
-        if (id == "\"NONE\"")
-            ss << "\"id_req\": " << id;
-        else
-            ss << "\"id_req\": \"" << id << "\"";
-    }
-    ss << "}] }";
-
-    return ss.str();
-}
-
-string WebSocketDS::exceptionStringOut(string errorMessage) {
-    stringstream ss;
-    ss << "{\"event\": \"error\", \"data\": [{";
-    ss << "\"error\": \"" << errorMessage << "\",";
-    ss << "\"type_req\": \"" << "attribute" << "\"";
-    ss << "}] }";
-
-    return ss.str();
-}
-
-//--------------------------------------------------------
-/** 
- * Method      : WebSocketDS::gettingAttrUserConf(string &inp)
- * Description : Method for getting of user-configuration for attributes.
- */
-//--------------------------------------------------------
-void WebSocketDS::gettingAttrOrCommUserConf(string &inp, TYPE_WS_REQ type_req)
-{
-    // Now must be one parameter. It is  "prec", "procf" or "procs" for precission.
-    //Example  'prec=15'
-    std::string delimiter = ";";
-    std::string token;
-    std::vector<std::string> gettedAttrOrComm;
-    size_t pos = 0;
-    bool firstiter = true;
-    string nameAttr;
-
-    string s = inp;
-
-    while ((pos = s.find(delimiter)) != std::string::npos) {
-        token = s.substr(0, pos);
-        if (firstiter) {
-            firstiter = false;
-            nameAttr = token;
-        }
-        else
-            gettedAttrOrComm.push_back(token);
-        s.erase(0, pos + delimiter.length());
-    }
-
-    if (!firstiter)
-        gettedAttrOrComm.push_back(s);
-
-    if (gettedAttrOrComm.size() == 0) {
-        inp = s;
-        return;
-    }
-
-    inp = nameAttr;
-
-    for (auto att : gettedAttrOrComm) {
-        if (type_req == TYPE_WS_REQ::ATTRIBUTE)
-            processor.addOptsForAttribute(inp,att);
-        if (type_req == TYPE_WS_REQ::COMMAND)
-            processor.addOptsForCommand(inp,att);
-    }
-}
 
 /*----- PROTECTED REGION END -----*/	//	WebSocketDS::namespace_ending
 } //	namespace

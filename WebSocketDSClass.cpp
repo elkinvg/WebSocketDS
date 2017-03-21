@@ -214,7 +214,7 @@ CORBA::Any *UpdateDataClass::execute(Tango::DeviceImpl *device, TANGO_UNUSED(con
 
 //--------------------------------------------------------
 /**
- * method : 		SendCommandToDeviceClass::execute()
+ * method : 		SendCommandClass::execute()
  * description : 	method to trigger the execution of the command.
  *
  * @param	device	The device on which the command must be executed
@@ -223,12 +223,12 @@ CORBA::Any *UpdateDataClass::execute(Tango::DeviceImpl *device, TANGO_UNUSED(con
  *	returns The command output data (packed in the Any object)
  */
 //--------------------------------------------------------
-CORBA::Any *SendCommandToDeviceClass::execute(Tango::DeviceImpl *device, const CORBA::Any &in_any)
+CORBA::Any *SendCommandClass::execute(Tango::DeviceImpl *device, const CORBA::Any &in_any)
 {
-	cout2 << "SendCommandToDeviceClass::execute(): arrived" << endl;
+	cout2 << "SendCommandClass::execute(): arrived" << endl;
 	Tango::DevString argin;
 	extract(in_any, argin);
-	return insert((static_cast<WebSocketDS *>(device))->send_command_to_device(argin));
+	return insert((static_cast<WebSocketDS *>(device))->send_command(argin));
 }
 
 //--------------------------------------------------------
@@ -265,6 +265,25 @@ CORBA::Any *CheckPollClass::execute(Tango::DeviceImpl *device, TANGO_UNUSED(cons
 	cout2 << "CheckPollClass::execute(): arrived" << endl;
 	((static_cast<WebSocketDS *>(device))->check_poll());
 	return new CORBA::Any();
+}
+
+//--------------------------------------------------------
+/**
+ * method : 		SendCommandBinClass::execute()
+ * description : 	method to trigger the execution of the command.
+ *
+ * @param	device	The device on which the command must be executed
+ * @param	in_any	The command input data
+ *
+ *	returns The command output data (packed in the Any object)
+ */
+//--------------------------------------------------------
+CORBA::Any *SendCommandBinClass::execute(Tango::DeviceImpl *device, const CORBA::Any &in_any)
+{
+	cout2 << "SendCommandBinClass::execute(): arrived" << endl;
+	Tango::DevString argin;
+	extract(in_any, argin);
+	return insert((static_cast<WebSocketDS *>(device))->send_command_bin(argin));
 }
 
 
@@ -477,6 +496,19 @@ void WebSocketDSClass::set_default_property()
 	prop_def  = "60";
 	vect_data.clear();
 	vect_data.push_back("60");
+	if (prop_def.length()>0)
+	{
+		Tango::DbDatum	data(prop_name);
+		data << vect_data ;
+		dev_def_prop.push_back(data);
+		add_wiz_dev_prop(prop_name, prop_desc,  prop_def);
+	}
+	else
+		add_wiz_dev_prop(prop_name, prop_desc);
+	prop_name = "Options";
+	prop_desc = "Options for device.\nFormat of options:\n	opt1;opt2=val";
+	prop_def  = "";
+	vect_data.clear();
 	if (prop_def.length()>0)
 	{
 		Tango::DbDatum	data(prop_name);
@@ -861,14 +893,14 @@ void WebSocketDSClass::command_factory()
 	pUpdateDataCmd->set_polling_period(3000);
 	command_list.push_back(pUpdateDataCmd);
 
-	//	Command SendCommandToDevice
-	SendCommandToDeviceClass	*pSendCommandToDeviceCmd =
-		new SendCommandToDeviceClass("SendCommandToDevice",
+	//	Command SendCommand
+	SendCommandClass	*pSendCommandCmd =
+		new SendCommandClass("SendCommand",
 			Tango::DEV_STRING, Tango::DEV_STRING,
 			"input argument must be in JSON. Command must be included to device property ``Commands``\n{``command`` : ``nameOfCommand``, ``argin`` : [``1``,``2``,``3``]}\nOR\n{``command`` : ``nameOfCommand``, ``argin`` : ``1``}",
 			"Output in JSON.",
 			Tango::OPERATOR);
-	command_list.push_back(pSendCommandToDeviceCmd);
+	command_list.push_back(pSendCommandCmd);
 
 	//	Command Reset
 	ResetClass	*pResetCmd =
@@ -888,6 +920,15 @@ void WebSocketDSClass::command_factory()
 			Tango::OPERATOR);
 	pCheckPollCmd->set_polling_period(10000);
 	command_list.push_back(pCheckPollCmd);
+
+	//	Command SendCommandBin
+	SendCommandBinClass	*pSendCommandBinCmd =
+		new SendCommandBinClass("SendCommandBin",
+			Tango::DEV_STRING, Tango::DEVVAR_CHARARRAY,
+			"input argument must be in JSON. Command must be included to device property ``Commands``\n{``command`` : ``nameOfCommand``, ``argin`` : [``1``,``2``,``3``]}\nOR\n{``command`` : ``nameOfCommand``, ``argin`` : ``1``}",
+			"Output in binary data",
+			Tango::OPERATOR);
+	command_list.push_back(pSendCommandBinCmd);
 
 	/*----- PROTECTED REGION ID(WebSocketDSClass::command_factory_after) ENABLED START -----*/
     

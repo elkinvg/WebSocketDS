@@ -79,8 +79,8 @@
 	<tr>
 		<td> MaximumBufferSize </td>
 		<td> The maximum size of the buffer (in KiB) after which the socket is closed<Br>
-			Value must be from 1 to 100000 </td>
-		<td> int </td>
+			Value must be from 1 to 10000 </td>
+		<td> short </td>
 		<td> 1000 <br> </td>
 	</tr>
 	<tr>
@@ -89,6 +89,14 @@
 			Default and MinValue = 60 </td>
 		<td> short </td>
 		<td> 60 <br> </td>
+	</tr>
+	<tr>
+		<td> Options </td>
+		<td> Options for device.<Br>
+			Format of options:<Br>
+				opt1;opt2=val </td>
+		<td> String </td>
+		<td> none </td>
 	</tr>
 </table>
 </body>

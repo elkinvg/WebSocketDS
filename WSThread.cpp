@@ -7,25 +7,76 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/asio.hpp>
 
+#include "UserControl.h"
+#include "WSThread.h"
+
+#include "StringProc.h"
+
 namespace WebSocketDS_ns
 {
+    WSThread::WSThread(WebSocketDS *dev/*, std::string hostName*/, int portNumber) : omni_thread(), Tango::LogAdapter(dev)
+    {
+        //host = hostName;
+        port = portNumber;
+        ds = dev;
+        uc = unique_ptr<UserControl>(new UserControl(dev));
+    }
 
 void WSThread::on_message(websocketpp::connection_hdl hdl, server::message_ptr msg) {
-    //DEBUG_STREAM << " Input message: " << msg->get_payload() << endl;
     string data_from_client = msg->get_payload();
     INFO_STREAM << " Input message: " << msg->get_payload() << endl;
-    Tango::DevString input = const_cast<Tango::DevString>(data_from_client.c_str());
+    
     map<string, string> conf = getRemoteConf(hdl);
-    //Tango::DevString output;
+    
     string output;
-    bool permission = uc->check_permission(conf, input);
-    if (permission)
-        output = (string)ds->send_command_to_device(input);
-    else
-        output = "{\"event\": \"error\", \"data\": [{\"error\":\"Permission denied\", \"type_req\": \"command\"}] }";
-        //output = "{\"error\":\"Permission denied\"}";
 
-    send(hdl, output);
+    auto parsedJson = StringProc::parseJsonFromCommand(data_from_client, ds->isGroup());
+
+    string commandName;
+
+    if (parsedJson.find("error") != parsedJson.end()) {
+        auto errorMess = StringProc::exceptionStringOut(NONE, "The input message (command) must be in json format", parsedJson["error"],"unknown");
+        send(hdl, errorMess);
+        return;
+    }
+
+    if (ds->isGroup()) {
+        commandName = parsedJson["command_device"];
+        if (!commandName.size() || commandName == NONE)
+            commandName = parsedJson["command_group"];
+    }
+    else
+        commandName = parsedJson["command"];
+
+
+    bool permission = uc->check_permission(conf, data_from_client, commandName);
+    if (permission)  {
+        OUTPUT_DATA_TYPE odt = ds->check_type_of_data(commandName);
+        Tango::DevString input = const_cast<Tango::DevString>(data_from_client.c_str());
+        if (odt == OUTPUT_DATA_TYPE::BINARY) {
+            Tango::DevVarCharArray* bindata = ds->send_command_bin(input);
+            unsigned long len = bindata->length();
+            if (len > 0) {
+                for (int i = 0; i < len; i++) {
+                    output.push_back((*bindata)[i]);
+                }
+                send(hdl, output.c_str(), len);
+            }
+            else {
+                output = "err{\"event\": \"error\", \"data\": [{\"error\":\"No data\", \"type_req\": \"command\"}] }";
+                send(hdl, output.c_str(), output.size());
+            }
+        }
+        else {
+            output = (string)ds->send_command(input);
+            send(hdl, output);
+        }
+    }
+    else {
+        output = "{\"event\": \"error\", \"data\": [{\"error\":\"Permission denied\", \"type_req\": \"command\"}] }";
+        send(hdl, output);
+    }
+        
 }
 
 void WSThread::on_open(websocketpp::connection_hdl hdl) {
