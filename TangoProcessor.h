@@ -7,6 +7,7 @@
 #include <unordered_map>
 
 #include "common.h"
+using Tango::DevicePipe;
 
 namespace WebSocketDS_ns
 {
@@ -15,6 +16,9 @@ namespace WebSocketDS_ns
     public:
         TangoProcessor();
         bool isMassive(int inType);
+
+        string processPipe(DevicePipe& pipe);
+
         std::string process_attribute_t(Tango::DeviceAttribute& att);
         Tango::DeviceData gettingDevDataFromJsonStr(const std::string& jsonData, int typeForDeviceData);
 
@@ -57,6 +61,12 @@ namespace WebSocketDS_ns
         template <typename T>
         void outForFloat(T &data, stringstream &ss, TYPE_IOS_OPT ios_opt, std::streamsize precIn = 0);
 
+        // FOR PIPE
+        void extractFromPipe(DevicePipe& pipe, std::stringstream& json , int dataType,const string& nameOfAttr);
+
+        template <typename T>
+        void forExtractingFromPipe(DevicePipe &pipe, stringstream &json,const string& nameOfAttr, bool isArray);
+
         //EGOR
     public:
         std::string process_device_attribute_json(Tango::DeviceAttribute& data);
@@ -67,6 +77,7 @@ namespace WebSocketDS_ns
         //std::unordered_map<string, unsigned short> attrsWithSetPrecision;
         stringunmap optsForAttributes;
         stringunmap optsForCommands;
+        stringunmap optsForPipe;
         std::array<string, 5> attrQuality;
         std::array<string, 14> tangoState;
         std::array<TYPE_OF_DEVICE_DATA,28> typeOfData;

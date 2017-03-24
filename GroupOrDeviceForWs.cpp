@@ -15,9 +15,9 @@ namespace WebSocketDS_ns
 
     GroupOrDeviceForWs::~GroupOrDeviceForWs() {}
 
-    void GroupOrDeviceForWs::initAttrComm(vector<string> &attributes, vector<string> &commands)
+    void GroupOrDeviceForWs::initAttrCommPipe(vector<string> &attributes, vector<string> &commands, vector<string> &pipeName)
     {
-        initAttr(attributes);
+        initAttrAndPipe(attributes, pipeName);
         initComm(commands);
     }
 
@@ -41,7 +41,7 @@ namespace WebSocketDS_ns
             return OUTPUT_DATA_TYPE::JSON;
     }
 
-    void GroupOrDeviceForWs::initAttr(vector<string> &attributes)
+    void GroupOrDeviceForWs::initAttrAndPipe(vector<string> &attributes, vector<string>&pipeName)
     {
         DEBUG_STREAM << "Attributes: " << endl;
         // Method gettingAttrUserConf added for Searhing of additional options for attributes
@@ -107,6 +107,15 @@ namespace WebSocketDS_ns
         }
         _attributes = attributes;
         nAttributes = _attributes.size();
+        
+        // GET OPTIONS FOR PIPE
+        if (pipeName.size() > 1) {
+            for (int i=1; i<pipeName.size(); i++) {
+                string attrName = pipeName[i];
+                vector<string> gettedOptions = StringProc::parseInputString(attrName, ";");
+                processor->initOptionsForAttrOrComm(attrName,gettedOptions, TYPE_WS_REQ::PIPE);
+            }
+        }
     }
 
     void GroupOrDeviceForWs::initComm(vector<string> &commands)

@@ -407,6 +407,19 @@ void WebSocketDSClass::set_default_property()
 	}
 	else
 		add_wiz_dev_prop(prop_name, prop_desc);
+	prop_name = "PipeName";
+	prop_desc = "Name of DevicePipe for reading. [0]\nWhen using GROUP, the DevicePipe name must be the same for all devices.\nIf you want to set properties for specific attributes, add them in the format ``NameAttr;property``";
+	prop_def  = "";
+	vect_data.clear();
+	if (prop_def.length()>0)
+	{
+		Tango::DbDatum	data(prop_name);
+		data << vect_data ;
+		dev_def_prop.push_back(data);
+		add_wiz_dev_prop(prop_name, prop_desc,  prop_def);
+	}
+	else
+		add_wiz_dev_prop(prop_name, prop_desc);
 	prop_name = "Secure";
 	prop_desc = "Shall we use SSL encryption?\nIt will be used wss connection (websocket secure)";
 	prop_def  = "false";

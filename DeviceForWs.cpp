@@ -29,7 +29,19 @@ namespace WebSocketDS_ns
 
         attrList = device->read_attributes(_attributes);
         generateAttrJson(json, attrList);
-        json << "]}";
+        json << "]";
+        if (ds->pipeName.size()) {
+            json << ", \"pipe\": ";
+            try {
+                Tango::DevicePipe devicePipe = device->read_pipe(ds->pipeName[0]);
+                json << processor->processPipe(devicePipe);
+            }
+            catch (Tango::DevFailed &e) {
+                json << "\"Exception\"";
+            }
+            
+        }
+        json << "}";
 
         iterator++;
         if (attrList != nullptr)

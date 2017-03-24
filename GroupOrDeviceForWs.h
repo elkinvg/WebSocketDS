@@ -19,7 +19,7 @@ namespace WebSocketDS_ns
         GroupOrDeviceForWs(WebSocketDS *dev);
         virtual ~GroupOrDeviceForWs();
 
-        void initAttrComm(vector<string> &attributes, vector<string> &commands);
+        void initAttrCommPipe(vector<string> &attributes, vector<string> &commands, vector<string> &pipeName);
         OUTPUT_DATA_TYPE checkDataType(string commandName);
 
         virtual string generateJsonForUpdate() = 0;
@@ -48,7 +48,7 @@ namespace WebSocketDS_ns
     private:
         void gettingAttrOrCommUserConf(string &inp, TYPE_WS_REQ type_req);
 
-        void initAttr(vector<string> &attributes);
+        void initAttrAndPipe(vector<string> &attributes, vector<string>&pipeName);
         void initComm(vector<string> &commands);
 
     protected:

@@ -48,11 +48,42 @@ namespace WebSocketDS_ns
             generateAttrJson(json, attrList);
             json << "]";
         }
-        iterator++;
+        json << "}";
+
         if (attrList != nullptr)
             delete attrList;
+        
+        // if reading from Pipe
+        if (ds->pipeName.size()) {
+            it = 0;
+            json << ", \"pipe\": {";
+            for (long i = 0; i < group_length; i++)
+            {
+                if (it != 0)
+                    json << ", ";
+                Tango::DeviceProxy *dp;
 
-        json << "}}";
+                try {
+                    dp = group->get_device(deviceList[i]);
+                    
+                    if (dp == 0)
+                        continue;
+                    it++;
+                    
+                    json << "\"" << deviceList[i] << "\": ";
+                    Tango::DevicePipe devicePipe = dp->read_pipe(ds->pipeName[0]);
+                    json << processor->processPipe(devicePipe);
+                }
+                catch (Tango::DevFailed &e) {
+                    json << "\"Exception\"";
+                }
+            }
+            json << "}";
+        }
+
+        iterator++;
+
+        json << "}";
         return json.str();
     }
 

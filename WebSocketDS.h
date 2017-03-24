@@ -126,6 +126,10 @@ public:
 	vector<string>	attributes;
 	//	Commands:	Commandes list from using DS
 	vector<string>	commands;
+	//	PipeName:	Name of DevicePipe for reading. [0]
+	//  When using GROUP, the DevicePipe name must be the same for all devices.
+	//  If you want to set properties for specific attributes, add them in the format ``NameAttr;property``
+	vector<string>	pipeName;
 	//	Secure:	Shall we use SSL encryption?
 	//  It will be used wss connection (websocket secure)
 	Tango::DevBoolean	secure;

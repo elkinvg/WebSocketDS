@@ -231,7 +231,7 @@ void WebSocketDS::init_device()
     set_state(Tango::ON);
     set_status("Device is On");
 
-    groupOrDevice->initAttrComm(attributes, commands);
+    groupOrDevice->initAttrCommPipe(attributes, commands,pipeName);
 
     /*----- PROTECTED REGION END -----*/	//	WebSocketDS::init_device
 }
@@ -258,6 +258,7 @@ void WebSocketDS::get_device_property()
 	dev_prop.push_back(Tango::DbDatum("Port"));
 	dev_prop.push_back(Tango::DbDatum("Attributes"));
 	dev_prop.push_back(Tango::DbDatum("Commands"));
+	dev_prop.push_back(Tango::DbDatum("PipeName"));
 	dev_prop.push_back(Tango::DbDatum("Secure"));
 	dev_prop.push_back(Tango::DbDatum("Certificate"));
 	dev_prop.push_back(Tango::DbDatum("Key"));
@@ -323,6 +324,17 @@ void WebSocketDS::get_device_property()
 		}
 		//	And try to extract Commands value from database
 		if (dev_prop[i].is_empty()==false)	dev_prop[i]  >>  commands;
+
+		//	Try to initialize PipeName from class property
+		cl_prop = ds_class->get_class_property(dev_prop[++i].name);
+		if (cl_prop.is_empty()==false)	cl_prop  >>  pipeName;
+		else {
+			//	Try to initialize PipeName from default device value
+			def_prop = ds_class->get_default_device_property(dev_prop[i].name);
+			if (def_prop.is_empty()==false)	def_prop  >>  pipeName;
+		}
+		//	And try to extract PipeName value from database
+		if (dev_prop[i].is_empty()==false)	dev_prop[i]  >>  pipeName;
 
 		//	Try to initialize Secure from class property
 		cl_prop = ds_class->get_class_property(dev_prop[++i].name);
@@ -429,7 +441,7 @@ void WebSocketDS::get_device_property()
 //--------------------------------------------------------
 void WebSocketDS::always_executed_hook()
 {
-	//DEBUG_STREAM << "WebSocketDS::always_executed_hook()  " << device_name << endl;
+	DEBUG_STREAM << "WebSocketDS::always_executed_hook()  " << device_name << endl;
 	/*----- PROTECTED REGION ID(WebSocketDS::always_executed_hook) ENABLED START -----*/
 
     if (groupOrDevice == nullptr || wsThread == nullptr) {

@@ -20,7 +20,6 @@ $("#test_butt").click(function () {
   argin.command = "DevShort";
   argin.id = id;
    argin.argin = 23;
-  //socket.send("HELLLLOOOOOOOO");
   var sender = JSON.stringify(argin);
   socket.send(sender);
   console.log("but clicked");

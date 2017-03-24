@@ -13,6 +13,7 @@ WebSocketDS
  - **DeviceServer** - tango id используемого устройства. Пример: `test/psw/group`. В случае использования групп устройств, используется шаблон. Параметром шаблона может быть простое имя устройства или шаблон имени устройства (например, `domain_*/family/member_*`); (string)
  - **Attributes** — список атрибутов устройства, которые вы хотите считывать; (array of string)
  - **Commands** — список команд устройства, которые вы хотите выполнять через WS; (array of string)
+ - **PipeName** - PipeName для pipe устройства, также список атрибутов с опциями для вывода; (array of string)
  - **AuthDS** — танго сервер, отвечающий за аутентификацию пользователя, при наличии исполняемых команд; (string)
  - **Secure** — установите true, для использования защищённого wss соединения, иначе false; (bool)
  - **Certificate** — полный путь к используемому сертификату (if Secure = true); (string)
@@ -46,15 +47,16 @@ WebSocketDS
 Пример формата получаемых данных будет следующим:
 ```json
 {
-  "event": "read",
-  "type_req":"attribute",
-  "data": [
+	"event": "read",
+	"type_req":"attribute",
+	"data":
+	[
 		{
-          "attr": "имя_атрибута",
-          "qual": "VALID",
-          "time": 1475580424,
-          "data": 128
-        },
+			"attr": "имя_атрибута",
+			"qual": "VALID",
+			"time": 1475580424,
+			"data": 128
+		},
 	]
 }
 ```
@@ -71,13 +73,14 @@ WebSocketDS
 В случае ошибок выводится сообщение вида
 ```json
 {
-  "event": "error",
-  "data": [
-            {
-		        "error" : "Сообщение ошибки",
-                "type_req": "attribute",
-	        }
-  ]
+	"event": "error",
+	"data":
+	[
+		{
+		"error" : "Сообщение ошибки",
+		"type_req": "attribute",
+		}
+	]
 }
 ```
 
@@ -89,18 +92,18 @@ WebSocketDS
 
 ```json
 {
-  "event": "read",
-  "type_req":"group_attribute",
-  "data":
-    {
-      "name/tango/device_from_group" :
-      {
-        "attr": "имя_атрибута",
-        "qual": "VALID",
-        "time": 1475580424,
-        "data": 128
-    }
-  }
+	"event": "read",
+	"type_req":"group_attribute",
+	"data":
+	{
+		"name/tango/device_from_group" :
+		{
+			"attr": "имя_атрибута",
+			"qual": "VALID",
+			"time": 1475580424,
+			"data": 128
+		}
+	}
 }
 ```
 
@@ -119,11 +122,74 @@ WebSocketDS
 
 ```json
 {
-  "name/tango/device_from_group" : "Error message"
+	"name/tango/device_from_group" : "Error message"
 }
 ```
 
-## Дополнительные параметры для атрибутов и команд
+## Чтение с pipe подключаемых устройств
+
+Для чтения данных с pipe подключаемых устройств в Свойство PipeName должно быть добавлено pipe_name.
+
+Подключение к pipe происходит в следующем формате:
+```c++
+Tango::DevicePipe devicePipe = device->read_pipe(pipeName[0]);
+```
+
+Пока подключаться можно к единственному pipe из девайса.
+
+При наличии PipeName в свойстве, к JSON, получаемом при чтении атрибутов, добавляется строка в следующем формате:
+
+__В случае успеха:__
+
+  a) __для девайса:__
+
+  ```json
+	{ "данные_с атрибутов" : "данные",
+		"pipe":
+		{
+			"attrName1" : "данные в формате зависящем от типа",
+			"attrName2" : ["данные в формате", "зависящем от типа"]
+		}
+	}
+  ```
+  b) __для группы:__
+
+ ```json
+	{ "данные_с атрибутов" : "данные",
+		"pipe":
+		{
+			"nameof/tango/device":
+			{
+				"attrName1" : "данные в формате зависящем от типа",
+				"attrName2" : ["данные в формате", "зависящем от типа"]
+			}
+		}
+	}
+ ```
+
+__В случае ошибки:__
+
+  a) __для девайса:__
+
+   ```json
+	{ "данные_с атрибутов" : "данные",
+		"pipe" : "Error message"
+	}
+   ```
+
+   b) __для группы:__
+
+   ```json
+	{ "данные_с атрибутов" : "данные",
+		"pipe":
+		{
+			"nameof/tango/device": "Error message"
+		}
+	}
+   ```
+
+
+## Дополнительные параметры для атрибутов, pipe и команд
 
 Для выставления дополнительных параметров к имени атрибута или команды в свойстве следует добавить строку в следующем формате `;param=val` если требуется значение, или `;param` если значение не требуется.
 
@@ -134,9 +200,19 @@ WebSocketDS
 CommandOrAttrName;par1=val;par2;par3=34
 ```
 
+В случае pipe в свойстве PipeName можно выставить дополнительно параметры для отдельных атрибутов, передаваемых через pipe. Все имена атрибутов, с параметрами должны идти после имени для DevicePipe.
+Пример:
+
+```
+PipeName
+AttrName;par1=val;par2
+```
+
+
 Список доступных, на данный момент, параметров для команд и атрибутов:
 
- - Для атрибутов и команд: **precf**, **precs**, **prec**, **niter**
+ - Для атрибутов, команд и pipe: **precf**, **precs**, **prec**
+ - Только для атрибутов: **niter**
  - Только для команд: **bindata**
 
 #### Команды с выводом в двоичном формате
@@ -150,12 +226,23 @@ CommandOrAttrName;par1=val;par2;par3=34
 `JSON_ERROR_MESSAGE` в таком формате:
 
 ```json
-{"event": "error", "data": [{"error": "error message","command": "name_of_command", "type_req": "command_device or command_group or command", "id_req": "id"}] }
+{
+	"event": "error",
+	"data":
+		[
+			{
+				"error": "error message",
+				"command": "name_of_command",
+				"type_req": "command_device or command_group or command",
+				"id_req": "id"
+			}
+		]
+}
 ```
 
-#### Изменение точности и форматирование выводимых значений атрибутов и команд типа с плавающей запятой
+#### Изменение точности и форматирование выводимых значений атрибутов, pipe и команд типа с плавающей запятой
 
-По умолчанию, для вывода атрибутов стоит setprecision(5). Для выставления других значений точности, к имени атрибута в свойстве следует добавить `;prec=N`, где N - это требуемая точность. Пример: `AttrDevDouble;prec=10`
+По умолчанию, для вывода данных атрибутов, pipe и команд стоит setprecision(5). Для выставления других значений точности, к имени атрибута в свойстве следует добавить `;prec=N`, где N - это требуемая точность. Пример: `AttrDevDouble;prec=10`
 
 Следует учитывать максимально возможную точность. Подробнее про double можно посмотреть [здесь](https://ru.wikipedia.org/wiki/%D0%A7%D0%B8%D1%81%D0%BB%D0%BE_%D0%B4%D0%B2%D0%BE%D0%B9%D0%BD%D0%BE%D0%B9_%D1%82%D0%BE%D1%87%D0%BD%D0%BE%D1%81%D1%82%D0%B8), про float [здесь](https://ru.wikipedia.org/wiki/%D0%A7%D0%B8%D1%81%D0%BB%D0%BE_%D1%81_%D0%BF%D0%BB%D0%B0%D0%B2%D0%B0%D1%8E%D1%89%D0%B5%D0%B9_%D0%B7%D0%B0%D0%BF%D1%8F%D1%82%D0%BE%D0%B9).
 
@@ -202,30 +289,31 @@ CommandOrAttrName;par1=val;par2;par3=34
 Ответ в успешном случае будет таким:
 ```json
 {
-  "event": "read",
-  "type_req": "command",
-  "data": {
-    "command_name": "имя команды",
-    "id_req": "id запроса запуска команды",
-    "argout": "Данные. Единственное значение
-    или массив в зависимости возвращаемых данных. В случае
-    массива [...]"
-  }
+	"event": "read",
+	"type_req": "command",
+	"data": {
+		"command_name": "имя команды",
+		"id_req": "id запроса запуска команды",
+		"argout": "Данные. Единственное значение
+		или массив в зависимости возвращаемых данных. В случае
+		массива [...]"
+	}
 }
 ```
 
 В случае ошибки таким:
 ```json
 {
-  "event": "error",
-  "data": [
-            {
-		        "error" : "Сообщение ошибки",
-                "command_name" : "Имя команды",
-                "type_req": "command",
-                "id_req": "id запроса запуска команды"
-	        }
-  ]
+	"event": "error",
+	"data":
+		[
+			{
+				"error" : "Сообщение ошибки",
+				"command_name" : "Имя команды",
+				"type_req": "command",
+				"id_req": "id запроса запуска команды"
+			}
+		]
 }
 ```
 
@@ -236,20 +324,20 @@ CommandOrAttrName;par1=val;par2;par3=34
 - Для всей группы:
 
   ```json
-  {
-    "command_group" : "nameOfCommand",
-    "argin" : ["1","2","3"]
-  }
+	{
+		"command_group" : "nameOfCommand",
+		"argin" : ["1","2","3"]
+	}
   ```
 
 - Для отдельного девайса из группы:
 
   ```json
-  {
-    "command_device" : "nameOfCommand",
-    "device_name": "nameof/tango/device",
-    "argin" : ["1","2","3"]
-  }
+	{
+		"command_device" : "nameOfCommand",
+		"device_name": "nameof/tango/device",
+		"argin" : ["1","2","3"]
+	}
   ```
 
 #### Общая информация по командам
