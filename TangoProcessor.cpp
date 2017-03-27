@@ -22,7 +22,7 @@ namespace WebSocketDS_ns
         else return false;
     }
 
-    string TangoProcessor::processPipe(DevicePipe &pipe)
+    string TangoProcessor::processPipe(DevicePipe &pipe, TYPE_WS_REQ pipeType)
     {
         /** Генерация JSON для pipe
         {
@@ -41,7 +41,7 @@ namespace WebSocketDS_ns
             if (i)
                 json << ", ";
             json << "\"" << nameOfAttr << "\": ";
-            extractFromPipe(pipe,json,typeD, nameOfAttr);
+            extractFromPipe(pipe, json, typeD, make_pair(nameOfAttr, pipeType));
         }
         json << "}";
         return json.str();
@@ -299,6 +299,8 @@ namespace WebSocketDS_ns
                 optsForCommands.insert(make_pair(nameAttrOrComm,opt));
             if (type_req == TYPE_WS_REQ::PIPE)
                 optsForPipe.insert(make_pair(nameAttrOrComm,opt));
+            if (type_req == TYPE_WS_REQ::PIPE_COMM)
+                optsForPipeComm.insert(make_pair(nameAttrOrComm,opt));
         }
     }
 
@@ -986,6 +988,9 @@ namespace WebSocketDS_ns
         if (type_req == TYPE_WS_REQ::PIPE) {
             opts = optsForPipe.equal_range(nameOfAttrOrComm);
         }
+        if (type_req == TYPE_WS_REQ::PIPE_COMM) {
+            opts = optsForPipeComm.equal_range(nameOfAttrOrComm);
+        }
 
         //std::unordered_map<string, string> forRet = optsMap(opts);
         return optsMap(opts);
@@ -1006,7 +1011,7 @@ namespace WebSocketDS_ns
     }
 
     template <typename T>
-    void TangoProcessor::forExtractingFromPipe(DevicePipe &pipe, stringstream &json,const string& nameOfAttr, bool isArray)
+    void TangoProcessor::forExtractingFromPipe(DevicePipe &pipe, stringstream &json, std::pair<string, TYPE_WS_REQ> &nameOfAttrAndTypeWsReq, bool isArray)
     {
         vector<T> dtArray;
         T dt;
@@ -1019,13 +1024,13 @@ namespace WebSocketDS_ns
                     if (i)
                         json << ", ";
                     T tmpVal = dtArray[i];
-                    dataFromAttrsOrCommToJson(tmpVal,json,TYPE_WS_REQ::PIPE,nameOfAttr);
+                    dataFromAttrsOrCommToJson(tmpVal, json, nameOfAttrAndTypeWsReq.second, nameOfAttrAndTypeWsReq.first);
                 }
                 json << "]";
             }
             else {
                 pipe >> dt;
-                dataFromAttrsOrCommToJson(dt,json,TYPE_WS_REQ::PIPE,nameOfAttr);
+                dataFromAttrsOrCommToJson(dt, json, nameOfAttrAndTypeWsReq.second, nameOfAttrAndTypeWsReq.first);
             }
         }
         catch (Tango::DevFailed &df) {
@@ -1033,7 +1038,7 @@ namespace WebSocketDS_ns
         }
     }
 
-    void TangoProcessor::extractFromPipe(DevicePipe &pipe, stringstream &json, int dataType, const string &nameOfAttr)
+    void TangoProcessor::extractFromPipe(DevicePipe &pipe, stringstream &json, int dataType, std::pair<string, TYPE_WS_REQ> nameOfAttrAndTypeWsReq)
     {
 
         switch (dataType)
@@ -1045,42 +1050,42 @@ namespace WebSocketDS_ns
             break;
         case Tango::DEV_BOOLEAN: // ??? not boolean?
         {
-            forExtractingFromPipe<bool>(pipe, json, nameOfAttr, false);
+            forExtractingFromPipe<bool>(pipe, json, nameOfAttrAndTypeWsReq, false);
         }
             break;
         case Tango::DEV_SHORT:
         {
-            forExtractingFromPipe<Tango::DevShort>(pipe, json, nameOfAttr, false);
+            forExtractingFromPipe<Tango::DevShort>(pipe, json, nameOfAttrAndTypeWsReq, false);
         }
             break;
         case Tango::DEV_LONG:
         {
-            forExtractingFromPipe<Tango::DevLong>(pipe, json, nameOfAttr, false);
+            forExtractingFromPipe<Tango::DevLong>(pipe, json, nameOfAttrAndTypeWsReq, false);
         }
             break;
         case Tango::DEV_FLOAT:
         {
-            forExtractingFromPipe<Tango::DevFloat>(pipe, json, nameOfAttr, false);
+            forExtractingFromPipe<Tango::DevFloat>(pipe, json, nameOfAttrAndTypeWsReq, false);
         }
             break;
         case Tango::DEV_DOUBLE:
         {
-            forExtractingFromPipe<Tango::DevDouble>(pipe, json, nameOfAttr, false);
+            forExtractingFromPipe<Tango::DevDouble>(pipe, json, nameOfAttrAndTypeWsReq, false);
         }
             break;
         case Tango::DEV_USHORT:
         {
-            forExtractingFromPipe<Tango::DevUShort>(pipe, json, nameOfAttr, false);
+            forExtractingFromPipe<Tango::DevUShort>(pipe, json, nameOfAttrAndTypeWsReq, false);
         }
             break;
         case Tango::DEV_ULONG:
         {
-            forExtractingFromPipe<Tango::DevULong>(pipe, json, nameOfAttr, false);
+            forExtractingFromPipe<Tango::DevULong>(pipe, json, nameOfAttrAndTypeWsReq, false);
         }
             break;
         case Tango::DEV_STRING:
         {
-            forExtractingFromPipe<string>(pipe, json, nameOfAttr, false);
+            forExtractingFromPipe<string>(pipe, json, nameOfAttrAndTypeWsReq, false);
         }
             break;
         case Tango::DEVVAR_CHARARRAY: // ??? why not DEVVAR_CHARARRAY
@@ -1090,37 +1095,37 @@ namespace WebSocketDS_ns
             break;
         case Tango::DEVVAR_SHORTARRAY:
         {
-            forExtractingFromPipe<short>(pipe, json, nameOfAttr, true);
+            forExtractingFromPipe<short>(pipe, json, nameOfAttrAndTypeWsReq, true);
         }
             break;
         case Tango::DEVVAR_LONGARRAY:
         {
-            forExtractingFromPipe<Tango::DevLong>(pipe, json, nameOfAttr, true);
+            forExtractingFromPipe<Tango::DevLong>(pipe, json, nameOfAttrAndTypeWsReq, true);
         }
             break;
         case Tango::DEVVAR_FLOATARRAY:
         {
-            forExtractingFromPipe<float>(pipe, json, nameOfAttr, true);
+            forExtractingFromPipe<float>(pipe, json, nameOfAttrAndTypeWsReq, true);
         }
             break;
         case Tango::DEVVAR_DOUBLEARRAY:
         {
-            forExtractingFromPipe<double>(pipe, json, nameOfAttr, true);
+            forExtractingFromPipe<double>(pipe, json, nameOfAttrAndTypeWsReq, true);
         }
             break;
         case Tango::DEVVAR_USHORTARRAY:
         {
-            forExtractingFromPipe<unsigned short>(pipe, json, nameOfAttr, true);
+            forExtractingFromPipe<unsigned short>(pipe, json, nameOfAttrAndTypeWsReq, true);
         }
             break;
         case Tango::DEVVAR_ULONGARRAY:
         {
-            forExtractingFromPipe<Tango::DevULong>(pipe, json, nameOfAttr, true);
+            forExtractingFromPipe<Tango::DevULong>(pipe, json, nameOfAttrAndTypeWsReq, true);
         }
             break;
         case Tango::DEVVAR_STRINGARRAY:
         {
-            forExtractingFromPipe<string>(pipe, json, nameOfAttr, true);
+            forExtractingFromPipe<string>(pipe, json, nameOfAttrAndTypeWsReq, true);
         }
             break;
         case Tango::DEVVAR_LONGSTRINGARRAY:
@@ -1142,7 +1147,7 @@ namespace WebSocketDS_ns
             break;
         case Tango::DEVVAR_BOOLEANARRAY:
         {
-            forExtractingFromPipe<bool>(pipe, json, nameOfAttr, true);
+            forExtractingFromPipe<bool>(pipe, json, nameOfAttrAndTypeWsReq, true);
         }
             break;
         case Tango::DEV_UCHAR:
@@ -1153,22 +1158,22 @@ namespace WebSocketDS_ns
             break;
         case Tango::DEV_LONG64:
         {
-            forExtractingFromPipe<Tango::DevLong64>(pipe, json, nameOfAttr, false);
+            forExtractingFromPipe<Tango::DevLong64>(pipe, json, nameOfAttrAndTypeWsReq, false);
         }
             break;
         case Tango::DEV_ULONG64:
         {
-            forExtractingFromPipe<Tango::DevULong64>(pipe, json, nameOfAttr, false);
+            forExtractingFromPipe<Tango::DevULong64>(pipe, json, nameOfAttrAndTypeWsReq, false);
         }
             break;
         case Tango::DEVVAR_LONG64ARRAY:
         {
-            forExtractingFromPipe<Tango::DevLong64>(pipe, json, nameOfAttr, true);
+            forExtractingFromPipe<Tango::DevLong64>(pipe, json, nameOfAttrAndTypeWsReq, true);
         }
             break;
         case Tango::DEVVAR_ULONG64ARRAY:
         {
-            forExtractingFromPipe<Tango::DevULong64>(pipe, json, nameOfAttr, true);
+            forExtractingFromPipe<Tango::DevULong64>(pipe, json, nameOfAttrAndTypeWsReq, true);
         }
             break;
         default:

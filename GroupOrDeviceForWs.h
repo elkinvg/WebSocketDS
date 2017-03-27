@@ -23,6 +23,7 @@ namespace WebSocketDS_ns
         OUTPUT_DATA_TYPE checkDataType(string commandName);
 
         virtual string generateJsonForUpdate() = 0;
+        virtual string generateJsonFromPipeComm(const std::map<std::string, std::string> &pipeConf) = 0;
         virtual Tango::DevString sendCommand(Tango::DevString &argin) = 0;
         virtual Tango::DevVarCharArray* sendCommandBin(Tango::DevString &argin) = 0;
 
@@ -32,6 +33,8 @@ namespace WebSocketDS_ns
         void generateAttrJson(std::stringstream& json, std::vector<Tango::DeviceAttribute> *attrList);
 
         Tango::DeviceData tangoCommandInoutForDevice(Tango::DeviceProxy *deviceProxy, Tango::DevString &argin, string &commandName, const string &arginStr, const string idStr, string &errorMess);
+
+        void generateJsonHeadForPipeComm(const std::map<string, string> &pipeConf, std::stringstream& json, const string &pipeName);
 
         Tango::DevVarCharArray* sendCommandBinForDevice(Tango::DeviceProxy *deviceProxy, Tango::DevString &argin, const std::map<std::string, std::string> &jsonArgs);
 

@@ -441,7 +441,7 @@ void WebSocketDS::get_device_property()
 //--------------------------------------------------------
 void WebSocketDS::always_executed_hook()
 {
-	DEBUG_STREAM << "WebSocketDS::always_executed_hook()  " << device_name << endl;
+	//DEBUG_STREAM << "WebSocketDS::always_executed_hook()  " << device_name << endl;
 	/*----- PROTECTED REGION ID(WebSocketDS::always_executed_hook) ENABLED START -----*/
 
     if (groupOrDevice == nullptr || wsThread == nullptr) {
@@ -730,6 +730,12 @@ void WebSocketDS::add_dynamic_commands()
 }
 
 /*----- PROTECTED REGION ID(WebSocketDS::namespace_ending) ENABLED START -----*/
+
+string WebSocketDS::readPipeFromDeviceOrGroup(const std::map<std::string, std::string> &pipeConf)
+{
+    return groupOrDevice->generateJsonFromPipeComm(pipeConf);
+}
+
 OUTPUT_DATA_TYPE WebSocketDS::check_type_of_data(const string& commandName) {
     //groupOrDevice->checkOption();
     return groupOrDevice->checkDataType(commandName);

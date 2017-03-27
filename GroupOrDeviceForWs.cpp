@@ -131,13 +131,26 @@ namespace WebSocketDS_ns
         for (auto& com : commands) {
             try {
                 vector<string> gettedOptions = StringProc::parseInputString(com, ";");
-                processor->initOptionsForAttrOrComm(com,gettedOptions, TYPE_WS_REQ::COMMAND);
 
-                // Getting CommandInfo
-                // cmd_name , cmd_tag, in_type, in_type_desc, out_type, out_type_desc
-                Tango::CommandInfo info = getCommandInfo(com);
+                bool isPipeComm = false;
+                for (auto &it: gettedOptions)
+                    if (it == "pipecomm") {
+                        isPipeComm = true;
+                        break;
+                    }
 
-                accessibleCommandInfo.insert(std::pair<std::string, Tango::CommandInfo>(com, info));
+                if (isPipeComm) {
+                    processor->initOptionsForAttrOrComm(com,gettedOptions, TYPE_WS_REQ::PIPE_COMM);
+                }
+                else {
+                    processor->initOptionsForAttrOrComm(com,gettedOptions, TYPE_WS_REQ::COMMAND);
+
+                    // Getting CommandInfo
+                    // cmd_name , cmd_tag, in_type, in_type_desc, out_type, out_type_desc
+                    Tango::CommandInfo info = getCommandInfo(com);
+
+                    accessibleCommandInfo.insert(std::pair<std::string, Tango::CommandInfo>(com, info));
+                }
                 DEBUG_STREAM << "Init " << com << endl;
             }
             catch (Tango::DevFailed &e)
@@ -221,7 +234,15 @@ namespace WebSocketDS_ns
                 }
             }
             catch (Tango::DevFailed &e) {
-                errorMess = StringProc::exceptionStringOut(idStr, commandName, "Exception from command_inout. Check the format of the data", typeReq);
+                string tangoErrors;
+
+                for (int i = 0; i < e.errors.length(); i++) {
+                    if (i > 0)
+                        tangoErrors += " ||| ";
+                    tangoErrors += (string)e.errors[i].desc;
+                }
+
+                errorMess = StringProc::exceptionStringOut(idStr, commandName, tangoErrors, typeReq);
             }
         }
         else {
@@ -229,6 +250,40 @@ namespace WebSocketDS_ns
         }
 
         return outDeviceData;
+    }
+
+    void GroupOrDeviceForWs::generateJsonHeadForPipeComm(const std::map<string, string> &pipeConf, stringstream &json, const string& pipeName)
+    {        
+        json << "{\"event\": \"read\", \"type_req\": ";
+        
+        try {
+            // Если вызывается в режиме group должен присутствовать ключ read_pipe_gr
+            if (pipeConf.at("read_pipe_gr") != NONE)
+                json << "\"pipe_gr\", ";
+            else {
+                json << "\"pipe_dev\", ";
+                json << "\"device_name\": " << "\"" << pipeConf.at("device_name") << "\", ";
+            }
+        }
+        catch (const std::out_of_range&) {
+            // Иначе read_pipe
+            json << "\"pipe\", ";
+        }
+
+
+        try {
+            auto idTmp = stoi(pipeConf.at("id"));
+            json << "\"id_req\": "  << idTmp << ", ";
+        }
+        catch (...) {
+            // id_req может быть числом, либо случайной строкой
+            if (pipeConf.at("id") == NONE)
+                json << "\"id_req\": "  << pipeConf.at("id") << ", ";
+            else
+                json << "\"id_req\": \""  << pipeConf.at("id") << "\", ";
+        }
+
+        json << "\"data\": ";
     }
 
     Tango::DevVarCharArray* GroupOrDeviceForWs::sendCommandBinForDevice(Tango::DeviceProxy *deviceProxy, Tango::DevString &argin, const std::map<std::string, std::string> &jsonArgs)

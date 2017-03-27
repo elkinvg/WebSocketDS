@@ -72,6 +72,7 @@ std::string WSThread_tls::get_password() {
 void WSThread_tls::send_all(std::string msg) {
     cache.clear();
     cache = msg;
+    removeSymbolsForString(msg);
     //msg.clear();
     con_list::iterator it;
     //for (it = m_connections.begin(); it != m_connections.end(); ++it) {
@@ -111,6 +112,7 @@ void WSThread_tls::send_all(std::string msg) {
 }
 
 void WSThread_tls::send(websocketpp::connection_hdl hdl, std::string msg) {
+    removeSymbolsForString(msg);
     try {
         size_t buffered_amount = get_buffered_amount(hdl);
 

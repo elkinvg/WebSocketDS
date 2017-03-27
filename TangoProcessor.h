@@ -17,7 +17,7 @@ namespace WebSocketDS_ns
         TangoProcessor();
         bool isMassive(int inType);
 
-        string processPipe(DevicePipe& pipe);
+        string processPipe(DevicePipe& pipe, TYPE_WS_REQ pipeType);
 
         std::string process_attribute_t(Tango::DeviceAttribute& att);
         Tango::DeviceData gettingDevDataFromJsonStr(const std::string& jsonData, int typeForDeviceData);
@@ -62,10 +62,10 @@ namespace WebSocketDS_ns
         void outForFloat(T &data, stringstream &ss, TYPE_IOS_OPT ios_opt, std::streamsize precIn = 0);
 
         // FOR PIPE
-        void extractFromPipe(DevicePipe& pipe, std::stringstream& json , int dataType,const string& nameOfAttr);
+        void extractFromPipe(DevicePipe& pipe, std::stringstream& json , int dataType, std::pair<string,TYPE_WS_REQ> nameOfAttrAndTypeWsReq);
 
         template <typename T>
-        void forExtractingFromPipe(DevicePipe &pipe, stringstream &json,const string& nameOfAttr, bool isArray);
+        void forExtractingFromPipe(DevicePipe &pipe, stringstream &json, std::pair<string, TYPE_WS_REQ> &nameOfAttrAndTypeWsReq, bool isArray);
 
         //EGOR
     public:
@@ -78,6 +78,7 @@ namespace WebSocketDS_ns
         stringunmap optsForAttributes;
         stringunmap optsForCommands;
         stringunmap optsForPipe;
+        stringunmap optsForPipeComm;
         std::array<string, 5> attrQuality;
         std::array<string, 14> tangoState;
         std::array<TYPE_OF_DEVICE_DATA,28> typeOfData;

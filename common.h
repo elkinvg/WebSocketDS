@@ -7,7 +7,7 @@
 namespace WebSocketDS_ns
 {
     // тип запроса. 
-    enum class TYPE_WS_REQ { ATTRIBUTE, COMMAND, PIPE };
+    enum class TYPE_WS_REQ { ATTRIBUTE, COMMAND, PIPE, PIPE_COMM };
     // форматы для IOS
     enum class TYPE_IOS_OPT { PREC, PRECF, PRECS };
     // тип 

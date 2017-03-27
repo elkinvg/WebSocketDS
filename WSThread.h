@@ -59,6 +59,8 @@ namespace WebSocketDS_ns
 
         virtual map<string, string> getRemoteConf(websocketpp::connection_hdl hdl) = 0;
 
+        void removeSymbolsForString(string &str);
+
         bool forValidate(map<string, string> remoteConf);
         int port;
 
@@ -73,6 +75,8 @@ namespace WebSocketDS_ns
         websocketpp::lib::mutex m_connection_lock;
 
     private:
+        void sendCommandToTango(websocketpp::connection_hdl hdl, string commandName, string dataFromClient);
+        void getDataFromTangoPipe(websocketpp::connection_hdl hdl, std::map<std::string, std::string> parsedPipeConf);
         vector<string> &split(const string &s, char delim, vector<string> &elems);
         vector<string> split(const string &s, char delim);
 

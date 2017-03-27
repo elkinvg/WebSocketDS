@@ -72,10 +72,16 @@ namespace WebSocketDS_ns
                     
                     json << "\"" << deviceList[i] << "\": ";
                     Tango::DevicePipe devicePipe = dp->read_pipe(ds->pipeName[0]);
-                    json << processor->processPipe(devicePipe);
+                    json << processor->processPipe(devicePipe, TYPE_WS_REQ::PIPE);
                 }
                 catch (Tango::DevFailed &e) {
-                    json << "\"Exception\"";
+                    json << "[";
+                    for (int i = 0; i < e.errors.length(); i++) {
+                        if (i > 0)
+                            json << ", ";
+                        json << "\"" << e.errors[i].desc << "\"";
+                    }
+                    json << "]";
                 }
             }
             json << "}";
@@ -87,6 +93,24 @@ namespace WebSocketDS_ns
         return json.str();
     }
 
+    string GroupForWs::generateJsonFromPipeComm(const std::map<string, string> &pipeConf)
+    {
+        // Вызов generateJsonFromPipeComm происходит из WSThread.cpp
+        // Там происходит проверка ключей read_pipe_gr read_pipe_dev если ds->isGroup() true
+        // И read_pipe если ds->isGroup() == false
+
+        string output;
+        if (pipeConf.at("read_pipe_gr") != NONE) {
+            output =  generateJsonFromPipeCommForGroup(pipeConf);
+        }
+        else if (pipeConf.at("read_pipe_dev") != NONE) {
+            if (pipeConf.at("device_name") == NONE)
+                return StringProc::exceptionStringOut(pipeConf.at("id"), pipeConf.at("read_pipe_dev"), "Object device_name not found. Check format of json request.", "read_pipe_dev");
+            output = generateJsonFromPipeCommForDeviceFromGroup(pipeConf);
+        }
+        return output;
+    }
+
     Tango::DevString GroupForWs::sendCommand(Tango::DevString &argin)
     {
         std::map<std::string, std::string> jsonArgs = StringProc::parseJsonFromCommand(argin, ds->isGroup());
@@ -96,13 +120,12 @@ namespace WebSocketDS_ns
 
         else if (jsonArgs.at("command_device") != NONE) {
             if (jsonArgs.at("device_name") == NONE)
-                return CORBA::string_dup(StringProc::exceptionStringOut(jsonArgs.at("id"
-                ), jsonArgs.at("command_device"), "Object device_name not found. Check format of json request.", "command_device").c_str());
+                return CORBA::string_dup(StringProc::exceptionStringOut(jsonArgs.at("id"), jsonArgs.at("command_device"), "Object device_name not found. Check format of json request.", "command_device").c_str());
             return sendCommandToDevice(argin,jsonArgs);
         }
 
         return CORBA::string_dup(StringProc::exceptionStringOut(jsonArgs.at("id"
-            ), jsonArgs.at("command_group"), "Command not found. Check format of json request.", "command_group").c_str());
+            ), jsonArgs.at("command_group"), "Command not found. Check format of json request. Json for group must contain key command_group or  keys command_device and device_name", "command_group").c_str());
     }
 
     Tango::DevVarCharArray* GroupForWs::sendCommandBin(Tango::DevString &argin)
@@ -306,5 +329,102 @@ namespace WebSocketDS_ns
         }
 
         return devAttrList;
+    }
+
+    string GroupForWs::generateJsonFromPipeCommForGroup(const std::map<string, string> &pipeConf)
+    {
+        string pipeName = pipeConf.at("read_pipe_gr");
+        vector<string> errorsMess;
+
+        std::stringstream json;
+        // { from generateJsonHeadForPipeComm
+        generateJsonHeadForPipeComm(pipeConf,json,pipeName);
+        json << "{";
+        vector<string> device_list;
+        try {
+            device_list = group->get_device_list(true);
+        }
+        catch(Tango::DevFailed &e) {
+            return StringProc::exceptionStringOut(pipeConf.at("id"),pipeName,"Device list not received","read_pipe_gr");
+        }
+
+        int it = 0;
+        bool hasActDev = false;
+        bool hasPipe = false;
+        for (auto& deviceFromGroup : device_list) {
+            Tango::DeviceProxy *dp = group->get_device(deviceFromGroup);
+            if (it != 0)
+                json << ", ";
+            it++;
+
+            json << "\"" << deviceFromGroup << "\": ";
+
+            if (dp == 0) {
+                string tmpErrMess = "Device unavailable.Check the status of corresponding tango-server";
+                json << "\"" << tmpErrMess << "\"";
+                errorsMess.push_back(deviceFromGroup + ": " + tmpErrMess);
+                continue;
+            }
+            hasActDev = true;
+
+            try {
+                DevicePipe devicePipe = dp->read_pipe(pipeName);
+                json << processor->processPipe(devicePipe, TYPE_WS_REQ::PIPE_COMM);
+                hasPipe = true;
+            }
+            catch (Tango::DevFailed &e){
+                json << "[";
+                string tmpErrMess;
+                for (int i = 0; i < e.errors.length(); i++) {
+                    if (i > 0) {
+                        json << ", ";
+                        tmpErrMess += " ||| ";
+                    }                        
+                    json << "\"" << e.errors[i].desc << "\"";
+                    tmpErrMess += (string)e.errors[i].desc;
+                }
+                json << "]";
+                errorsMess.push_back(deviceFromGroup + ": " + tmpErrMess);
+            }            
+        }
+        json << "}";
+        json << "}";
+
+        if (hasActDev && hasPipe)
+            return json.str();
+        
+        if (!hasActDev)
+            return StringProc::exceptionStringOut(pipeConf.at("id"),pipeName,"All device unavailable. Check the status of corresponding tango-server","read_pipe_gr");
+
+        return StringProc::exceptionStringOut(pipeConf.at("id"), pipeName, errorsMess, "read_pipe_gr");
+
+    }
+
+    string GroupForWs::generateJsonFromPipeCommForDeviceFromGroup(const std::map<string, string> &pipeConf)
+    {
+        string pipeName = pipeConf.at("read_pipe_dev");
+        string device_name = pipeConf.at("device_name");
+
+        std::stringstream json;
+        generateJsonHeadForPipeComm(pipeConf,json,pipeName);
+        try{
+            Tango::DeviceProxy *dp = group->get_device(device_name);
+
+            if (dp == 0)
+                return StringProc::exceptionStringOut(pipeConf.at("id"), pipeName, "Device " + device_name + " unavailable. Check the status of corresponding tango-server", "read_pipe_dev");
+
+            DevicePipe devicePipe = dp->read_pipe(pipeName);
+            json << processor->processPipe(devicePipe, TYPE_WS_REQ::PIPE_COMM);
+            json << "}";
+        }
+        catch (Tango::DevFailed &e) {
+            vector<string> errors;
+            for (int i = 0; i < e.errors.length(); i++)
+                errors.push_back((string)e.errors[i].desc);
+
+            return StringProc::exceptionStringOut(pipeConf.at("id"), pipeName, errors, "read_pipe_dev");
+        }
+
+        return json.str();
     }
 }

@@ -34,10 +34,16 @@ namespace WebSocketDS_ns
             json << ", \"pipe\": ";
             try {
                 Tango::DevicePipe devicePipe = device->read_pipe(ds->pipeName[0]);
-                json << processor->processPipe(devicePipe);
+                json << processor->processPipe(devicePipe, TYPE_WS_REQ::PIPE);
             }
             catch (Tango::DevFailed &e) {
-                json << "\"Exception\"";
+                json << "[";
+                for (int i = 0; i < e.errors.length(); i++) {
+                    if (i > 0)
+                        json << ", ";
+                    json << "\"" << e.errors[i].desc << "\"";
+                }
+                json << "]";                
             }
             
         }
@@ -47,6 +53,29 @@ namespace WebSocketDS_ns
         if (attrList != nullptr)
             delete attrList;
         return json.str();
+    }
+
+    string DeviceForWs::generateJsonFromPipeComm(const std::map<string, string> &pipeConf)
+    {
+        // Вызов generateJsonFromPipeComm происходит из WSThread.cpp
+        // Там происходит проверка ключей read_pipe_gr read_pipe_dev если ds->isGroup() == true
+        // И read_pipe если  ds->isGroup() == false
+
+        string pipeName = pipeConf.at("read_pipe");
+
+        try {
+            DevicePipe devicePipe = device->read_pipe(pipeName);
+
+            std::stringstream json;
+            generateJsonHeadForPipeComm(pipeConf,json,pipeName);
+            json << processor->processPipe(devicePipe, TYPE_WS_REQ::PIPE_COMM);
+            json << "}";
+            return json.str();
+        }
+        catch (Tango::DevFailed &e) {
+            string errM = "Pipe " + pipeName + " not found in " + device->name();
+            return StringProc::exceptionStringOut(pipeConf.at("id"),pipeName,errM,"read_pipe");
+        }
     }
 
     Tango::DevString DeviceForWs::sendCommand(Tango::DevString &argin) {

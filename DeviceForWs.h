@@ -12,6 +12,7 @@ namespace WebSocketDS_ns
         ~DeviceForWs();
 
         virtual string generateJsonForUpdate() override;
+        virtual string generateJsonFromPipeComm(const std::map<std::string, std::string> &pipeConf) override;
         virtual Tango::DevString sendCommand(Tango::DevString &argin) override;
         virtual Tango::DevVarCharArray* sendCommandBin(Tango::DevString &argin) override;
 

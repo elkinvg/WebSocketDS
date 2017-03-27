@@ -65,6 +65,7 @@ namespace WebSocketDS_ns
     void WSThread_plain::send_all(std::string msg) {
         cache.clear();
         cache = msg;
+        removeSymbolsForString(msg);
         con_list::iterator it;
         int ii=0;
         size_t total = 0;
@@ -169,6 +170,7 @@ namespace WebSocketDS_ns
 
 
     void WSThread_plain::send(websocketpp::connection_hdl hdl, std::string msg) {
+        removeSymbolsForString(msg);
         try {
             unsigned int maxBuffSize = ds->maximumBufferSize;
             if (maxBuffSize < maximumBufferSizeMin || maxBuffSize > maximumBufferSizeMax)

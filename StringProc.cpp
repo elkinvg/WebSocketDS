@@ -7,39 +7,31 @@ using std::stringstream;
 namespace WebSocketDS_ns
 {
 
-    string StringProc::exceptionStringOut(string id, string commandName, string errorMessage, string type_req_str)
+    string StringProc::exceptionStringOut(string id, string commandOrPipeName, string errorMessage, string type_req_str)
     {
+        string tmpMess = "\"err_mess\": \"" + errorMessage + "\"";
+        return generateExceptionMess(id, commandOrPipeName, tmpMess, type_req_str);
+    }
 
-        stringstream ss;
-        ss << "{\"event\": \"error\", \"data\": [{";
-        ss << "\"error\": \"" << errorMessage << "\",";
-        if (commandName == NONE)
-            ss << "\"" << "command" << "\": " << commandName << ", ";
-        else
-            ss << "\"" << "command" << "\": \"" << commandName << "\", ";
-        ss << "\"type_req\": \"" << type_req_str << "\", ";
-
-        try {
-            auto idTmp = stoi(id);
-            ss << "\"id_req\": " << idTmp;
+    string StringProc::exceptionStringOut(string id, string commandOrPipeName, vector<string> errorMessages, string type_req_str) {
+        string errMess = "\"err_mess\": [";
+        int it = 0;
+        for (auto& mess : errorMessages) {
+            if (it)
+                errMess += ", ";
+            errMess = errMess + "\"" + mess + "\"";
+            it++;
         }
-        catch (...) {
-            if (id == NONE)
-                ss << "\"id_req\": " << id;
-            else
-                ss << "\"id_req\": \"" << id << "\"";
-        }
-        ss << "}] }";
-
-        return ss.str();
+        errMess += "]";
+        return generateExceptionMess(id, commandOrPipeName, errMess, type_req_str);
     }
 
     string StringProc::exceptionStringOut(string errorMessage) {
         stringstream ss;
-        ss << "{\"event\": \"error\", \"data\": [{";
-        ss << "\"error\": \"" << errorMessage << "\",";
-        ss << "\"type_req\": \"" << "attribute" << "\"";
-        ss << "}] }";
+        ss << "{\"event\": \"error\", ";
+        ss << "\"type_req\": \"" << "attribute" << "\", ";
+        ss << "\"err_mess\": \"" << errorMessage << "\"";
+        ss << "}";
 
         return ss.str();
     }
@@ -112,9 +104,15 @@ namespace WebSocketDS_ns
                 boostOpt.push_back(std::make_pair("command_group", pt.get_optional<std::string>("command_group")));
                 boostOpt.push_back(std::make_pair("command_device", pt.get_optional<std::string>("command_device")));
                 boostOpt.push_back(std::make_pair("device_name", pt.get_optional<std::string>("device_name")));
+                // for pipe
+                boostOpt.push_back(std::make_pair("read_pipe_gr", pt.get_optional<std::string>("read_pipe_gr")));
+                boostOpt.push_back(std::make_pair("read_pipe_dev", pt.get_optional<std::string>("read_pipe_dev")));
             }
-            else
+            else {
                 boostOpt.push_back(std::make_pair("command", pt.get_optional<std::string>("command")));
+                // for pipe
+                boostOpt.push_back(std::make_pair("read_pipe", pt.get_optional<std::string>("read_pipe")));
+            }
 
             boostOpt.push_back(std::make_pair("id", pt.get_optional<std::string>("id")));
             boostOpt.push_back(std::make_pair("argin", pt.get_optional<std::string>("argin")));
@@ -151,5 +149,31 @@ namespace WebSocketDS_ns
         }
 
         return output;
+    }
+
+    string StringProc::generateExceptionMess(string id, string commandOrPipeName, string& inMessage, string type_req_str) {
+        stringstream ss;
+        ss << "{\"event\": \"error\", ";
+        ss << "\"type_req\": \"" << type_req_str << "\", ";
+        if (commandOrPipeName == NONE)
+            ss << "\"" << "name_req" << "\": " << commandOrPipeName << ", ";
+        else
+            ss << "\"" << "name_req" << "\": \"" << commandOrPipeName << "\", ";
+
+        try {
+            auto idTmp = stoi(id);
+            ss << "\"id_req\": " << idTmp << ", ";
+        }
+        catch (...) {
+            if (id == NONE)
+                ss << "\"id_req\": " << id << ", ";
+            else
+                ss << "\"id_req\": \"" << id << "\", ";
+        }
+        ss << inMessage;
+        //ss << "\"err_mess\": \"" << inMessage << "\"";
+        ss << "}";
+
+        return ss.str();
     }
 }

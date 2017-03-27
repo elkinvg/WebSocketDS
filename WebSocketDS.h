@@ -334,6 +334,7 @@ public:
 
 /*----- PROTECTED REGION ID(WebSocketDS::Additional Method prototypes) ENABLED START -----*/
 public:
+    string readPipeFromDeviceOrGroup(const std::map<string, string> &pipeConf);
     // From Property "Options" of tango_device
     // format opt1;opt2=val;opt3
     OUTPUT_DATA_TYPE check_type_of_data(const string& commandName);

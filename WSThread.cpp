@@ -27,8 +27,7 @@ void WSThread::on_message(websocketpp::connection_hdl hdl, server::message_ptr m
     INFO_STREAM << " Input message: " << msg->get_payload() << endl;
     
     map<string, string> conf = getRemoteConf(hdl);
-    
-    string output;
+
 
     auto parsedJson = StringProc::parseJsonFromCommand(data_from_client, ds->isGroup());
 
@@ -40,43 +39,37 @@ void WSThread::on_message(websocketpp::connection_hdl hdl, server::message_ptr m
         return;
     }
 
+    bool isPipe = false;
+
     if (ds->isGroup()) {
-        commandName = parsedJson["command_device"];
-        if (!commandName.size() || commandName == NONE)
-            commandName = parsedJson["command_group"];
-    }
-    else
-        commandName = parsedJson["command"];
-
-
-    bool permission = uc->check_permission(conf, data_from_client, commandName);
-    if (permission)  {
-        OUTPUT_DATA_TYPE odt = ds->check_type_of_data(commandName);
-        Tango::DevString input = const_cast<Tango::DevString>(data_from_client.c_str());
-        if (odt == OUTPUT_DATA_TYPE::BINARY) {
-            Tango::DevVarCharArray* bindata = ds->send_command_bin(input);
-            unsigned long len = bindata->length();
-            if (len > 0) {
-                for (int i = 0; i < len; i++) {
-                    output.push_back((*bindata)[i]);
-                }
-                send(hdl, output.c_str(), len);
-            }
-            else {
-                output = "err{\"event\": \"error\", \"data\": [{\"error\":\"No data\", \"type_req\": \"command\"}] }";
-                send(hdl, output.c_str(), output.size());
-            }
-        }
+        if (parsedJson["read_pipe_gr"] != NONE || parsedJson["read_pipe_dev"] != NONE )
+            isPipe = true;
         else {
-            output = (string)ds->send_command(input);
+            commandName = parsedJson["command_device"];
+            if (!commandName.size() || commandName == NONE)
+                commandName = parsedJson["command_group"];
+            }
+    }
+    else {
+        if (parsedJson["read_pipe"] != NONE)
+            isPipe = true;
+        else
+            commandName = parsedJson["command"];
+    }
+
+    if (isPipe) {
+        getDataFromTangoPipe(hdl,parsedJson);
+    }
+    else {
+        bool permission = uc->check_permission(conf, data_from_client, commandName);
+        if (permission)
+            sendCommandToTango(hdl, commandName, data_from_client);
+        else
+        {
+            string output = StringProc::exceptionStringOut(parsedJson["id"], commandName,"Permission denied","command");
             send(hdl, output);
         }
     }
-    else {
-        output = "{\"event\": \"error\", \"data\": [{\"error\":\"Permission denied\", \"type_req\": \"command\"}] }";
-        send(hdl, output);
-    }
-        
 }
 
 void WSThread::on_open(websocketpp::connection_hdl hdl) {
@@ -168,6 +161,40 @@ bool WSThread::forValidate(map<string, string> remoteConf) {
     return isValid;
 }
 
+void WSThread::sendCommandToTango(websocketpp::connection_hdl hdl, string commandName, string dataFromClient)
+{
+    string output;
+    OUTPUT_DATA_TYPE odt = ds->check_type_of_data(commandName);
+    Tango::DevString input = const_cast<Tango::DevString>(dataFromClient.c_str());
+    if (odt == OUTPUT_DATA_TYPE::BINARY) {
+
+        Tango::DevVarCharArray* bindata = ds->send_command_bin(input);
+        unsigned long len = bindata->length();
+        if (len > 0) {
+            for (int i = 0; i < len; i++) {
+                output.push_back((*bindata)[i]);
+            }
+            send(hdl, output.c_str(), len);
+        }
+        else {
+            output = "err" + StringProc::exceptionStringOut(NONE, commandName, "No data", "command");
+            send(hdl, output.c_str(), output.size());
+        }
+    }
+    else {
+        output = (string)ds->send_command(input);
+        removeSymbolsForString(output);
+        send(hdl, output);
+    }
+}
+
+void WSThread::getDataFromTangoPipe(websocketpp::connection_hdl hdl, std::map<string, string> parsedPipeConf)
+{
+    string output = ds->readPipeFromDeviceOrGroup(parsedPipeConf);
+    removeSymbolsForString(output);
+    send(hdl, output);
+}
+
 vector<string> &WSThread::split(const string &s, char delim, vector<string> &elems) {
     stringstream ss(s);
     string item;
@@ -182,6 +209,15 @@ vector<string> WSThread::split(const string &s, char delim) {
     vector<string> elems;
     split(s, delim, elems);
     return elems;
+}
+
+void WSThread::removeSymbolsForString(string &str) {
+    //if (str.find('\0') != string::npos)
+    //    str.erase(remove(str.begin(), str.end(), '\0'), str.end());
+    if (str.find('\r') != string::npos)
+        str.erase(remove(str.begin(), str.end(), '\r'), str.end());
+    if (str.find('\n') != string::npos)
+        std::replace(str.begin(), str.end(), '\n', ' ');
 }
 
 WSThread::~WSThread() {}
