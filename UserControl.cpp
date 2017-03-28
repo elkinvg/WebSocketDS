@@ -1,53 +1,52 @@
 #include "UserControl.h"
-#include "WebSocketDS.h"
+#include <chrono>
 
 
-WebSocketDS_ns::UserControl::UserControl(WebSocketDS *dev) :
-Tango::LogAdapter(dev)
+WebSocketDS_ns::UserControl::UserControl(string authDS, TYPE_OF_IDENT toi, bool isLogActive)
 {
-    ds = dev;
+    _authDS = authDS;
+    _toi = toi;
+    _isLogActive = isLogActive;
 }
 
-bool WebSocketDS_ns::UserControl::check_permission(map<string, string>& parsedGet, const string& commandJson, const string& commandName) {
+bool WebSocketDS_ns::UserControl::check_permission(map<string, string>& parsedGet, const string& commandJson, std::pair<string, string> deviceAndCommandName, bool isGroup) {
     bool isAuth = false;
 
     if (!checkKeysFromParsedGet(parsedGet))
         return isAuth;
 
-    TYPE_OF_IDENT toi = ds->check_type_of_ident();
-
-    if (toi == TYPE_OF_IDENT::SIMPLE)
+    if (_toi == TYPE_OF_IDENT::SIMPLE)
     {
         bool cuser = check_user(parsedGet);
 
         if (!cuser) {
-            ERROR_STREAM << "incorrect login or password " << endl;
+            //ERROR_STREAM << "incorrect login or password " << endl;
             return isAuth;
         }
     }
 
-    vector <string> permission_data = getPermissionData(parsedGet, commandName);
+    vector <string> permission_data = getPermissionData(parsedGet, deviceAndCommandName);
 
     Tango::DeviceData argin, argout;
     Tango::DeviceProxy *authProxy = nullptr;
 
     try {
         argin << permission_data;
-        authProxy = new Tango::DeviceProxy(ds->authDS);
-        if (toi == TYPE_OF_IDENT::RANDIDENT)
+        authProxy = new Tango::DeviceProxy(_authDS);
+        if (_toi == TYPE_OF_IDENT::RANDIDENT)
             argout = authProxy->command_inout("check_permissions_ident", argin);
         else
             argout = authProxy->command_inout("check_permissions", argin);
         argout >> isAuth;
-        INFO_STREAM << "User " << permission_data[3] << " tried to run the command " << commandName  <<". Access status is " << std::boolalpha << isAuth << endl;
+        //INFO_STREAM << "User " << permission_data[3] << " tried to run the command " << commandName  <<". Access status is " << std::boolalpha << isAuth << endl;
         // Если включён режим отправления данных в журналы.
         // Если задан uselog в Property "Options". Подробнее в README.md
-        if (ds->isLogActive())
-            sendLogCommand(authProxy, permission_data, commandJson, isAuth);
+        if (_isLogActive)
+            sendLogCommand(authProxy, permission_data, commandJson, make_pair(isAuth,isGroup));
         delete authProxy;
     }
     catch (Tango::DevFailed &e) {
-        ERROR_STREAM << "Could not connect to device-server '" << ds->authDS << "'.. Desc: " << e.errors[0].desc.in();
+        //ERROR_STREAM << "Could not connect to device-server '" <</*ds->authDS*/_authDS << "'.. Desc: " << e.errors[0].desc.in();
         if (authProxy!=nullptr)
             delete authProxy;
     }
@@ -70,13 +69,13 @@ bool WebSocketDS_ns::UserControl::check_user(map<string, string>& parsedGet) {
 
     try {
         argin << auth_data;
-        authProxy = new Tango::DeviceProxy(ds->authDS);
+        authProxy = new Tango::DeviceProxy(_authDS);
         argout = authProxy->command_inout("check_user", argin);
         argout >> isAuth;
         delete authProxy;
     }
     catch (Tango::DevFailed &e) {
-        ERROR_STREAM << "Could not connect to device-server '" << ds->authDS << "'.. Desc: " << e.errors[0].desc.in();
+        //ERROR_STREAM << "Could not connect to device-server '" << ds->authDS << "'.. Desc: " << e.errors[0].desc.in();
         if (authProxy != nullptr)
             delete authProxy;
     }
@@ -84,7 +83,7 @@ bool WebSocketDS_ns::UserControl::check_user(map<string, string>& parsedGet) {
     return isAuth;
 }
 
-bool WebSocketDS_ns::UserControl::sendLogCommand(Tango::DeviceProxy *authProxy, const vector<string>& permission_data, const string& commandJson, bool isAuth)
+bool WebSocketDS_ns::UserControl::sendLogCommand(Tango::DeviceProxy *authProxy, const vector<string>& permission_data, const string& commandJson, pair<bool, bool> isAuthAndIsGroup)
 {
     // toLogData[0] = timestamp_string UNIX_TIMESTAMP
     // toLogData[1] = login
@@ -110,8 +109,8 @@ bool WebSocketDS_ns::UserControl::sendLogCommand(Tango::DeviceProxy *authProxy, 
     permission_data_for_log.push_back(permission_data[2]); // ip
     permission_data_for_log.push_back(permission_data[1]); // command_name
     permission_data_for_log.push_back(commandJson);
-    permission_data_for_log.push_back(to_string(isAuth));
-    permission_data_for_log.push_back(to_string(ds->isGroup()));
+    permission_data_for_log.push_back(to_string(isAuthAndIsGroup.first)); // isAuth
+    permission_data_for_log.push_back(to_string(isAuthAndIsGroup.second)); // isGroup
     
     Tango::DeviceData argin, argout;
 
@@ -121,36 +120,27 @@ bool WebSocketDS_ns::UserControl::sendLogCommand(Tango::DeviceProxy *authProxy, 
         argout >> isSuccess;
     }
     catch (Tango::DevFailed &e) {
-        ERROR_STREAM << "Could not connect to device-server '" << ds->authDS << "'.. Desc: " << e.errors[0].desc.in();
+        //ERROR_STREAM << "Could not connect to device-server '" << ds->authDS << "'.. Desc: " << e.errors[0].desc.in();
         isSuccess = false;
     }
     return isSuccess;
 }
 
-vector<string> WebSocketDS_ns::UserControl::getPermissionData(map<string, string>& parsedGet, const string& commandName)
+vector<string> WebSocketDS_ns::UserControl::getPermissionData(map<string, string>& parsedGet, std::pair<string, string> deviceAndCommandName)
 {
     vector <string> permission_data;
-    
-    Tango::DbDevice* dbDev = ds->get_db_device();
-    Tango::DbData db_data;
-    db_data.push_back(Tango::DbDatum("DeviceServer"));
-    dbDev->get_property(db_data);
-    string deviceName;
-    db_data[0] >> deviceName;
 
-    TYPE_OF_IDENT toi = ds->check_type_of_ident();
-
-    if (toi == TYPE_OF_IDENT::RANDIDENT)
+    if (_toi == TYPE_OF_IDENT::RANDIDENT)
         permission_data.resize(7);
     else
         permission_data.resize(4);
 
-    permission_data[0] = deviceName; // device
-    permission_data[1] = commandName;
+    permission_data[0] = deviceAndCommandName.first; // device
+    permission_data[1] = deviceAndCommandName.second; // commandName
     permission_data[2] = parsedGet["ip"];
     permission_data[3] = parsedGet["login"];
     
-    if (toi == TYPE_OF_IDENT::RANDIDENT) {
+    if (_toi == TYPE_OF_IDENT::RANDIDENT) {
         permission_data[4] = parsedGet["id_ri"];
         permission_data[5] = parsedGet["rand_ident_hash"];
         permission_data[6] = parsedGet["rand_ident"];
@@ -161,9 +151,7 @@ vector<string> WebSocketDS_ns::UserControl::getPermissionData(map<string, string
 
 bool WebSocketDS_ns::UserControl::checkKeysFromParsedGet(const map<string, string>& parsedGet)
 {
-    TYPE_OF_IDENT toi = ds->check_type_of_ident();
-
-    if (toi == TYPE_OF_IDENT::RANDIDENT)
+    if (_toi == TYPE_OF_IDENT::RANDIDENT)
     {
         if (parsedGet.find("login") == parsedGet.end() || parsedGet.find("id_ri") == parsedGet.end())
             return false;
@@ -173,7 +161,7 @@ bool WebSocketDS_ns::UserControl::checkKeysFromParsedGet(const map<string, strin
     }
     else {
         if (parsedGet.find("login") == parsedGet.end() || parsedGet.find("password") == parsedGet.end() || parsedGet.find("ip") == parsedGet.end()) {
-            ERROR_STREAM << "login or password or ip not found" << endl;
+            //ERROR_STREAM << "login or password or ip not found" << endl;
             return false;
         }
     }

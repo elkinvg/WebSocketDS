@@ -2,11 +2,12 @@
 #include <omnithread.h>
 #include <log4tango.h>
 #include <cmath>
-#include "WebSocketDS.h"
+
 #include <locale.h>
 #include <boost/lexical_cast.hpp>
 #include <boost/asio.hpp>
 
+#include "WebSocketDS.h"
 #include "UserControl.h"
 #include "WSThread.h"
 
@@ -16,10 +17,9 @@ namespace WebSocketDS_ns
 {
     WSThread::WSThread(WebSocketDS *dev/*, std::string hostName*/, int portNumber) : omni_thread(), Tango::LogAdapter(dev)
     {
-        //host = hostName;
         port = portNumber;
         ds = dev;
-        uc = unique_ptr<UserControl>(new UserControl(dev));
+        uc = unique_ptr<UserControl>(new UserControl(ds->authDS,ds->check_type_of_ident(),ds->isLogActive()));
     }
 
 void WSThread::on_message(websocketpp::connection_hdl hdl, server::message_ptr msg) {
@@ -61,7 +61,8 @@ void WSThread::on_message(websocketpp::connection_hdl hdl, server::message_ptr m
         getDataFromTangoPipe(hdl,parsedJson);
     }
     else {
-        bool permission = uc->check_permission(conf, data_from_client, commandName);
+        pair<string, string> devCommName = make_pair(ds->deviceServer,commandName);
+        bool permission = uc->check_permission(conf, data_from_client, devCommName, ds->isGroup());
         if (permission)
             sendCommandToTango(hdl, commandName, data_from_client);
         else
