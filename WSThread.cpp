@@ -1,3 +1,7 @@
+#ifdef _WIN32
+#define WINVER 0x0A00
+#endif
+
 #include <tango.h>
 #include <omnithread.h>
 #include <log4tango.h>
