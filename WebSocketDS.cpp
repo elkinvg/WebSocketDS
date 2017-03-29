@@ -777,6 +777,9 @@ bool WebSocketDS::initDeviceServer()
                             typeOfIdent = TYPE_OF_IDENT::SIMPLE;
                     }
                 }
+                if (opt == "notshrtatt") {
+                    _isShortAttr = false;
+                }
             }
         }
 

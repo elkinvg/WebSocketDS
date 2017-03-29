@@ -109,6 +109,7 @@ private:
 
     bool _isGroup{false};
     bool _isLogActive {false};
+    bool _isShortAttr{true};
     TYPE_OF_IDENT typeOfIdent{TYPE_OF_IDENT::SIMPLE};
 
     std::chrono::seconds timeFromUpdateData;
@@ -344,6 +345,8 @@ public:
     bool isGroup() { return _isGroup; };
     // opt = uselog
     bool isLogActive() { return _isLogActive; };
+    // opt = notshrtatt
+    bool isShortAttr() {return _isShortAttr; };
 
 private:
     void reInitDevice();

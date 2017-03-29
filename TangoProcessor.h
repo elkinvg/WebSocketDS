@@ -19,7 +19,7 @@ namespace WebSocketDS_ns
 
         string processPipe(DevicePipe& pipe, TYPE_WS_REQ pipeType);
 
-        std::string process_attribute_t(Tango::DeviceAttribute& att);
+        std::string process_attribute_t(Tango::DeviceAttribute& att, bool isShortAttr);
         Tango::DeviceData gettingDevDataFromJsonStr(const std::string& jsonData, int typeForDeviceData);
 
         std::string gettingJsonStrFromDevData(Tango::DeviceData& devData, std::map<std::string,std::string>& inputArgs, bool isFromGroup = false);
