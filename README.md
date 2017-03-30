@@ -409,7 +409,7 @@ AttrName;pipecomm;par1=val;par2
   ```json
   {
   	"event": "read",
-  	"type_req": "command",
+  	"type_req": "command_group",
   	"data": {
   		"command_name": "имя команды",
   		"id_req": "id запроса запуска команды",
