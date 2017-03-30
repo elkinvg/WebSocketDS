@@ -71,11 +71,14 @@ WebSocketDS
 {
 	"event": "read",
 	"type_req":"attribute",
-	"data":
-	[
+	"data": [
 		{
 			"attr": "имя_атрибута",
-			"data": 128
+			"data": "данные"
+		},
+		{
+			"attr": "имя_атрибута2",
+			"data": ["массив", "данных"]
 		},
 	]
 }
@@ -118,10 +121,16 @@ WebSocketDS
 	"data":
 	{
 		"name/tango/device_from_group" :
-		{
-			"attr": "имя_атрибута",
-			"data": 128
-		}
+		[
+			{
+				"attr": "имя_атрибута",
+				"data": "данные"
+			},
+			{
+				"attr": "имя_атрибута2",
+				"data": ["массив", "данных"]
+			},
+		]
 	}
 }
 ```
