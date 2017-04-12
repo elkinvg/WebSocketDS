@@ -39,15 +39,11 @@
 #define WebSocketDS_H
 
 #include <tango.h>
-#ifdef _WIN32
-#define WINVER 0x0A00
-#endif
-
-#include "GroupOrDeviceForWs.h"
 
 #include <chrono>
 
 #include "common.h"
+#include "WSTangoConn.h"
 
 
 /*----- PROTECTED REGION END -----*/	//	WebSocketDS.h
@@ -86,13 +82,7 @@
 namespace WebSocketDS_ns
 {
 /*----- PROTECTED REGION ID(WebSocketDS::Additional Class Declarations) ENABLED START -----*/
-class UserControl;
-class WSThread;
-
-class GroupOrDeviceForWs;
-//class DeviceForWs;
-//class GroupForWs;
-
+//    class WSTangoConn;
 
 
 /*----- PROTECTED REGION END -----*/	//	WebSocketDS::Additional Class Declarations
@@ -103,18 +93,11 @@ class WebSocketDS : public TANGO_BASE_CLASS
 /*----- PROTECTED REGION ID(WebSocketDS::Data Members) ENABLED START -----*/
 
 private:
-    WSThread *wsThread;
-    std::unique_ptr<GroupOrDeviceForWs> groupOrDevice;
-
-
-    bool _isGroup{false};
-    bool _isLogActive {false};
-    bool _isShortAttr{true};
-    TYPE_OF_IDENT typeOfIdent{TYPE_OF_IDENT::SIMPLE};
+    //WSThread *wsThread;
+    //std::unique_ptr<GroupOrDeviceForWs> groupOrDevice;
+    std::unique_ptr<WSTangoConn> wsTangoConn;
 
     std::chrono::seconds timeFromUpdateData;
-public:
-    std::map<std::string, Tango::CommandInfo> accessibleCommandInfo;
     /*----- PROTECTED REGION END -----*/	//	WebSocketDS::Data Members
 
 //	Device property data members
@@ -286,18 +269,6 @@ public:
 	virtual void update_data();
 	virtual bool is_UpdateData_allowed(const CORBA::Any &any);
 	/**
-	 *	Command SendCommand related method
-	 *	Description: Command for sending command to device from property.
-	 *
-	 *	@param argin input argument must be in JSON. Command must be included to device property ``Commands``
-	 *               {``command`` : ``nameOfCommand``, ``argin`` : [``1``,``2``,``3``]}
-	 *               OR
-	 *               {``command`` : ``nameOfCommand``, ``argin`` : ``1``}
-	 *	@returns Output in JSON.
-	 */
-	virtual Tango::DevString send_command(Tango::DevString argin);
-	virtual bool is_SendCommand_allowed(const CORBA::Any &any);
-	/**
 	 *	Command Reset related method
 	 *	Description: Restart websocket server
 	 *
@@ -311,18 +282,6 @@ public:
 	 */
 	virtual void check_poll();
 	virtual bool is_CheckPoll_allowed(const CORBA::Any &any);
-	/**
-	 *	Command SendCommandBin related method
-	 *	Description: Command for sending command to device from property.
-	 *
-	 *	@param argin input argument must be in JSON. Command must be included to device property ``Commands``
-	 *               {``command`` : ``nameOfCommand``, ``argin`` : [``1``,``2``,``3``]}
-	 *               OR
-	 *               {``command`` : ``nameOfCommand``, ``argin`` : ``1``}
-	 *	@returns Output in binary data
-	 */
-	virtual Tango::DevVarCharArray *send_command_bin(Tango::DevString argin);
-	virtual bool is_SendCommandBin_allowed(const CORBA::Any &any);
 
 
 	//--------------------------------------------------------
@@ -334,31 +293,10 @@ public:
 	void add_dynamic_commands();
 
 /*----- PROTECTED REGION ID(WebSocketDS::Additional Method prototypes) ENABLED START -----*/
-public:
-    string readPipeFromDeviceOrGroup(const std::map<string, string> &pipeConf);
-    // From Property "Options" of tango_device
-    // format opt1;opt2=val;opt3
-    OUTPUT_DATA_TYPE check_type_of_data(const string& commandName);
-    // opt = tident=[smpl or rndid] example tident=rndid
-    TYPE_OF_IDENT check_type_of_ident(){ return typeOfIdent; };
-    // opt = group
-    bool isGroup() { return _isGroup; };
-    // opt = uselog
-    bool isLogActive() { return _isLogActive; };
-    // opt = notshrtatt
-    bool isShortAttr() {return _isShortAttr; };
 
 private:
     void reInitDevice();
-    void fromException(Tango::DevFailed &e, string func);
 
-    bool initDeviceServer();
-    bool initWsThread();
-
-
-#ifdef TESTFAIL
-    void sendLogToFile();
-#endif
 
     /*----- PROTECTED REGION END -----*/	//	WebSocketDS::Additional Method prototypes
 };

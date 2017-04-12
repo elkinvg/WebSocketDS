@@ -97,6 +97,7 @@
     <ClCompile Include="..\WebSocketDS.cpp" />
     <ClCompile Include="..\WebSocketDSClass.cpp" />
     <ClCompile Include="..\WebSocketDSStateMachine.cpp" />
+    <ClCompile Include="..\WSTangoConn.cpp" />
     <ClCompile Include="..\WSThread.cpp" />
     <ClCompile Include="..\WSThread_plain.cpp" />
     <ClCompile Include="..\WSThread_tls.cpp" />
@@ -113,6 +114,7 @@
     </ClInclude>
     <ClInclude Include="..\WebSocketDSClass.h">
     </ClInclude>
+    <ClInclude Include="..\WSTangoConn.h" />
     <ClInclude Include="..\WSThread.h" />
     <ClInclude Include="..\WSThread_plain.h" />
     <ClInclude Include="..\WSThread_tls.h" />

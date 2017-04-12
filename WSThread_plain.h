@@ -8,7 +8,7 @@ namespace WebSocketDS_ns
     class WSThread_plain : public WSThread
     {
     public:
-        WSThread_plain(WebSocketDS *dev/*, std::string hostName*/, int portNumber);
+        WSThread_plain(/*WebSocketDS *dev,*/ /*pair<string, string> deviceServerAndOptions,*/WSTangoConn *tc, int portNumber);
 
         ~WSThread_plain();
         virtual void *run_undetached(void *) override;
@@ -20,7 +20,7 @@ namespace WebSocketDS_ns
     private:
         virtual void close_from_server(websocketpp::connection_hdl hdl) override;
         virtual size_t get_buffered_amount(websocketpp::connection_hdl hdl) override;
-        virtual map<string, string> getRemoteConf(websocketpp::connection_hdl hdl) override;
+        virtual std::unordered_map<string, string> getRemoteConf(websocketpp::connection_hdl hdl) override;
         server m_server;
     };
 }

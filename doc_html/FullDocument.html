@@ -65,10 +65,8 @@
 				<li> <a href="FullDocument.html#cmdOn"> On </a>
 				<li> <a href="FullDocument.html#cmdOff"> Off </a>
 				<li> <a href="FullDocument.html#cmdUpdateData"> UpdateData </a>
-				<li> <a href="FullDocument.html#cmdSendCommand"> SendCommand </a>
 				<li> <a href="FullDocument.html#cmdReset"> Reset </a>
 				<li> <a href="FullDocument.html#cmdCheckPoll"> CheckPoll </a>
-				<li> <a href="FullDocument.html#cmdSendCommandBin"> SendCommandBin </a>
 			</ul>
 			<li> <a href="FullDocument.html#attributes">   Attributes   </a>
 			<ul>
@@ -316,13 +314,6 @@
 		<td> None. </td>
 	</tr>
 	<tr>
-		<td> <a href="CmdSendCommand.html"> SendCommand </a> </td>
-		<td> DEV_STRING </td>
-		<td> DEV_STRING </td>
-		<td> OPERATOR </td>
-		<td> Command for sending command to device from property. </td>
-	</tr>
-	<tr>
 		<td> <a href="CmdReset.html"> Reset </a> </td>
 		<td> DEV_VOID </td>
 		<td> DEV_VOID </td>
@@ -335,13 +326,6 @@
 		<td> DEV_VOID </td>
 		<td> OPERATOR </td>
 		<td> None. </td>
-	</tr>
-	<tr>
-		<td> <a href="CmdSendCommandBin.html"> SendCommandBin </a> </td>
-		<td> DEV_STRING </td>
-		<td> DEVVAR_CHARARRAY </td>
-		<td> OPERATOR </td>
-		<td> Command for sending command to device from property. </td>
 	</tr>
 </table>
 <br><br><hr>
@@ -587,58 +571,6 @@
 	</tr>
 </table>
 <br><br><hr>
-<a name="cmdSendCommand"> </a>
-<br><br><br>
-<font size="+1"><u><b> Command SendCommand : </b></u></font>
-<ul>
-	Command for sending command to device from property.
-</ul>
-<br><br><br>
-<Table Border=2 Cellpadding=3 CELLSPACING=0>
-	<tr bgcolor="#CCCCFF" class="TableHeadingColor">
-	<td colspan=0> <font size=+1> <center><b> SendCommand Definition </b></font></center></td>
-	</tr>
-	<tr>
-		<td> Input Argument </td>
-		<td> Tango::DEV_STRING </td>
-		<td> input argument must be in JSON. Command must be included to device property ``Commands``<Br>
-{``command`` : ``nameOfCommand``, ``argin`` : [``1``,``2``,``3``]}<Br>
-OR<Br>
-{``command`` : ``nameOfCommand``, ``argin`` : ``1``} </td>
-	</tr>
-	<tr>
-		<td> Output Argument </td>
-		<td> Tango::DEV_STRING </td>
-		<td> Output in JSON. </td>
-	</tr>
-	<tr>
-		<td> DisplayLevel </td>
-		<td> OPERATOR </td>
-		<td> .. </td>
-	</tr>
-	<tr>
-		<td> Inherited </td>
-		<td> false </td>
-		<td> .. </td>
-	</tr>
-	<tr>
-		<td> Abstract </td>
-		<td> false </td>
-		<td> .. </td>
-	</tr>
-	<tr>
-		<td> Polling Period </td>
-		<td> Not polled </td>
-		<td> .. </td>
-	</tr>
-<Tr BGCOLOR="#CCCCFF"><Td><Hr></Td><Td><Hr></Td><Td><Hr></Td></Tr>
-	<tr>
-		<td> Command allowed for </td>
-		<td> All states </td>
-		<td> .. </td>
-	</tr>
-</table>
-<br><br><hr>
 <a name="cmdReset"> </a>
 <br><br><br>
 <font size="+1"><u><b> Command Reset : </b></u></font>
@@ -726,58 +658,6 @@ OR<Br>
 	<tr>
 		<td> Polling Period </td>
 		<td> 10000 </td>
-		<td> .. </td>
-	</tr>
-<Tr BGCOLOR="#CCCCFF"><Td><Hr></Td><Td><Hr></Td><Td><Hr></Td></Tr>
-	<tr>
-		<td> Command allowed for </td>
-		<td> All states </td>
-		<td> .. </td>
-	</tr>
-</table>
-<br><br><hr>
-<a name="cmdSendCommandBin"> </a>
-<br><br><br>
-<font size="+1"><u><b> Command SendCommandBin : </b></u></font>
-<ul>
-	Command for sending command to device from property.
-</ul>
-<br><br><br>
-<Table Border=2 Cellpadding=3 CELLSPACING=0>
-	<tr bgcolor="#CCCCFF" class="TableHeadingColor">
-	<td colspan=0> <font size=+1> <center><b> SendCommandBin Definition </b></font></center></td>
-	</tr>
-	<tr>
-		<td> Input Argument </td>
-		<td> Tango::DEV_STRING </td>
-		<td> input argument must be in JSON. Command must be included to device property ``Commands``<Br>
-{``command`` : ``nameOfCommand``, ``argin`` : [``1``,``2``,``3``]}<Br>
-OR<Br>
-{``command`` : ``nameOfCommand``, ``argin`` : ``1``} </td>
-	</tr>
-	<tr>
-		<td> Output Argument </td>
-		<td> Tango::DEVVAR_CHARARRAY </td>
-		<td> Output in binary data </td>
-	</tr>
-	<tr>
-		<td> DisplayLevel </td>
-		<td> OPERATOR </td>
-		<td> .. </td>
-	</tr>
-	<tr>
-		<td> Inherited </td>
-		<td> false </td>
-		<td> .. </td>
-	</tr>
-	<tr>
-		<td> Abstract </td>
-		<td> false </td>
-		<td> .. </td>
-	</tr>
-	<tr>
-		<td> Polling Period </td>
-		<td> Not polled </td>
 		<td> .. </td>
 	</tr>
 <Tr BGCOLOR="#CCCCFF"><Td><Hr></Td><Td><Hr></Td><Td><Hr></Td></Tr>

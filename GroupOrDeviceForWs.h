@@ -2,54 +2,45 @@
 #define GROUPORDEVICEFORWS_H
 
 #include <tango.h>
-
+#include <array>
 #include "common.h"
 
 using std::unordered_map;
 using std::pair;
+using std::array;
 
 namespace WebSocketDS_ns
 {
-    class WebSocketDS;
     class TangoProcessor;
 
-    class GroupOrDeviceForWs : public Tango::LogAdapter
+    class GroupOrDeviceForWs
     {
     public:
-        GroupOrDeviceForWs(WebSocketDS *dev);
+        GroupOrDeviceForWs();
         virtual ~GroupOrDeviceForWs();
+        
+        void useNotShortAttrOut() { _isShortAttr = false; };
 
-        void initAttrCommPipe(vector<string> &attributes, vector<string> &commands, vector<string> &pipeName);
+        void initAttrCommPipe(array<vector<string>, 3>& attrCommPipe);
         OUTPUT_DATA_TYPE checkDataType(string commandName);
 
         virtual string generateJsonForUpdate() = 0;
-        virtual string generateJsonFromPipeComm(const std::map<std::string, std::string> &pipeConf) = 0;
-        virtual Tango::DevString sendCommand(Tango::DevString &argin) = 0;
-        virtual Tango::DevVarCharArray* sendCommandBin(Tango::DevString &argin) = 0;
+        virtual string sendPipeCommand(const ParsedInputJson& parsedInput) = 0;
+        virtual string sendCommand(const ParsedInputJson& parsedInput, bool& statusComm) = 0;
+        virtual string sendCommandBin(const ParsedInputJson& parsedInput, bool& statusComm) = 0;
 
     protected:
         virtual Tango::CommandInfo getCommandInfo(const string& command_name) = 0;
 
         void generateAttrJson(std::stringstream& json, std::vector<Tango::DeviceAttribute> *attrList);
 
-        Tango::DeviceData tangoCommandInoutForDevice(Tango::DeviceProxy *deviceProxy, Tango::DevString &argin, string &commandName, const string &arginStr, const string idStr, string &errorMess);
+        Tango::DeviceData tangoCommandInoutForDevice(Tango::DeviceProxy *deviceProxy, const ParsedInputJson& dataFromJson, string& errorMessInJson);
 
-        void generateJsonHeadForPipeComm(const std::map<string, string> &pipeConf, std::stringstream& json, const string &pipeName);
+        void generateJsonHeadForPipeComm(const ParsedInputJson& parsedInput, stringstream &json);
 
-        Tango::DevVarCharArray* sendCommandBinForDevice(Tango::DeviceProxy *deviceProxy, Tango::DevString &argin, const std::map<std::string, std::string> &jsonArgs);
-
-        Tango::DevVarCharArray* errorMessageToCharArray(const string&);
-
-        void fromException(Tango::DevFailed &e, string func)
-        {
-            auto lnh = e.errors.length();
-            for (unsigned int i = 0; i<lnh; i++) {
-                ERROR_STREAM << " From " + func + ": " << e.errors[i].desc << endl;
-            }
-        }
+        string sendCommandBinForDevice(Tango::DeviceProxy *deviceProxy, const ParsedInputJson& parsedInput, bool& statusComm);
 
     private:
-        void gettingAttrOrCommUserConf(string &inp, TYPE_WS_REQ type_req);
 
         void initAttrAndPipe(vector<string> &attributes, vector<string>&pipeName);
         void initComm(vector<string> &commands);
@@ -58,14 +49,15 @@ namespace WebSocketDS_ns
         std::vector<std::pair<unsigned short, unsigned short>> nIters;
         unsigned long long iterator{ 0 };
         vector<string> _attributes;
+        string _pipeAttr;
         std::vector<bool>  isJsonAttribute;
         int nAttributes{0};
-        std::map<std::string, Tango::CommandInfo> accessibleCommandInfo;
+        std::unordered_map<std::string, Tango::CommandInfo> accessibleCommandInfo;
         std::unique_ptr<TangoProcessor> processor;
-        WebSocketDS *ds;
+        const string ERR_PRED = "err";
     
     private:
-//        WebSocketDS *ds;
+        bool _isShortAttr{ true };
     };
 }
 

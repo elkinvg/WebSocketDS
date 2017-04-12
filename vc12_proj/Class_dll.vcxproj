@@ -132,6 +132,7 @@
     <ClCompile Include="..\WebSocketDS.cpp" />
     <ClCompile Include="..\WebSocketDSClass.cpp" />
     <ClCompile Include="..\WebSocketDSStateMachine.cpp" />
+    <ClCompile Include="..\WSTangoConn.cpp" />
     <ClCompile Include="..\WSThread.cpp" />
     <ClCompile Include="..\WSThread_plain.cpp" />
     <ClCompile Include="..\WSThread_tls.cpp" />
@@ -148,6 +149,7 @@
     </ClInclude>
     <ClInclude Include="..\WebSocketDSClass.h">
     </ClInclude>
+    <ClInclude Include="..\WSTangoConn.h" />
     <ClInclude Include="..\WSThread.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

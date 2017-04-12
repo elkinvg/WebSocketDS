@@ -166,21 +166,6 @@ bool WebSocketDS::is_UpdateData_allowed(TANGO_UNUSED(const CORBA::Any &any))
 
 //--------------------------------------------------------
 /**
- *	Method      : WebSocketDS::is_SendCommand_allowed()
- *	Description : Execution allowed for SendCommand attribute
- */
-//--------------------------------------------------------
-bool WebSocketDS::is_SendCommand_allowed(TANGO_UNUSED(const CORBA::Any &any))
-{
-	//	Not any excluded states for SendCommand command.
-	/*----- PROTECTED REGION ID(WebSocketDS::SendCommandStateAllowed) ENABLED START -----*/
-	
-	/*----- PROTECTED REGION END -----*/	//	WebSocketDS::SendCommandStateAllowed
-	return true;
-}
-
-//--------------------------------------------------------
-/**
  *	Method      : WebSocketDS::is_Reset_allowed()
  *	Description : Execution allowed for Reset attribute
  */
@@ -209,21 +194,6 @@ bool WebSocketDS::is_CheckPoll_allowed(TANGO_UNUSED(const CORBA::Any &any))
         return false;
     }
 	/*----- PROTECTED REGION END -----*/	//	WebSocketDS::CheckPollStateAllowed
-	return true;
-}
-
-//--------------------------------------------------------
-/**
- *	Method      : WebSocketDS::is_SendCommandBin_allowed()
- *	Description : Execution allowed for SendCommandBin attribute
- */
-//--------------------------------------------------------
-bool WebSocketDS::is_SendCommandBin_allowed(TANGO_UNUSED(const CORBA::Any &any))
-{
-	//	Not any excluded states for SendCommandBin command.
-	/*----- PROTECTED REGION ID(WebSocketDS::SendCommandBinStateAllowed) ENABLED START -----*/
-	
-	/*----- PROTECTED REGION END -----*/	//	WebSocketDS::SendCommandBinStateAllowed
 	return true;
 }
 

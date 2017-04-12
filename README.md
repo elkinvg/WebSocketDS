@@ -238,8 +238,9 @@ __В случае ошибки:__
 Для чтения с pipe в командном режиме на сервер отправляется JSON сообщение в следующем формате:
 
 ```json
-{
-	"read_pipe or read_pipe_dev or read_pipe_gr": "PipeName",
+{     
+	"type_req": "read_pipe or read_pipe_dev or read_pipe_gr",
+	"pipe_name": "PipeName",
 	"device_name": "!!!Только при чтении с конкретного девайса в групповом режиме!!!",
 	"id": "id для идентификации запроса"
 }
@@ -255,7 +256,7 @@ __В случае ошибки:__
   ```json
   {
   	"event": "read",
-  	"type_req": "pipe",
+  	"type_req": "read_pipe",
   	"id_req": 1,
   	"data": {
   		"AttrName": "данные",
@@ -269,7 +270,7 @@ __В случае ошибки:__
   ```json
   {
   	"event": "read",
-  	"type_req": "pipe_dev",
+  	"type_req": "read_pipe_dev",
   	"device_name": "name/tango/device_from_group",
   	"id_req": "id запроса запуска команды",
   	"data": {
@@ -284,7 +285,7 @@ __В случае ошибки:__
   ```json
   {
   	"event": "read",
-  	"type_req": "pipe_gr",
+  	"type_req": "read_pipe_gr",
   	"device_name": "name/tango/device_from_group",
   	"id_req": "id запроса запуска команды",
   	"data" : {
@@ -378,9 +379,12 @@ AttrName;pipecomm;par1=val;par2
 #### Запуск команд в режиме танго-девайса
 
 Команды запускаются входящим json сообщением вида:
-
 ```json
-{"command" : "nameOfCommand", "argin" : ["1","2","3"]}
+{
+	"type_req": "command",
+	"command_name": "имя команды",
+	"argin" : ["1","2","3"]
+}
 ```
 
 `argin` в зависимости от метода, отправляется либо в виде единичного значения, либо в виде массива. Если команда не принимает аргументов, `argin` не  указывать. Также можно указывать `"id": id`, для идентификации запроса. В случае, если id не указан, возвращается `"id": "None"`. значение для id может быть как числом, так и строкой.
@@ -407,10 +411,11 @@ AttrName;pipecomm;par1=val;par2
 - Для всей группы запрос будет таким:
 
   ```json
-	{
-		"command_group" : "nameOfCommand",
-		"argin" : ["1","2","3"]
-	}
+  {
+  	"type_req": "command_group",
+  	"command_name": "имя команды",
+  	"argin" : ["1","2","3"]
+  }
   ```
 
 Ответ, будет таким:
@@ -435,11 +440,12 @@ AttrName;pipecomm;par1=val;par2
 - Для отдельного девайса из группы запрос будет таким:
 
   ```json
-	{
-		"command_device" : "nameOfCommand",
-		"device_name": "nameof/tango/device",
-		"argin" : ["1","2","3"]
-	}
+  {
+  	"type_req": "command_device",
+  	"command_name": "имя команды",
+  	"device_name": "имя/танго/девайса",
+  	"argin" : ["1","2","3"]
+  }
   ```
 
   Ответ, в успешном случае, будет таким:

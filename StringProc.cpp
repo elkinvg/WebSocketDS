@@ -79,76 +79,166 @@ namespace WebSocketDS_ns
         return parsed;
     }
 
-    std::map<std::string, std::string> StringProc::parseJsonFromCommand(const string& jsonInput, bool isGroup) {
+    //std::map<std::string, std::string> StringProc::parseJsonFromCommand(const string& jsonInput, bool isGroup) {
+    //    // Проверка входных парамеров JSON.
+    //    // Если параметры найдены в строке будет значение параметра, иначе пустая строка
+    //    // Для argin, если входной параметр массив передаёт "Array", иначе просто значение
+    //    boost::property_tree::ptree pt;
+    //    std::stringstream ss;
+    //    std::map<std::string, std::string> output;
+
+    //    std::string command, id;
+
+    //    ss << jsonInput;
+    //    try {
+    //        boost::property_tree::read_json(ss, pt);
+
+    //        //pt.get_value_optional
+    //        // Взят boost::optional. В случае, если параметр JSON не найден, присваивает этому параметру пустую строку
+
+    //        // Если входная строка не JSON, возвращяет строку с ошибкой.
+    //        vector<pair<std::string, boost::optional<std::string>>> boostOpt;
+
+
+    //        if (isGroup) {
+    //            boostOpt.push_back(std::make_pair("command_group", pt.get_optional<std::string>("command_group")));
+    //            boostOpt.push_back(std::make_pair("command_device", pt.get_optional<std::string>("command_device")));
+    //            boostOpt.push_back(std::make_pair("device_name", pt.get_optional<std::string>("device_name")));
+    //            // for pipe
+    //            boostOpt.push_back(std::make_pair("read_pipe_gr", pt.get_optional<std::string>("read_pipe_gr")));
+    //            boostOpt.push_back(std::make_pair("read_pipe_dev", pt.get_optional<std::string>("read_pipe_dev")));
+    //        }
+    //        else {
+    //            boostOpt.push_back(std::make_pair("command", pt.get_optional<std::string>("command")));
+    //            // for pipe
+    //            boostOpt.push_back(std::make_pair("read_pipe", pt.get_optional<std::string>("read_pipe")));
+    //        }
+
+    //        boostOpt.push_back(std::make_pair("id", pt.get_optional<std::string>("id")));
+    //        boostOpt.push_back(std::make_pair("argin", pt.get_optional<std::string>("argin")));
+
+    //        bool isJsonExact = true;
+    //        for (auto& v : boostOpt) {
+    //            if (v.second) {
+    //                output.insert(std::pair<std::string, std::string>(v.first, v.second.get()));
+    //            }
+    //            else {
+    //                output.insert(std::pair<std::string, std::string>(v.first, NONE));
+    //            }
+    //        }
+
+    //        // Здесь, если output["argin"].size() == 0, значит параметр argin найден, но формат данных не простое значение.
+    //        // Прводится проверка, является ли он массивом
+
+    //        if (output["argin"].size() == 0) {
+    //            int it = 0;
+    //            try {
+    //                for (boost::property_tree::ptree::value_type &v : pt.get_child("argin")) {
+    //                    it++;
+    //                }
+    //            }
+    //            catch (boost::property_tree::ptree_bad_data) { it = 0; }
+    //            if (it) output["argin"] = "Array";
+    //        }
+
+    //    }
+    //    catch (boost::property_tree::json_parser::json_parser_error &je)
+    //    {
+    //        std::string err = "Json parsed error. Message from Boost: " + je.message();
+    //        output.insert(std::make_pair("error", err));
+    //    }
+
+    //    return output;
+    //}
+
+    ParsedInputJson StringProc::parseInputJson(const string& json){
         // Проверка входных парамеров JSON.
-        // Если параметры найдены в строке будет значение параметра, иначе пустая строка
-        // Для argin, если входной параметр массив передаёт "Array", иначе просто значение
+
+        ParsedInputJson parsedJson;
+        stringstream ss;
+        ss << json;
         boost::property_tree::ptree pt;
-        std::stringstream ss;
-        std::map<std::string, std::string> output;
 
-        std::string command, id;
+        std::unordered_map<string, vector<string>> inpVec;
+        std::unordered_map<string, string> inpStr;
 
-        ss << jsonInput;
         try {
             boost::property_tree::read_json(ss, pt);
 
-            //pt.get_value_optional
-            // Взят boost::optional. В случае, если параметр JSON не найден, присваивает этому параметру пустую строку
-
-            // Если входная строка не JSON, возвращяет строку с ошибкой.
-            vector<pair<std::string, boost::optional<std::string>>> boostOpt;
-
-
-            if (isGroup) {
-                boostOpt.push_back(std::make_pair("command_group", pt.get_optional<std::string>("command_group")));
-                boostOpt.push_back(std::make_pair("command_device", pt.get_optional<std::string>("command_device")));
-                boostOpt.push_back(std::make_pair("device_name", pt.get_optional<std::string>("device_name")));
-                // for pipe
-                boostOpt.push_back(std::make_pair("read_pipe_gr", pt.get_optional<std::string>("read_pipe_gr")));
-                boostOpt.push_back(std::make_pair("read_pipe_dev", pt.get_optional<std::string>("read_pipe_dev")));
-            }
-            else {
-                boostOpt.push_back(std::make_pair("command", pt.get_optional<std::string>("command")));
-                // for pipe
-                boostOpt.push_back(std::make_pair("read_pipe", pt.get_optional<std::string>("read_pipe")));
+            // id должен присутствовать, но не обязательно
+            if (pt.find("id") == pt.not_found()) {
+                parsedJson.id = NONE;
             }
 
-            boostOpt.push_back(std::make_pair("id", pt.get_optional<std::string>("id")));
-            boostOpt.push_back(std::make_pair("argin", pt.get_optional<std::string>("argin")));
 
-            bool isJsonExact = true;
-            for (auto& v : boostOpt) {
-                if (v.second) {
-                    output.insert(std::pair<std::string, std::string>(v.first, v.second.get()));
+            for (auto& elem : pt) {
+                string tmpStr;
+                if (elem.first == "id") {
+                    tmpStr = elem.second.data();
+                    if (!tmpStr.size()) {
+                        parsedJson.errMess = "type of id must be value";
+                        return parsedJson;
+                    }
+                    parsedJson.id = tmpStr;
+                    continue;
                 }
-                else {
-                    output.insert(std::pair<std::string, std::string>(v.first, NONE));
+
+                // type_req должен присутствовать 
+                // (для command можно не указывать ... оставлено для совместимости )
+                if (elem.first == "type_req") {
+                    tmpStr = elem.second.data();
+                    if (!tmpStr.size()) {
+                        parsedJson.errMess = "type of type_req must be value";
+                        return parsedJson;
+                    }
+                    parsedJson.type_req = tmpStr;
+                    continue;
                 }
-            }
 
-            // Здесь, если output["argin"].size() == 0, значит параметр argin найден, но формат данных не простое значение.
-            // Прводится проверка, является ли он массивом
+                // Если является значением
+                if (elem.second.data() != "") {
+                    inpStr[elem.first] = elem.second.data();
+                    continue;
+                }
 
-            if (output["argin"].size() == 0) {
+                // Если является массивом
+                vector<string> vecStr;
                 int it = 0;
                 try {
-                    for (boost::property_tree::ptree::value_type &v : pt.get_child("argin")) {
-                        it++;
+                    for (boost::property_tree::ptree::value_type &v : elem.second) {
+                        if (!v.first.size()) {
+                            // Массив должен содержать только значения
+                            // Проверка содержит ли массив объекты {}
+                            if (!v.second.data().size()) {
+                                it = 0;
+                                break;
+                            }
+                            vecStr.push_back(v.second.data());
+                            it++;
+                        }
                     }
                 }
                 catch (boost::property_tree::ptree_bad_data) { it = 0; }
-                if (it) output["argin"] = "Array";
+                if (it) {
+                    inpVec[elem.first] = vecStr;
+                }
             }
 
+            if (inpStr.size()) {
+                parsedJson.otherInpStr = inpStr;
+            }
+            if (inpVec.size())
+                parsedJson.otherInpVec = inpVec;
+            parsedJson.isOk = true;
         }
         catch (boost::property_tree::json_parser::json_parser_error &je)
         {
-            std::string err = "Json parsed error. Message from Boost: " + je.message();
-            output.insert(std::make_pair("error", err));
+            parsedJson.errMess = "Json parsed error. Message from Boost: " + je.message() ;
         }
-
-        return output;
+        catch (...) {
+            parsedJson.errMess = "unknown error from parseInputJson ";
+        }
+        return parsedJson;
     }
 
     string StringProc::generateExceptionMess(string id, string commandOrPipeName, string& inMessage, string type_req_str) {

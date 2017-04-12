@@ -6,19 +6,17 @@
 
 namespace WebSocketDS_ns
 {
-    GroupOrDeviceForWs::GroupOrDeviceForWs(WebSocketDS *dev):
-        Tango::LogAdapter(dev)
+    GroupOrDeviceForWs::GroupOrDeviceForWs()
     {
-        ds = dev;
         processor = unique_ptr<TangoProcessor>(new TangoProcessor());
     }
 
     GroupOrDeviceForWs::~GroupOrDeviceForWs() {}
 
-    void GroupOrDeviceForWs::initAttrCommPipe(vector<string> &attributes, vector<string> &commands, vector<string> &pipeName)
+    void GroupOrDeviceForWs::initAttrCommPipe(array<vector<string>, 3>& attrCommPipe)
     {
-        initAttrAndPipe(attributes, pipeName);
-        initComm(commands);
+        initAttrAndPipe(attrCommPipe[0], attrCommPipe[2]);
+        initComm(attrCommPipe[1]);
     }
 
     //--------------------------------------------------------
@@ -43,7 +41,7 @@ namespace WebSocketDS_ns
 
     void GroupOrDeviceForWs::initAttrAndPipe(vector<string> &attributes, vector<string>&pipeName)
     {
-        DEBUG_STREAM << "Attributes: " << endl;
+        //DEBUG_STREAM << "Attributes: " << endl;
         // Method gettingAttrUserConf added for Searhing of additional options for attributes
         // Now it is options "prec", "precf", "precs" for precision
         // And "niter"
@@ -91,7 +89,7 @@ namespace WebSocketDS_ns
             std::transform(tmpAttrName.begin(), tmpAttrName.end(), tmpAttrName.begin(), ::tolower);
             isJsonAttribute.push_back(tmpAttrName.find("json") != std::string::npos);
 
-            DEBUG_STREAM << attr << endl;
+            //DEBUG_STREAM << attr << endl;
 
             vector<string> gettedOptions = StringProc::parseInputString(attr, ";");
             processor->initOptionsForAttrOrComm(attr,gettedOptions, TYPE_WS_REQ::ATTRIBUTE);
@@ -108,7 +106,8 @@ namespace WebSocketDS_ns
         _attributes = attributes;
         nAttributes = _attributes.size();
         
-        // GET OPTIONS FOR PIPE
+        if (pipeName.size())
+            _pipeAttr = pipeName[0];
         if (pipeName.size() > 1) {
             for (int i=1; i<pipeName.size(); i++) {
                 string attrName = pipeName[i];
@@ -120,7 +119,7 @@ namespace WebSocketDS_ns
 
     void GroupOrDeviceForWs::initComm(vector<string> &commands)
     {
-        DEBUG_STREAM << "Commands: " << endl;
+        //DEBUG_STREAM << "Commands: " << endl;
 
         // Список команд, доступных для выполения
         // При каждой попытке запуска команды, проверяются права на выполение,
@@ -151,30 +150,17 @@ namespace WebSocketDS_ns
 
                     accessibleCommandInfo.insert(std::pair<std::string, Tango::CommandInfo>(com, info));
                 }
-                DEBUG_STREAM << "Init " << com << endl;
+                //DEBUG_STREAM << "Init " << com << endl;
             }
             catch (Tango::DevFailed &e)
             {
-                ERROR_STREAM << "command " << com << " not found" << endl;
+                //ERROR_STREAM << "command " << com << " not found" << endl;
             }
             catch (exception &e)
             {
-                ERROR_STREAM << "Command " << com << ": " << e.what() << endl;
+                //ERROR_STREAM << "Command " << com << ": " << e.what() << endl;
             }
         }
-    }
-
-    Tango::DevVarCharArray* GroupOrDeviceForWs::errorMessageToCharArray(const string& errorMessage)
-    {
-        Tango::DevVarCharArray *errout = new Tango::DevVarCharArray();
-        errout->length(3 + errorMessage.size());
-        (*errout)[0] = 'e';
-        (*errout)[1] = 'r';
-        (*errout)[2] = 'r';
-        for (unsigned int i = 0; i < errorMessage.size(); i++) {
-            (*errout)[i + 3] = errorMessage[i];
-        }
-        return errout;
     }
 
     void GroupOrDeviceForWs::generateAttrJson(std::stringstream& json, std::vector<Tango::DeviceAttribute> *attrList) {
@@ -193,152 +179,125 @@ namespace WebSocketDS_ns
             if (isJsonAttribute.at(i))
                 json << processor->process_device_attribute_json(att);
             else
-                json << processor->process_attribute_t(att, ds->isShortAttr());
+                json << processor->process_attribute_t(att, _isShortAttr);
         }
     }
 
-    Tango::DeviceData GroupOrDeviceForWs::tangoCommandInoutForDevice(Tango::DeviceProxy *deviceProxy, Tango::DevString &argin, string &commandName,const string &arginStr, const string idStr, string& errorMess)
+    Tango::DeviceData GroupOrDeviceForWs::tangoCommandInoutForDevice(Tango::DeviceProxy *deviceProxy, const ParsedInputJson& dataFromJson, string& errorMessInJson)
     {
         Tango::DeviceData outDeviceData;
-        string typeReq = "command_device";
+        string commandName = dataFromJson.otherInpStr.at("command_name");
 
-        if (accessibleCommandInfo.find(commandName) != accessibleCommandInfo.end())
-        {
-            Tango::CommandInfo comInfo = accessibleCommandInfo[commandName];
-            int type = comInfo.in_type;
+        if (accessibleCommandInfo.find(commandName) == accessibleCommandInfo.end()) {
+            errorMessInJson = StringProc::exceptionStringOut(dataFromJson.id, commandName, "This Command not found in the list of available commands or not found on DeviceServer", dataFromJson.type_req);
+            return outDeviceData;
+        }
 
-            // Вызов правильного метода  command_inout
-            // Проверка типа входных аргументов Void, Array, Data
-            try {
-                if (type == Tango::DEV_VOID) {
-                    outDeviceData = deviceProxy->command_inout(commandName);
-                }
-                else {
-                    if (arginStr == NONE) {
-                        errorMess = StringProc::exceptionStringOut(idStr, commandName, "argin not found", typeReq);
-                        return outDeviceData;
-                    }
+        Tango::CommandInfo comInfo = accessibleCommandInfo[commandName];
+        int type = comInfo.in_type;
 
-                    // если argin - массив
-                    // и если требуемый type не является массивом
-                    if (arginStr == "ARRAY" && !processor->isMassive(type)) {
-                        errorMess = StringProc::exceptionStringOut(idStr, commandName, "The input data should not be an array", typeReq);
-                        return outDeviceData;
-                    }
-
-                    Tango::DeviceData inDeviceData;
-                    inDeviceData = processor->gettingDevDataFromJsonStr(argin, type);
-
-                    outDeviceData = deviceProxy->command_inout(commandName, inDeviceData);
-
-                }
+        // Вызов правильного метода  command_inout
+        // Проверка типа входных аргументов Void, Array, Data
+        try {
+            if (type == Tango::DEV_VOID) {
+                outDeviceData = deviceProxy->command_inout(commandName);
             }
-            catch (Tango::DevFailed &e) {
-                string tangoErrors;
-
-                for (int i = 0; i < e.errors.length(); i++) {
-                    if (i > 0)
-                        tangoErrors += " ||| ";
-                    tangoErrors += (string)e.errors[i].desc;
+            else {
+                if (dataFromJson.check_key("argin") == TYPE_OF_VAL::NONE) {
+                    errorMessInJson = StringProc::exceptionStringOut(dataFromJson.id, commandName, "argin not found", dataFromJson.type_req);
+                    return outDeviceData;
                 }
 
-                errorMess = StringProc::exceptionStringOut(idStr, commandName, tangoErrors, typeReq);
+                // если argin - массив
+                // и если требуемый type не является массивом
+                if (dataFromJson.check_key("argin") == TYPE_OF_VAL::ARRAY && !processor->isMassive(type)) {
+                    errorMessInJson = StringProc::exceptionStringOut(dataFromJson.id, commandName, "The input data should not be an array", dataFromJson.type_req);
+                    return outDeviceData;
+                }
+
+                Tango::DeviceData inDeviceData;
+                inDeviceData = processor->getDeviceDataFromParsedJson(dataFromJson, type);
+
+                outDeviceData = deviceProxy->command_inout(commandName, inDeviceData);
             }
         }
-        else {
-            errorMess = StringProc::exceptionStringOut(idStr, commandName, "This Command not found in the list of available commands or not found on DeviceServer", typeReq);
+        catch (Tango::DevFailed &e) {
+            string tangoErrors;
+
+            for (int i = 0; i < e.errors.length(); i++) {
+                if (i > 0)
+                    tangoErrors += " ||| ";
+                tangoErrors += (string)e.errors[i].desc;
+            }
+
+            errorMessInJson = StringProc::exceptionStringOut(dataFromJson.id, commandName, tangoErrors, dataFromJson.type_req);
+        }
+        catch (std::exception &exc) {
+            // ??? !!! if cannot convert input str
+            errorMessInJson = StringProc::exceptionStringOut(dataFromJson.id, commandName, exc.what(), dataFromJson.type_req);
         }
 
         return outDeviceData;
     }
 
-    void GroupOrDeviceForWs::generateJsonHeadForPipeComm(const std::map<string, string> &pipeConf, stringstream &json, const string& pipeName)
+    void GroupOrDeviceForWs::generateJsonHeadForPipeComm(const ParsedInputJson& parsedInput, stringstream &json)
     {        
-        json << "{\"event\": \"read\", \"type_req\": ";
-        
-        try {
-            // Если вызывается в режиме group должен присутствовать ключ read_pipe_gr
-            if (pipeConf.at("read_pipe_gr") != NONE)
-                json << "\"pipe_gr\", ";
-            else {
-                json << "\"pipe_dev\", ";
-                json << "\"device_name\": " << "\"" << pipeConf.at("device_name") << "\", ";
-            }
-        }
-        catch (const std::out_of_range&) {
-            // Иначе read_pipe
-            json << "\"pipe\", ";
-        }
+        json << "{\"event\": \"read\", \"type_req\": \"" << parsedInput.type_req << "\", ";
+        json << "\"pipe_name\": \"" << parsedInput.otherInpStr.at("pipe_name") << "\", ";
 
+        if (parsedInput.type_req == "read_pipe_dev")
+            json << "\"device_name\": " << "\"" << parsedInput.otherInpStr.at("device_name") << "\", ";
 
         try {
-            auto idTmp = stoi(pipeConf.at("id"));
+            auto idTmp = stoi(parsedInput.id);
             json << "\"id_req\": "  << idTmp << ", ";
         }
         catch (...) {
             // id_req может быть числом, либо случайной строкой
-            if (pipeConf.at("id") == NONE)
-                json << "\"id_req\": "  << pipeConf.at("id") << ", ";
+            if (parsedInput.id == NONE)
+                json << "\"id_req\": " << parsedInput.id << ", ";
             else
-                json << "\"id_req\": \""  << pipeConf.at("id") << "\", ";
+                json << "\"id_req\": \"" << parsedInput.id << "\", ";
         }
 
         json << "\"data\": ";
     }
 
-    Tango::DevVarCharArray* GroupOrDeviceForWs::sendCommandBinForDevice(Tango::DeviceProxy *deviceProxy, Tango::DevString &argin, const std::map<std::string, std::string> &jsonArgs)
+    string GroupOrDeviceForWs::sendCommandBinForDevice(Tango::DeviceProxy *deviceProxy, const ParsedInputJson& parsedInput, bool& statusComm)
     {
-        Tango::DevVarCharArray *argout;
-
-        // Имя команды определено либо в jsonArgs["command"] либо
-        // в jsonArgs["command_device"] в зависимости от типа
-        // Проверка данных ключей производится в методах:
-        //       WebSocketDS::send_command_bin
-        //       WebSocketDS::send_command
-        // вызовом метода StringProc::parseJsonFromCommand
-
-        string commandName;
-        string typeReq;
-        try {
-            commandName = jsonArgs.at("command");
-            typeReq = "command";
-        }
-        catch (const std::out_of_range&) {
-            commandName = jsonArgs.at("command_device");
-            typeReq = "command_device";
-        }
+        statusComm = false;
+        string argout;
+        string commandName = parsedInput.otherInpStr.at("command_name");
+        string typeReq = parsedInput.type_req;
 
 
         string errorMess;
-        string arginStr = jsonArgs.at("argin");
-        string idStr = jsonArgs.at("id");
 
-        Tango::DeviceData outDeviceData = tangoCommandInoutForDevice(deviceProxy, argin, commandName, arginStr, idStr, errorMess);
+        Tango::DeviceData outDeviceData = tangoCommandInoutForDevice(deviceProxy, parsedInput, errorMess);
 
         // Если при отправлении команды на девайс выявлена ошибка
         if (errorMess.size())
-            return errorMessageToCharArray(errorMess);
+            return errorMess.insert(0,ERR_PRED);
+
+        statusComm = true;
 
         int type = outDeviceData.get_type();
-        argout = new Tango::DevVarCharArray();
 
         if (type == Tango::DEVVAR_CHARARRAY) {
             const Tango::DevVarCharArray *vcharr;
-
             try {
                 outDeviceData >> vcharr;
-                argout->length(vcharr->length());
                 for (int i = 0; i < vcharr->length(); i++) {
-                    (*argout)[i] = (*vcharr)[i];
+                    argout.push_back((*vcharr)[i]);
                 }
             }
             catch (Tango::DevFailed &e) {
-                argout = errorMessageToCharArray(StringProc::exceptionStringOut(idStr, commandName, "Exception From sendCommandBin", typeReq));
+                argout = StringProc::exceptionStringOut(parsedInput.id, commandName, "Exception From sendCommandBin", typeReq).insert(0, ERR_PRED);
             }
         }
         else
         {
-            argout = errorMessageToCharArray(StringProc::exceptionStringOut(idStr, commandName, "Output data must be Tango::DevVarCharArray", typeReq));
+            argout = StringProc::exceptionStringOut(parsedInput.id, commandName, "Output data must be Tango::DevVarCharArray", typeReq).insert(0, ERR_PRED);
         }
 
         return argout;

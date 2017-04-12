@@ -8,17 +8,17 @@ namespace WebSocketDS_ns
     class DeviceForWs : public GroupOrDeviceForWs
     {
     public:
-        DeviceForWs(WebSocketDS *dev, string deviceName);
+        DeviceForWs(string deviceName);
         ~DeviceForWs();
 
         virtual string generateJsonForUpdate() override;
-        virtual string generateJsonFromPipeComm(const std::map<std::string, std::string> &pipeConf) override;
-        virtual Tango::DevString sendCommand(Tango::DevString &argin) override;
-        virtual Tango::DevVarCharArray* sendCommandBin(Tango::DevString &argin) override;
+        virtual string sendPipeCommand(const ParsedInputJson& parsedInput) override;
+        virtual string sendCommand(const ParsedInputJson& parsedInput, bool& statusComm) override;
+
+        virtual string sendCommandBin(const ParsedInputJson& parsedInput, bool& statusComm) override;
 
     private:
         virtual Tango::CommandInfo getCommandInfo(const string& command_name) override;
-        Tango::DeviceData tangoCommandInout(Tango::DevString &argin, const std::map<std::string, std::string> &jsonArgs, string& errorMess);
 
     private:
         Tango::DeviceProxy *device = nullptr;

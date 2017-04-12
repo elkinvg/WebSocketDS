@@ -42,16 +42,7 @@ static const char *RcsId = "$Id:  $";
 
 #include <WebSocketDS.h>
 #include <WebSocketDSClass.h>
-#include <cmath>
-#include <boost/lexical_cast.hpp>
-#include <boost/algorithm/string.hpp>    
 
-#include "WSThread_plain.h"
-#include "WSThread_tls.h"
-
-#include "StringProc.h"
-#include "DeviceForWs.h"
-#include "GroupForWs.h"
 
 /*----- PROTECTED REGION END -----*/	//	WebSocketDS.cpp
 
@@ -90,17 +81,15 @@ static const char *RcsId = "$Id:  $";
 //  The following table gives the correspondence
 //  between command and method names.
 //
-//  Command name    |  Method name
+//  Command name  |  Method name
 //================================================================
-//  State           |  Inherited (no method)
-//  Status          |  Inherited (no method)
-//  On              |  on
-//  Off             |  off
-//  UpdateData      |  update_data
-//  SendCommand     |  send_command
-//  Reset           |  reset
-//  CheckPoll       |  check_poll
-//  SendCommandBin  |  send_command_bin
+//  State         |  Inherited (no method)
+//  Status        |  Inherited (no method)
+//  On            |  on
+//  Off           |  off
+//  UpdateData    |  update_data
+//  Reset         |  reset
+//  CheckPoll     |  check_poll
 //================================================================
 
 //================================================================
@@ -164,13 +153,6 @@ void WebSocketDS::delete_device()
 	DEBUG_STREAM << "WebSocketDS::delete_device() " << device_name << endl;
 	/*----- PROTECTED REGION ID(WebSocketDS::delete_device) ENABLED START -----*/
 
-    if (wsThread != nullptr) {
-        wsThread->stop();
-        void *ptr;
-        DEBUG_STREAM << "Waiting for the thread to exit" << endl;
-        wsThread->join(&ptr);
-    }  
-
     CORBA::string_free(*attr_JSON_read);
 
     /*----- PROTECTED REGION END -----*/	//	WebSocketDS::delete_device
@@ -206,32 +188,53 @@ void WebSocketDS::init_device()
     attr_NumberOfConnections_read[0] = 0;
     
 
-    timeFromUpdateData = std::chrono::seconds(std::time(NULL));
+    timeFromUpdateData = std::chrono::seconds(/*std::*/time(NULL));
     attr_TimestampDiff_read[0] = 0;
 
     if (resetTimestampDifference < 60)
         resetTimestampDifference = 60;
 
-    wsThread = nullptr;
-    bool isDsInit = initDeviceServer();
-
-    if (!isDsInit) {
-        set_state(Tango::FAULT);
-        set_status("Couldn't connect to device: " + deviceServer);
-        return;
-    }
-
-    bool isWsThreadInit = initWsThread();
-    if (!isWsThreadInit) {
-        set_state(Tango::FAULT);
-        set_status("Couldn't init wsThread");
-        return;
-    }
+    wsTangoConn = nullptr;
 
     set_state(Tango::ON);
     set_status("Device is On");
 
-    groupOrDevice->initAttrCommPipe(attributes, commands,pipeName);
+    try {
+        if (secure)
+            wsTangoConn = unique_ptr<WSTangoConn>(new WSTangoConn(this, make_pair(deviceServer, options), { { attributes, commands, pipeName } }, port, certificate, key));
+        else
+            wsTangoConn = unique_ptr<WSTangoConn>(new WSTangoConn(this, make_pair(deviceServer, options), { { attributes, commands, pipeName } }, port));
+    }
+    catch (Tango::DevFailed &e) {
+        set_state(Tango::FAULT);
+        set_status("Couldn't init wsTangoConn");
+        return;
+    }
+    catch (std::exception &e) {
+        set_state(Tango::FAULT);
+        set_status(e.what());
+        return;
+    }
+    catch (...) {
+        set_state(Tango::FAULT);
+        set_status("Unknown Exception from init");
+        return;
+    }
+
+    string errorMessage;
+    if (!wsTangoConn->isInitDs(errorMessage)) {
+        set_state(Tango::FAULT);
+
+        if (errorMessage.size())
+            set_status(errorMessage);
+        else
+            set_status("unknown error");
+        return;
+    }
+
+    set_state(Tango::ON);
+    set_status("The listening server is running");
+
 
     /*----- PROTECTED REGION END -----*/	//	WebSocketDS::init_device
 }
@@ -441,10 +444,11 @@ void WebSocketDS::get_device_property()
 //--------------------------------------------------------
 void WebSocketDS::always_executed_hook()
 {
-	//DEBUG_STREAM << "WebSocketDS::always_executed_hook()  " << device_name << endl;
+//	DEBUG_STREAM << "WebSocketDS::always_executed_hook()  " << device_name << endl;
 	/*----- PROTECTED REGION ID(WebSocketDS::always_executed_hook) ENABLED START -----*/
 
-    if (groupOrDevice == nullptr || wsThread == nullptr) {
+    //if (groupOrDevice == nullptr || wsThread == nullptr) {
+    if (wsTangoConn == nullptr) {
         reInitDevice();
         return;
     }
@@ -517,7 +521,7 @@ void WebSocketDS::read_NumberOfConnections(Tango::Attribute &attr)
 {
 	DEBUG_STREAM << "WebSocketDS::read_NumberOfConnections(Tango::Attribute &attr) entering... " << endl;
 	/*----- PROTECTED REGION ID(WebSocketDS::read_NumberOfConnections) ENABLED START -----*/
-	//	Set the attribute value
+    attr_NumberOfConnections_read[0] = wsTangoConn->getNumOfConnections();
 	attr.set_value(attr_NumberOfConnections_read);
 	
 	/*----- PROTECTED REGION END -----*/	//	WebSocketDS::read_NumberOfConnections
@@ -585,63 +589,12 @@ void WebSocketDS::update_data()
 	DEBUG_STREAM << "WebSocketDS::UpdateData()  - " << device_name << endl;
 	/*----- PROTECTED REGION ID(WebSocketDS::update_data) ENABLED START -----*/
 
-    timeFromUpdateData = std::chrono::seconds(std::time(NULL));
-    string jsonStrOut;
-    try {
-        jsonStrOut = groupOrDevice->generateJsonForUpdate();
-
-        CORBA::string_free(*attr_JSON_read);
-        attr_JSON_read[0] = Tango::string_dup(jsonStrOut.c_str());
-    }
-    catch (Tango::ConnectionFailed &e)
-    {
-        fromException(e, "update_data.read_attr ConnectionFailed ");
-        string mes = "ConnectionFailed from: " + deviceServer;
-        jsonStrOut = StringProc::exceptionStringOut(mes);
-    }
-    catch (Tango::CommunicationFailed &e)
-    {
-        fromException(e, "update_data.read_attr CommunicationFailed ");
-        string mes = "CommunicationFailed from: " + deviceServer;
-        jsonStrOut = StringProc::exceptionStringOut(mes);
-    }
-    catch (Tango::DevFailed &e)
-    {
-        fromException(e, "update_data.read_attr ");
-        reInitDevice();
-        return;
-    }
-    catch (...) {
-        reInitDevice();
-        return;
-    }
-
-    wsThread->send_all(jsonStrOut.c_str());
+    timeFromUpdateData = std::chrono::seconds(/*std::*/time(NULL)); 
+    //wsTangoConn->for_update_data();
+    CORBA::string_free(*attr_JSON_read);
+    attr_JSON_read[0] = Tango::string_dup(wsTangoConn->for_update_data().c_str());
 
     /*----- PROTECTED REGION END -----*/	//	WebSocketDS::update_data
-}
-//--------------------------------------------------------
-/**
- *	Command SendCommand related method
- *	Description: Command for sending command to device from property.
- *
- *	@param argin input argument must be in JSON. Command must be included to device property ``Commands``
- *               {``command`` : ``nameOfCommand``, ``argin`` : [``1``,``2``,``3``]}
- *               OR
- *               {``command`` : ``nameOfCommand``, ``argin`` : ``1``}
- *	@returns Output in JSON.
- */
-//--------------------------------------------------------
-Tango::DevString WebSocketDS::send_command(Tango::DevString argin)
-{
-	Tango::DevString argout;
-	DEBUG_STREAM << "WebSocketDS::SendCommand()  - " << device_name << endl;
-	/*----- PROTECTED REGION ID(WebSocketDS::send_command) ENABLED START -----*/
-
-    argout = groupOrDevice->sendCommand(argin);
-
-	/*----- PROTECTED REGION END -----*/	//	WebSocketDS::send_command
-	return argout;
 }
 //--------------------------------------------------------
 /**
@@ -657,9 +610,6 @@ void WebSocketDS::reset()
     auto instance = Tango::Util::instance();// get_dserver_device();
     auto dsd = instance->get_dserver_device();
     dsd->restart_server();
-#ifdef TESTFAIL
-    sendLogToFile();
-#endif
     //reInitDevice();
 	
 	/*----- PROTECTED REGION END -----*/	//	WebSocketDS::reset
@@ -676,7 +626,7 @@ void WebSocketDS::check_poll()
 	DEBUG_STREAM << "WebSocketDS::CheckPoll()  - " << device_name << endl;
 	/*----- PROTECTED REGION ID(WebSocketDS::check_poll) ENABLED START -----*/
 	
-     std::chrono::seconds  checkPollTime = std::chrono::seconds(std::time(NULL));
+     std::chrono::seconds  checkPollTime = std::chrono::seconds(/*std::*/time(NULL));
      Tango::DevULong cpTime,updTime;
      //Tango::DevULong diffTime;
      cpTime = checkPollTime.count();
@@ -689,29 +639,6 @@ void WebSocketDS::check_poll()
 
 	
 	/*----- PROTECTED REGION END -----*/	//	WebSocketDS::check_poll
-}
-//--------------------------------------------------------
-/**
- *	Command SendCommandBin related method
- *	Description: Command for sending command to device from property.
- *
- *	@param argin input argument must be in JSON. Command must be included to device property ``Commands``
- *               {``command`` : ``nameOfCommand``, ``argin`` : [``1``,``2``,``3``]}
- *               OR
- *               {``command`` : ``nameOfCommand``, ``argin`` : ``1``}
- *	@returns Output in binary data
- */
-//--------------------------------------------------------
-Tango::DevVarCharArray *WebSocketDS::send_command_bin(Tango::DevString argin)
-{
-	Tango::DevVarCharArray *argout;
-	DEBUG_STREAM << "WebSocketDS::SendCommandBin()  - " << device_name << endl;
-	/*----- PROTECTED REGION ID(WebSocketDS::send_command_bin) ENABLED START -----*/
-
-    argout = groupOrDevice->sendCommandBin(argin);
-    
-	/*----- PROTECTED REGION END -----*/	//	WebSocketDS::send_command_bin
-	return argout;
 }
 //--------------------------------------------------------
 /**
@@ -731,104 +658,10 @@ void WebSocketDS::add_dynamic_commands()
 
 /*----- PROTECTED REGION ID(WebSocketDS::namespace_ending) ENABLED START -----*/
 
-string WebSocketDS::readPipeFromDeviceOrGroup(const std::map<std::string, std::string> &pipeConf)
-{
-    return groupOrDevice->generateJsonFromPipeComm(pipeConf);
-}
-
-OUTPUT_DATA_TYPE WebSocketDS::check_type_of_data(const string& commandName) {
-    //groupOrDevice->checkOption();
-    return groupOrDevice->checkDataType(commandName);
-}
-
 void WebSocketDS::reInitDevice() {
     delete_device();
     init_device();
 }
-
-void WebSocketDS::fromException(Tango::DevFailed &e, string func)
-{
-    auto lnh = e.errors.length();
-    for (int i=0;i<lnh;i++) {
-        ERROR_STREAM << " From " + func + ": " << e.errors[i].desc << endl;
-    }
-}
-
-bool WebSocketDS::initDeviceServer()
-{
-    groupOrDevice = nullptr;
-    bool isInit = false;
-    try {
-        if (options.size()) {
-            std::vector<std::string> gettedOptions = StringProc::parseInputString(options, ";", true);
-            for (auto& opt : gettedOptions) {
-                if (opt == "group")
-                    _isGroup = true;
-                if (opt == "uselog")
-                    _isLogActive = true;
-                if (opt.find("tident") != string::npos) {
-                    auto gettedIdentOpt = StringProc::parseInputString(opt, "=", true);
-                    if (gettedIdentOpt.size() > 1) {
-                        if (gettedIdentOpt[1] == "rndid")
-                            typeOfIdent = TYPE_OF_IDENT::RANDIDENT;
-                        if (gettedIdentOpt[1] == "smpl")
-                            typeOfIdent = TYPE_OF_IDENT::SIMPLE;
-                        else
-                            typeOfIdent = TYPE_OF_IDENT::SIMPLE;
-                    }
-                }
-                if (opt == "notshrtatt") {
-                    _isShortAttr = false;
-                }
-            }
-        }
-
-        if (_isGroup) {
-            groupOrDevice = unique_ptr<GroupForWs>(new GroupForWs(this, deviceServer));
-        }
-        else 
-            groupOrDevice = unique_ptr<DeviceForWs>(new DeviceForWs(this, deviceServer));
-        isInit = true;
-    }
-    catch (Tango::DevFailed &e)
-    {
-        fromException(e,"initDeviceServer(). ");
-    }
-    return isInit;
-}
-
-bool WebSocketDS::initWsThread()
-{
-    bool isInit = false;
-    try
-    {
-        if (!secure){
-            wsThread = new WSThread_plain(this, port);
-        } else {
-            wsThread = new WSThread_tls(this,port,certificate,key);
-        }
-        isInit = true;
-    }
-    catch (Tango::DevFailed &e)
-    {
-        fromException(e,"initDeviceServer(). ");
-    }
-    return isInit;
-}
-
-#ifdef TESTFAIL
-void WebSocketDS::sendLogToFile()
-{
-    std::fstream fs;
-    fs.open ("/tmp/tango_log/web_socket/test_log.out", std::fstream::in | std::fstream::out | std::fstream::app);
-    Tango::DevULong cTime;
-    std::chrono::seconds  timeFromUpdateData= std::chrono::seconds(std::time(NULL));
-    cTime = timeFromUpdateData.count();
-    fs << cTime << " : Websocket deviceserver reloaded" << endl;
-
-    fs.close();
-}
-#endif
 
 /*----- PROTECTED REGION END -----*/	//	WebSocketDS::namespace_ending
 } //	namespace

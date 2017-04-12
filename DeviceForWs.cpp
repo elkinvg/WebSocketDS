@@ -2,12 +2,10 @@
 #include "StringProc.h"
 
 #include "TangoProcessor.h"
-#include "WebSocketDS.h"
 
 namespace WebSocketDS_ns
 {
-    DeviceForWs::DeviceForWs(WebSocketDS *dev, string deviceName):
-        GroupOrDeviceForWs(dev)
+    DeviceForWs::DeviceForWs(string deviceName)
     {
         device = new Tango::DeviceProxy(deviceName);
         device->set_timeout_millis(3000);
@@ -30,10 +28,11 @@ namespace WebSocketDS_ns
         attrList = device->read_attributes(_attributes);
         generateAttrJson(json, attrList);
         json << "]";
-        if (ds->pipeName.size()) {
+
+        if (_pipeAttr.size()) {
             json << ", \"pipe\": ";
             try {
-                Tango::DevicePipe devicePipe = device->read_pipe(ds->pipeName[0]);
+                Tango::DevicePipe devicePipe = device->read_pipe(_pipeAttr);
                 json << processor->processPipe(devicePipe, TYPE_WS_REQ::PIPE);
             }
             catch (Tango::DevFailed &e) {
@@ -55,60 +54,50 @@ namespace WebSocketDS_ns
         return json.str();
     }
 
-    string DeviceForWs::generateJsonFromPipeComm(const std::map<string, string> &pipeConf)
+    string DeviceForWs::sendPipeCommand(const ParsedInputJson& parsedInput)
     {
-        // Вызов generateJsonFromPipeComm происходит из WSThread.cpp
-        // Там происходит проверка ключей read_pipe_gr read_pipe_dev если ds->isGroup() == true
-        // И read_pipe если  ds->isGroup() == false
+        string pipeName = parsedInput.otherInpStr.at("pipe_name");
 
-        string pipeName = pipeConf.at("read_pipe");
+        if (parsedInput.type_req != "read_pipe")
+            return StringProc::exceptionStringOut(parsedInput.id, pipeName, "type_req must be read_pipe", parsedInput.type_req);
 
         try {
             DevicePipe devicePipe = device->read_pipe(pipeName);
 
             std::stringstream json;
-            generateJsonHeadForPipeComm(pipeConf,json,pipeName);
+            generateJsonHeadForPipeComm(parsedInput, json);
             json << processor->processPipe(devicePipe, TYPE_WS_REQ::PIPE_COMM);
             json << "}";
             return json.str();
         }
         catch (Tango::DevFailed &e) {
             string errM = "Pipe " + pipeName + " not found in " + device->name();
-            return StringProc::exceptionStringOut(pipeConf.at("id"),pipeName,errM,"read_pipe");
+            return StringProc::exceptionStringOut(parsedInput.id, pipeName, errM, "read_pipe");
         }
     }
 
-    Tango::DevString DeviceForWs::sendCommand(Tango::DevString &argin) {
+    string DeviceForWs::sendCommand(const ParsedInputJson& parsedInput, bool& statusComm) {
+        statusComm = false;
+        if (parsedInput.type_req != "command")
+            return StringProc::exceptionStringOut(parsedInput.id, parsedInput.otherInpStr.at("command_name"),"type_req must be command","command");
+
         string errorMess;
-        std::map<std::string, std::string> jsonArgs = StringProc::parseJsonFromCommand(argin, ds->isGroup());
-        Tango::DeviceData outDeviceData = tangoCommandInout(argin, jsonArgs, errorMess);
+        Tango::DeviceData outDeviceData = tangoCommandInoutForDevice(device, parsedInput, errorMess);
 
         if (errorMess.size())
-            return CORBA::string_dup(errorMess.c_str());
-        else
-            // Преобразование полученных данных в Json-формат
-            return CORBA::string_dup(processor->gettingJsonStrFromDevData(outDeviceData, jsonArgs).c_str());
+            return errorMess;
+
+        statusComm = true;
+        return processor->getJsonStrFromDevData(outDeviceData, parsedInput);
     }
 
-    Tango::DevVarCharArray* DeviceForWs::sendCommandBin(Tango::DevString &argin)
+    string DeviceForWs::sendCommandBin(const ParsedInputJson& parsedInput, bool& statusComm)
     {
-        std::map<std::string, std::string> jsonArgs = StringProc::parseJsonFromCommand(argin, ds->isGroup());
-        return sendCommandBinForDevice(device, argin, jsonArgs);
+        return sendCommandBinForDevice(device, parsedInput, statusComm);
     }
 
     Tango::CommandInfo DeviceForWs::getCommandInfo(const string &command_name)
     {
         return device->command_query(command_name);
-    }
-
-    Tango::DeviceData DeviceForWs::tangoCommandInout(Tango::DevString &argin, const std::map<std::string, std::string> &jsonArgs, string& errorMess)
-    {
-        string commandName = jsonArgs.at("command");
-        string arginStr = jsonArgs.at("argin");
-        string idStr = jsonArgs.at("id");
-
-        errorMess.clear();
-
-        return tangoCommandInoutForDevice(device,argin,commandName,arginStr,idStr,errorMess);
     }
 }

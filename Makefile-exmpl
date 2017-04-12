@@ -129,7 +129,12 @@ include $(MAKE_ENV)/tango.opt
 #=============================================================================
 # SVC_OBJS is the list of all objects needed to make the output
 #
-SVC_INCL =  $(PACKAGE_NAME).h $(PACKAGE_NAME)Class.h
+SVC_INCL =  $(PACKAGE_NAME).h $(PACKAGE_NAME)Class.h \
+        WSThread.h WSThread_plain.h WSThread_tls.h \
+        TangoProcessor.h UserControl.h \
+        StringProc.h DeviceForWs.h \
+        GroupOrDeviceForWs.h GroupForWs.h \
+        WSTangoConn.h
 
 
 SVC_OBJS =      \
@@ -152,7 +157,8 @@ ADDITIONAL_OBJS = \
 		$(OBJDIR)/StringProc.o \
 		$(OBJDIR)/DeviceForWs.o \
 		$(OBJDIR)/GroupOrDeviceForWs.o \
-		$(OBJDIR)/GroupForWs.o
+		$(OBJDIR)/GroupForWs.o \
+		$(OBJDIR)/WSTangoConn.o
 
 #=============================================================================
 #	include common targets

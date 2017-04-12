@@ -6,8 +6,7 @@
 
 namespace WebSocketDS_ns
 {
-    GroupForWs::GroupForWs(WebSocketDS *dev, string pattern):
-        GroupOrDeviceForWs(dev)
+    GroupForWs::GroupForWs(string pattern)
     {
         group = new Tango::Group("forws");
         group->add(pattern);
@@ -53,8 +52,7 @@ namespace WebSocketDS_ns
         if (attrList != nullptr)
             delete attrList;
         
-        // if reading from Pipe
-        if (ds->pipeName.size()) {
+        if (_pipeAttr.size()) {
             it = 0;
             json << ", \"pipe\": {";
             for (long i = 0; i < group_length; i++)
@@ -71,7 +69,7 @@ namespace WebSocketDS_ns
                     it++;
                     
                     json << "\"" << deviceList[i] << "\": ";
-                    Tango::DevicePipe devicePipe = dp->read_pipe(ds->pipeName[0]);
+                    Tango::DevicePipe devicePipe = dp->read_pipe(_pipeAttr);
                     json << processor->processPipe(devicePipe, TYPE_WS_REQ::PIPE);
                 }
                 catch (Tango::DevFailed &e) {
@@ -93,54 +91,92 @@ namespace WebSocketDS_ns
         return json.str();
     }
 
-    string GroupForWs::generateJsonFromPipeComm(const std::map<string, string> &pipeConf)
+    string GroupForWs::sendPipeCommand(const ParsedInputJson& parsedInput)
     {
-        // Вызов generateJsonFromPipeComm происходит из WSThread.cpp
-        // Там происходит проверка ключей read_pipe_gr read_pipe_dev если ds->isGroup() true
-        // И read_pipe если ds->isGroup() == false
-
         string output;
-        if (pipeConf.at("read_pipe_gr") != NONE) {
-            output =  generateJsonFromPipeCommForGroup(pipeConf);
+        string pipeName = parsedInput.otherInpStr.at("pipe_name");
+        if (parsedInput.type_req != "read_pipe_gr" && parsedInput.type_req != "read_pipe_dev")
+            return StringProc::exceptionStringOut(parsedInput.id, pipeName, "type_req must be read_pipe_gr or read_pipe_dev", parsedInput.type_req);
+
+        if (parsedInput.type_req == "read_pipe_dev") {
+            if (parsedInput.check_key("device_name") != TYPE_OF_VAL::VALUE)
+                return StringProc::exceptionStringOut(parsedInput.id, pipeName, "This request (command_device) must contain a key device_name", parsedInput.type_req);
+            output = generateJsonFromPipeCommForDeviceFromGroup(parsedInput);
         }
-        else if (pipeConf.at("read_pipe_dev") != NONE) {
-            if (pipeConf.at("device_name") == NONE)
-                return StringProc::exceptionStringOut(pipeConf.at("id"), pipeConf.at("read_pipe_dev"), "Object device_name not found. Check format of json request.", "read_pipe_dev");
-            output = generateJsonFromPipeCommForDeviceFromGroup(pipeConf);
-        }
+
+        if (parsedInput.type_req == "read_pipe_gr") 
+            output = generateJsonFromPipeCommForGroup(parsedInput);
+
         return output;
     }
 
-    Tango::DevString GroupForWs::sendCommand(Tango::DevString &argin)
+    string GroupForWs::sendCommand(const ParsedInputJson& parsedInput, bool& statusComm)
     {
-        std::map<std::string, std::string> jsonArgs = StringProc::parseJsonFromCommand(argin, ds->isGroup());
+        statusComm = false;
+        if (parsedInput.type_req != "command_device" && parsedInput.type_req != "command_group")
+            return StringProc::exceptionStringOut(parsedInput.id, parsedInput.otherInpStr.at("command_name"), "type_req must be command_device or command_group", "command");
 
-        if (jsonArgs.at("command_group") != NONE)
-            return sendCommandToGroup(argin,jsonArgs);
+        // command_device or command_group
+        string resp;
+        string commandName = parsedInput.otherInpStr.at("command_name");
 
-        else if (jsonArgs.at("command_device") != NONE) {
-            if (jsonArgs.at("device_name") == NONE)
-                return CORBA::string_dup(StringProc::exceptionStringOut(jsonArgs.at("id"), jsonArgs.at("command_device"), "Object device_name not found. Check format of json request.", "command_device").c_str());
-            return sendCommandToDevice(argin,jsonArgs);
+        if (parsedInput.type_req == "command_device") {
+            
+            if (parsedInput.check_key("device_name") != TYPE_OF_VAL::VALUE)
+                return StringProc::exceptionStringOut(parsedInput.id, commandName, "This request (command_device) must contain a key device_name", parsedInput.type_req);
+            string deviceName = parsedInput.otherInpStr.at("device_name");
+            Tango::DeviceProxy *dp;
+            try {
+                dp = group->get_device(deviceName);
+                if (dp == 0) {
+                    return StringProc::exceptionStringOut(parsedInput.id, commandName, deviceName + " does not belongs to the group" , parsedInput.type_req);
+                }
+            }
+            catch (const Tango::DevFailed &df) {
+                return StringProc::exceptionStringOut(parsedInput.id, commandName, deviceName + "  belongs to the group but can’t be reached" , parsedInput.type_req);
+            }
+
+            string errorMessInJson;
+            Tango::DeviceData dd = tangoCommandInoutForDevice(dp,parsedInput,errorMessInJson);
+            if (errorMessInJson.size())
+                return errorMessInJson;
+
+            resp =  processor->getJsonStrFromDevData(dd, parsedInput);
+            statusComm = true;
+        }
+        
+        if (parsedInput.type_req == "command_group") {
+            string errorMessInJson;
+            Tango::GroupCmdReplyList replyList = tangoCommandInoutForGroup(parsedInput, errorMessInJson);
+
+            if (errorMessInJson.size())
+                return errorMessInJson;
+
+            resp = processor->getJsonStrFromGroupCmdReplyList(replyList, parsedInput);
+            statusComm = true;
         }
 
-        return CORBA::string_dup(StringProc::exceptionStringOut(jsonArgs.at("id"
-            ), jsonArgs.at("command_group"), "Command not found. Check format of json request. Json for group must contain key command_group or  keys command_device and device_name", "command_group").c_str());
+        return resp;
     }
 
-    Tango::DevVarCharArray* GroupForWs::sendCommandBin(Tango::DevString &argin)
+    string GroupForWs::sendCommandBin(const ParsedInputJson& parsedInput, bool& statusComm)
     {
+        statusComm = false;
         // Отправление команды производится только отдельным девайсам из группы
         // Для всей группы команда не выполняется
-        
-        std::map<std::string, std::string> jsonArgs = StringProc::parseJsonFromCommand(argin, ds->isGroup());
-        
-        if (jsonArgs.at("command_device") != NONE) {
-            if (jsonArgs.at("device_name") == NONE)
-                return errorMessageToCharArray(StringProc::exceptionStringOut(jsonArgs.at("id"), jsonArgs.at("command_device"), "Not found object device_name in input JSON", "command_device"));
+        string commandName = parsedInput.otherInpStr.at("command_name");
 
-            Tango::DeviceProxy *dp;
-            string deviceName = jsonArgs.at("device_name");
+        if (parsedInput.type_req != "command_device" )
+            return StringProc::exceptionStringOut(parsedInput.id, commandName, "type_req must be command_device", "command").insert(0, ERR_PRED);
+
+
+        if (parsedInput.check_key("device_name") != TYPE_OF_VAL::VALUE)
+            return StringProc::exceptionStringOut(parsedInput.id, commandName, "This request (command_device) must contain a key device_name", parsedInput.type_req).insert(0, ERR_PRED);
+
+        string deviceName = parsedInput.otherInpStr.at("device_name");
+
+        Tango::DeviceProxy *dp;
+
             try
             {
                 // Получение девайса по имени. Если данный девайс не входит в группу
@@ -148,29 +184,15 @@ namespace WebSocketDS_ns
                 dp = group->get_device(deviceName);
                 if (dp == 0)
                 {
-                    return errorMessageToCharArray(StringProc::exceptionStringOut(jsonArgs.at("id"
-                        ), jsonArgs.at("command_device"), deviceName + " does not belongs to the group", "command_device"));
+                    return StringProc::exceptionStringOut(parsedInput.id, commandName, deviceName + " does not belongs to the group", parsedInput.type_req).insert(0, ERR_PRED);
                 }
             }
             catch (const Tango::DevFailed &df)
             {
-                return errorMessageToCharArray(StringProc::exceptionStringOut(jsonArgs.at("id"
-                    ), jsonArgs.at("command_device"), deviceName + "  belongs to the group but can’t be reached", "command_device"));
+                return StringProc::exceptionStringOut(parsedInput.id, commandName, deviceName + "  belongs to the group but can’t be reached", parsedInput.type_req).insert(0, ERR_PRED);
             }
 
-            return sendCommandBinForDevice(dp, argin, jsonArgs);
-        }
-
-        // Имя команды определено либо в jsonArgs["command_group"] либо 
-        // в jsonArgs["command_device"] в зависимости адресата команды
-        //
-        // Проверка данных ключей производится в методах:
-        //       WebSocketDS::send_command_bin
-        //       WebSocketDS::send_command
-        // вызовом метода StringProc::parseJsonFromCommand
-
-        return errorMessageToCharArray(StringProc::exceptionStringOut(jsonArgs.at("id"
-            ), jsonArgs.at("command_group"), "Not found object device_name or command_device in input JSON. And command with binary output is available only for single device from group. ", "command_group"));
+            return sendCommandBinForDevice(dp, parsedInput, statusComm);
     }
 
     Tango::CommandInfo GroupForWs::getCommandInfo(const string& command_name)
@@ -203,114 +225,57 @@ namespace WebSocketDS_ns
         return ci_out;
     }
 
-    Tango::GroupCmdReplyList GroupForWs::tangoCommandInoutForGroup(Tango::DevString &argin, const std::map<string, string> &jsonArgs, string &errorMess)
+    Tango::GroupCmdReplyList GroupForWs::tangoCommandInoutForGroup(const ParsedInputJson& dataFromJson, string& errorMessInJson)
     {
         Tango::GroupCmdReplyList deviceDataList;
-        errorMess.clear();
-        string commandName;
-        string arginStr = jsonArgs.at("argin");
-        string idStr = jsonArgs.at("id");
+        string commandName = dataFromJson.otherInpStr.at("command_name");
 
-        if (jsonArgs.at("command_group") != NONE)
-            commandName = jsonArgs.at("command_group");
-        else {
-            errorMess = StringProc::exceptionStringOut(idStr, commandName, "Not found key command_group in JSON", "command_group");
+        if (accessibleCommandInfo.find(commandName) == accessibleCommandInfo.end()) {
+            errorMessInJson = StringProc::exceptionStringOut(dataFromJson.id, commandName, "This Command not found in the list of available commands or not found on DeviceServer", dataFromJson.type_req);
             return deviceDataList;
         }
 
-        if (accessibleCommandInfo.find(commandName) != accessibleCommandInfo.end()) {
-            Tango::CommandInfo comInfo = accessibleCommandInfo[commandName];
-            int type = comInfo.in_type;
-            // Вызов правильного метода  command_inout
-            // Проверка типа входных аргументов Void, Array, Data
+        Tango::CommandInfo comInfo = accessibleCommandInfo[commandName];
+        int type = comInfo.in_type;
 
-            try{
-                if (type == Tango::DEV_VOID)
-                    deviceDataList = group->command_inout(commandName, true);
-                else {
-                    if (arginStr == NONE) {
-                        errorMess = StringProc::exceptionStringOut(idStr, commandName, "argin not found", "command_group");
-                        return deviceDataList;
-                    }
-
-                    // если argin - массив
-                    // и если требуемый type не является массивом
-                    if (arginStr == "ARRAY" && !processor->isMassive(type)) {
-                        errorMess = StringProc::exceptionStringOut(idStr, commandName, "The input data should not be an array", "command_group");
-                        return deviceDataList;
-                    }
-
-                    Tango::DeviceData inDeviceData;
-                    inDeviceData = processor->gettingDevDataFromJsonStr(argin, type);
-
-                    deviceDataList = group->command_inout(commandName, inDeviceData, true);
+        try{
+            if (type == Tango::DEV_VOID)
+                deviceDataList = group->command_inout(commandName, true);
+            else {
+                if (dataFromJson.check_key("argin") == TYPE_OF_VAL::NONE) {
+                    errorMessInJson = StringProc::exceptionStringOut(dataFromJson.id, commandName, "argin not found", dataFromJson.type_req);
+                    return deviceDataList;
                 }
-            }
-            catch (Tango::DevFailed &e) {
-                errorMess = StringProc::exceptionStringOut(idStr, commandName, "Exception from command_inout. Check the format of the data", "command_group");
+
+                // если argin - массив
+                // и если требуемый type не является массивом
+                if (dataFromJson.check_key("argin") == TYPE_OF_VAL::ARRAY && !processor->isMassive(type)) {
+                    errorMessInJson = StringProc::exceptionStringOut(dataFromJson.id, commandName, "The input data should not be an array", dataFromJson.type_req);
+                    return deviceDataList;
+                }
+
+                Tango::DeviceData inDeviceData;
+                inDeviceData = processor->getDeviceDataFromParsedJson(dataFromJson, type);
+
+                deviceDataList = group->command_inout(commandName, inDeviceData, true);
             }
         }
-        else {
-            errorMess = StringProc::exceptionStringOut(idStr, commandName, "This Command not found in the list of available commands or not found on DeviceServer", "command_group");
+        catch (Tango::DevFailed &e) {
+            string tangoErrors;
+
+            for (int i = 0; i < e.errors.length(); i++) {
+                if (i > 0)
+                    tangoErrors += " ||| ";
+                tangoErrors += (string)e.errors[i].desc;
+            }
+
+            errorMessInJson = StringProc::exceptionStringOut(dataFromJson.id, commandName, tangoErrors, dataFromJson.type_req);
+        }
+        catch (std::exception &exc) {
+            errorMessInJson = StringProc::exceptionStringOut(dataFromJson.id, commandName, exc.what(), dataFromJson.type_req);
         }
 
         return deviceDataList;
-    }
-
-    Tango::DevString GroupForWs::sendCommandToGroup(Tango::DevString &argin, std::map<string, string> &jsonArgs)
-    {
-        string errorMess;
-        Tango::GroupCmdReplyList dataFromGroup =  tangoCommandInoutForGroup(argin,jsonArgs,errorMess);
-
-        if (errorMess.size())
-            return CORBA::string_dup(errorMess.c_str());
-
-        // Преобразование полученных данных в Json-формат
-        return CORBA::string_dup(processor->gettingJsonStrFromGroupCmdReplyList(dataFromGroup,jsonArgs).c_str());
-    }
-
-    Tango::DeviceData GroupForWs::tangoCommandInoutForDeviceFromGroup(Tango::DevString &argin, std::map<string, string> &jsonArgs, string &errorMess)
-    {
-        string commandName = jsonArgs.at("command_device");
-        string deviceName = jsonArgs.at("device_name");
-        string arginStr = jsonArgs.at("argin");
-        string idStr = jsonArgs.at("id");
-
-        errorMess.clear();
-
-        Tango::DeviceData outDeviceData;
-        Tango::DeviceProxy *dp;
-
-        try
-        {
-            // Получение девайса по имени. Если данный девайс не входит в группу
-            // или нет доступа к нему, высылается сообщение об ошибке
-            dp = group->get_device(deviceName);
-            if (dp == 0)
-            {
-                errorMess = StringProc::exceptionStringOut(idStr, commandName, deviceName + " does not belongs to the group" , "command_device");
-                return outDeviceData;
-            }
-        }
-        catch (const Tango::DevFailed &df)
-        {
-            errorMess = StringProc::exceptionStringOut(idStr, commandName, deviceName + "  belongs to the group but can’t be reached" , "command_device");
-            return outDeviceData;
-        }
-
-        return tangoCommandInoutForDevice(dp,argin,commandName,arginStr,idStr,errorMess);
-    }
-
-    Tango::DevString GroupForWs::sendCommandToDevice(Tango::DevString &argin, std::map<string, string> &jsonArgs)
-    {
-        string errorMess;
-        Tango::DeviceData outDeviceData = tangoCommandInoutForDeviceFromGroup(argin, jsonArgs, errorMess);
-
-        if (errorMess.size())
-            return CORBA::string_dup(errorMess.c_str());
-        else
-            // Преобразование полученных данных в Json-формат
-            return CORBA::string_dup(processor->gettingJsonStrFromDevData(outDeviceData, jsonArgs, true).c_str());
     }
 
     std::vector<Tango::DeviceAttribute>* GroupForWs::getAttributeList(const  string& device_name_i, vector<string> &attributes)
@@ -325,27 +290,25 @@ namespace WebSocketDS_ns
                 devAttrList = dp->read_attributes(attributes);
         }
         catch (Tango::DevFailed &e) {
-            fromException(e, "getAttributeList ");
         }
 
         return devAttrList;
     }
 
-    string GroupForWs::generateJsonFromPipeCommForGroup(const std::map<string, string> &pipeConf)
+    string GroupForWs::generateJsonFromPipeCommForGroup(const ParsedInputJson& parsedInput)
     {
-        string pipeName = pipeConf.at("read_pipe_gr");
+        string pipeName = parsedInput.otherInpStr.at("pipe_name");
         vector<string> errorsMess;
 
         std::stringstream json;
-        // { from generateJsonHeadForPipeComm
-        generateJsonHeadForPipeComm(pipeConf,json,pipeName);
+        generateJsonHeadForPipeComm(parsedInput, json);
         json << "{";
         vector<string> device_list;
         try {
             device_list = group->get_device_list(true);
         }
         catch(Tango::DevFailed &e) {
-            return StringProc::exceptionStringOut(pipeConf.at("id"),pipeName,"Device list not received","read_pipe_gr");
+            return StringProc::exceptionStringOut(parsedInput.id, pipeName, "Device list not received", parsedInput.type_req);
         }
 
         int it = 0;
@@ -360,7 +323,7 @@ namespace WebSocketDS_ns
             json << "\"" << deviceFromGroup << "\": ";
 
             if (dp == 0) {
-                string tmpErrMess = "Device unavailable.Check the status of corresponding tango-server";
+                string tmpErrMess = "Device unavailable. Check the status of corresponding tango-server";
                 json << "\"" << tmpErrMess << "\"";
                 errorsMess.push_back(deviceFromGroup + ": " + tmpErrMess);
                 continue;
@@ -394,25 +357,25 @@ namespace WebSocketDS_ns
             return json.str();
         
         if (!hasActDev)
-            return StringProc::exceptionStringOut(pipeConf.at("id"),pipeName,"All device unavailable. Check the status of corresponding tango-server","read_pipe_gr");
+            return StringProc::exceptionStringOut(parsedInput.id, pipeName, "All device unavailable. Check the status of corresponding tango-server", parsedInput.type_req);
 
-        return StringProc::exceptionStringOut(pipeConf.at("id"), pipeName, errorsMess, "read_pipe_gr");
+        return StringProc::exceptionStringOut(parsedInput.id, pipeName, errorsMess, parsedInput.type_req);
 
     }
 
-    string GroupForWs::generateJsonFromPipeCommForDeviceFromGroup(const std::map<string, string> &pipeConf)
+    string GroupForWs::generateJsonFromPipeCommForDeviceFromGroup(const ParsedInputJson& parsedInput)
     {
-        string pipeName = pipeConf.at("read_pipe_dev");
-        string device_name = pipeConf.at("device_name");
+        string pipeName = parsedInput.otherInpStr.at("pipe_name");
+        string device_name = parsedInput.otherInpStr.at("device_name");
 
         std::stringstream json;
-        generateJsonHeadForPipeComm(pipeConf,json,pipeName);
         try{
             Tango::DeviceProxy *dp = group->get_device(device_name);
 
             if (dp == 0)
-                return StringProc::exceptionStringOut(pipeConf.at("id"), pipeName, "Device " + device_name + " unavailable. Check the status of corresponding tango-server", "read_pipe_dev");
+                return StringProc::exceptionStringOut(parsedInput.id, pipeName, "Device " + device_name + " unavailable.Check the status of corresponding tango - server", parsedInput.type_req);
 
+            generateJsonHeadForPipeComm(parsedInput, json);
             DevicePipe devicePipe = dp->read_pipe(pipeName);
             json << processor->processPipe(devicePipe, TYPE_WS_REQ::PIPE_COMM);
             json << "}";
@@ -422,7 +385,7 @@ namespace WebSocketDS_ns
             for (int i = 0; i < e.errors.length(); i++)
                 errors.push_back((string)e.errors[i].desc);
 
-            return StringProc::exceptionStringOut(pipeConf.at("id"), pipeName, errors, "read_pipe_dev");
+            return StringProc::exceptionStringOut(parsedInput.id, pipeName, errors, parsedInput.type_req);
         }
 
         return json.str();
