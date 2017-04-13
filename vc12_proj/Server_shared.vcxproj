@@ -50,6 +50,9 @@
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">WebSocketDS</TargetName>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">WebSocketDS</TargetName>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ProjectDir)..\wstangoproc</IncludePath>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <Midl>
       <TypeLibraryName>$(IntDir)$(TargetName).tlb</TypeLibraryName>

@@ -43,6 +43,9 @@
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">WebSocketDSd</TargetName>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">WebSocketDS</TargetName>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <IncludePath>$(ProjectDir)..\wstangoproc;$(IncludePath)</IncludePath>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
@@ -88,36 +91,36 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\DeviceForWs.cpp" />
-    <ClCompile Include="..\GroupForWs.cpp" />
-    <ClCompile Include="..\GroupOrDeviceForWs.cpp" />
-    <ClCompile Include="..\StringProc.cpp" />
-    <ClCompile Include="..\TangoProcessor.cpp" />
-    <ClCompile Include="..\UserControl.cpp" />
     <ClCompile Include="..\WebSocketDS.cpp" />
     <ClCompile Include="..\WebSocketDSClass.cpp" />
     <ClCompile Include="..\WebSocketDSStateMachine.cpp" />
-    <ClCompile Include="..\WSTangoConn.cpp" />
-    <ClCompile Include="..\WSThread.cpp" />
-    <ClCompile Include="..\WSThread_plain.cpp" />
-    <ClCompile Include="..\WSThread_tls.cpp" />
+    <ClCompile Include="..\wstangoproc\DeviceForWs.cpp" />
+    <ClCompile Include="..\wstangoproc\GroupForWs.cpp" />
+    <ClCompile Include="..\wstangoproc\GroupOrDeviceForWs.cpp" />
+    <ClCompile Include="..\wstangoproc\StringProc.cpp" />
+    <ClCompile Include="..\wstangoproc\TangoProcessor.cpp" />
+    <ClCompile Include="..\wstangoproc\UserControl.cpp" />
+    <ClCompile Include="..\wstangoproc\WSTangoConn.cpp" />
+    <ClCompile Include="..\wstangoproc\WSThread.cpp" />
+    <ClCompile Include="..\wstangoproc\WSThread_plain.cpp" />
+    <ClCompile Include="..\wstangoproc\WSThread_tls.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\common.h" />
-    <ClInclude Include="..\DeviceForWs.h" />
-    <ClInclude Include="..\GroupForWs.h" />
-    <ClInclude Include="..\GroupOrDeviceForWs.h" />
-    <ClInclude Include="..\StringProc.h" />
-    <ClInclude Include="..\TangoProcessor.h" />
-    <ClInclude Include="..\UserControl.h" />
     <ClInclude Include="..\WebSocketDS.h">
     </ClInclude>
     <ClInclude Include="..\WebSocketDSClass.h">
     </ClInclude>
-    <ClInclude Include="..\WSTangoConn.h" />
-    <ClInclude Include="..\WSThread.h" />
-    <ClInclude Include="..\WSThread_plain.h" />
-    <ClInclude Include="..\WSThread_tls.h" />
+    <ClInclude Include="..\wstangoproc\common.h" />
+    <ClInclude Include="..\wstangoproc\DeviceForWs.h" />
+    <ClInclude Include="..\wstangoproc\GroupForWs.h" />
+    <ClInclude Include="..\wstangoproc\GroupOrDeviceForWs.h" />
+    <ClInclude Include="..\wstangoproc\StringProc.h" />
+    <ClInclude Include="..\wstangoproc\TangoProcessor.h" />
+    <ClInclude Include="..\wstangoproc\UserControl.h" />
+    <ClInclude Include="..\wstangoproc\WSTangoConn.h" />
+    <ClInclude Include="..\wstangoproc\WSThread.h" />
+    <ClInclude Include="..\wstangoproc\WSThread_plain.h" />
+    <ClInclude Include="..\wstangoproc\WSThread_tls.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

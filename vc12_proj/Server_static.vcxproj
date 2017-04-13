@@ -48,6 +48,9 @@
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">WebSocketDS</TargetName>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">WebSocketDS</TargetName>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <IncludePath>$(ProjectDir)..\wstangoproc;$(IncludePath)</IncludePath>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <Optimization>Disabled</Optimization>

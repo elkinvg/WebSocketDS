@@ -96,7 +96,7 @@ namespace WebSocketDS_ns
         json << "{";
         json << "\"command_name\": " << "\"" << command_name << "\",";
 
-        if (inputArgs.check_key("command_device") == TYPE_OF_VAL::VALUE && inputArgs.check_key("device_name") == TYPE_OF_VAL::VALUE)
+        if (inputArgs.type_req == "command_device" && inputArgs.check_key("device_name") == TYPE_OF_VAL::VALUE)
             json << "\"device_name\": " << "\"" << inputArgs.otherInpStr.at("device_name") << "\",";
         try {
             auto idTmp = stoi(inputArgs.id);

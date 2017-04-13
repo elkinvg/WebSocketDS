@@ -69,7 +69,8 @@ OUTPUT_TYPE = DEVICE
 #   - for a device server, tango dependencies are automatically appended
 #   - '-I ../include' and '-I .' are automatically appended in all cases
 #
-INC_DIR_USER= -I/usr/include
+WS_TANGO_PROC_DIR = wstangoproc
+INC_DIR_USER= -I/usr/include -I$(WS_TANGO_PROC_DIR)
 
 #=============================================================================
 # LIB_DIR_USER is the list of user library directories
@@ -129,13 +130,11 @@ include $(MAKE_ENV)/tango.opt
 #=============================================================================
 # SVC_OBJS is the list of all objects needed to make the output
 #
-SVC_INCL =  $(PACKAGE_NAME).h $(PACKAGE_NAME)Class.h \
-        WSThread.h WSThread_plain.h WSThread_tls.h \
-        TangoProcessor.h UserControl.h \
-        StringProc.h DeviceForWs.h \
-        GroupOrDeviceForWs.h GroupForWs.h \
-        WSTangoConn.h
 
+SVC_INCL =  $(PACKAGE_NAME).h $(PACKAGE_NAME)Class.h \
+		$(shell find $(WS_TANGO_PROC_DIR) -name '*.h')
+		
+SRC_WSTP = $(shell find $(WS_TANGO_PROC_DIR) -name '*.cpp')
 
 SVC_OBJS =      \
         $(OBJDIR)/$(PACKAGE_NAME).o \
@@ -146,21 +145,17 @@ SVC_OBJS =      \
         $(ADDITIONAL_OBJS)
 
 SVC_INHERITANCE_OBJ =  \
+		
 
 #------------ Object files for additional files ------------
+
 ADDITIONAL_OBJS = \
-		$(OBJDIR)/WSThread.o \
-		$(OBJDIR)/WSThread_plain.o \
-		$(OBJDIR)/WSThread_tls.o \
-		$(OBJDIR)/TangoProcessor.o \
-		$(OBJDIR)/UserControl.o \
-		$(OBJDIR)/StringProc.o \
-		$(OBJDIR)/DeviceForWs.o \
-		$(OBJDIR)/GroupOrDeviceForWs.o \
-		$(OBJDIR)/GroupForWs.o \
-		$(OBJDIR)/WSTangoConn.o
+		$(patsubst $(WS_TANGO_PROC_DIR)/%.cpp,$(OBJDIR)/%.o,$(SRC_WSTP))
 
 #=============================================================================
 #	include common targets
 #
 include $(MAKE_ENV)/common_target.opt
+
+$(OBJDIR)/%.o: $(WS_TANGO_PROC_DIR)/%.cpp $(SVC_INCL)
+	$(CXX) -c $(CXXFLAGS) -o $@ $<
