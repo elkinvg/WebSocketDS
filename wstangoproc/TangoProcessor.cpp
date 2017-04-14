@@ -89,7 +89,19 @@ namespace WebSocketDS_ns
         //      }
         //    }
 
-        json << "{\"event\": \"read\", \"type_req\": \"" << inputArgs.type_req << "\", \"data\":";
+        json << "{\"event\": \"read\", \"type_req\": \"" << inputArgs.type_req << "\", ";
+        try {
+            auto idTmp = stoi(inputArgs.id);
+            json << "\"id_req\": " << idTmp << ",";
+        }
+        catch (...) {
+            // id_req может быть числом, либо случайной строкой
+            if (inputArgs.id == NONE)
+                json << "\"id_req\": " << inputArgs.id << ",";
+            else
+                json << "\"id_req\": \"" << inputArgs.id << "\",";
+        }
+        json << " \"data\":";
 
         string command_name = inputArgs.otherInpStr.at("command_name");
 
@@ -98,17 +110,6 @@ namespace WebSocketDS_ns
 
         if (inputArgs.type_req == "command_device" && inputArgs.check_key("device_name") == TYPE_OF_VAL::VALUE)
             json << "\"device_name\": " << "\"" << inputArgs.otherInpStr.at("device_name") << "\",";
-        try {
-            auto idTmp = stoi(inputArgs.id);
-            json << "\"id_req\": "  << idTmp << ",";
-        }
-        catch (...) {
-            // id_req может быть числом, либо случайной строкой
-            if (inputArgs.id == NONE)
-                json << "\"id_req\": "  << inputArgs.id << ",";
-            else
-                json << "\"id_req\": \""  << inputArgs.id << "\",";
-        }
 
         json << "\"argout\":";
         generateArgoutForJson(devData,json,command_name);
@@ -124,12 +125,10 @@ namespace WebSocketDS_ns
         string commandName = parsedInput.otherInpStr.at("command_name");
 
         json << "{\"event\": \"read\", \"type_req\": \"command_group\", ";
-        json << "\"data\":";
-        json << "{";
-        json << "\"command_name\": " << "\"" << commandName << "\", ";
+
         try {
             auto idTmp = stoi(parsedInput.id);
-            json << "\"id_req\": "  << idTmp << ", ";
+            json << "\"id_req\": " << idTmp << ", ";
         }
         catch (...) {
             // id_req может быть числом, либо случайной строкой
@@ -138,6 +137,11 @@ namespace WebSocketDS_ns
             else
                 json << "\"id_req\": \"" << parsedInput.id << "\", ";
         }
+
+        json << "\"data\":";
+        json << "{";
+        json << "\"command_name\": " << "\"" << commandName << "\", ";
+       
 
         json << "\"argout\":";
         json << " {";

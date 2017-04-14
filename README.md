@@ -382,6 +382,7 @@ AttrName;pipecomm;par1=val;par2
 ```json
 {
 	"type_req": "command",
+	"id": "id запроса запуска команды",
 	"command_name": "имя команды",
 	"argin" : ["1","2","3"]
 }
@@ -394,9 +395,9 @@ AttrName;pipecomm;par1=val;par2
 {
 	"event": "read",
 	"type_req": "command",
+	"id_req": "id запроса запуска команды",
 	"data": {
 		"command_name": "имя команды",
-		"id_req": "id запроса запуска команды",
 		"argout": "Данные. Единственное значение [или массив]"
 	}
 }
@@ -413,6 +414,7 @@ AttrName;pipecomm;par1=val;par2
   ```json
   {
   	"type_req": "command_group",
+  	"id": "id запроса запуска команды",
   	"command_name": "имя команды",
   	"argin" : ["1","2","3"]
   }
@@ -424,9 +426,9 @@ AttrName;pipecomm;par1=val;par2
   {
   	"event": "read",
   	"type_req": "command_group",
+  	"id_req": "id запроса запуска команды",
   	"data": {
   		"command_name": "имя команды",
-  		"id_req": "id запроса запуска команды",
   		"argout": {
   			"name/tango/device_from_group" : "Данные в формате зависящем от возвращаемого типа",
   			"name/tango/other_device_from_group": {
@@ -434,7 +436,7 @@ AttrName;pipecomm;par1=val;par2
   			}
   		}
   	}
-  }  
+  }
   ```  
 
 - Для отдельного девайса из группы запрос будет таким:
@@ -442,6 +444,7 @@ AttrName;pipecomm;par1=val;par2
   ```json
   {
   	"type_req": "command_device",
+  	"id": "id запроса запуска команды",
   	"command_name": "имя команды",
   	"device_name": "имя/танго/девайса",
   	"argin" : ["1","2","3"]
@@ -454,13 +457,13 @@ AttrName;pipecomm;par1=val;par2
   {
   	"event": "read",
   	"type_req": "command_device",
+  	"id_req": "id запроса запуска команды",
   	"data": {
   		"command_name": "имя команды",
   		"device_name": "name/tango/device_from_group",
-  		"id_req": "id запроса запуска команды",
   		"argout": "Данные в формате зависящем от возвращаемого типа"
   	}
-  }
+  } 
   ```
 
   В случае ошибки, возвращается JSON_ERROR_MESSAGE. Формат данного сообщения описан в разделе  "[Формат возвращаемых ошибок](#Формат-возвращаемых-ошибок)"
