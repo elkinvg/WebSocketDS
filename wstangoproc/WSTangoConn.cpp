@@ -96,160 +96,28 @@ namespace WebSocketDS_ns
     {
         isBinary = false;
         TYPE_WS_REQ typeWsReq = getTypeWsReq(inputReq.type_req);
-        string resp_json;
 
         if (typeWsReq == TYPE_WS_REQ::UNKNOWN) {
             return StringProc::exceptionStringOut(inputReq.id, "unknown", "This request type is not supported", inputReq.type_req);
         }
 
         if (typeWsReq == TYPE_WS_REQ::COMMAND) {
-            if (inputReq.check_key("command_name") != TYPE_OF_VAL::VALUE)
-                return StringProc::exceptionStringOut(inputReq.id, "unknown", "Not found key command_name or command_name is not value", inputReq.type_req);
-            string commandName = inputReq.otherInpStr.at("command_name");
-            string mess;
-
-            // Пока логин пароль (и прочие аут-данные) вводятся при запросе
-            // В дальнейшем, когда будет режим проверки во время сессии
-            // дописать дополнительно проверку режима проверки.
-            if (!connData.userCheckStatus.first && typeOfIdent != TYPE_OF_IDENT::RANDIDENT2 ) {
-                mess = connData.userCheckStatus.second;
-                INFO_STREAM << mess << endl;
-                return StringProc::exceptionStringOut(inputReq.id, commandName, mess, inputReq.type_req);
-            }
-            else if (typeOfIdent == TYPE_OF_IDENT::RANDIDENT2) {
-                if (!connData.forRandIdent2.identState) {
-                    if (connData.forRandIdent2.isRandSended)
-                        connData.forRandIdent2.isRandSended = false;
-                    if (connData.forRandIdent2.rand_ident)
-                        connData.forRandIdent2.rand_ident = 0;
-                    connData.forRandIdent2.login = "";
-                    return StringProc::exceptionStringOut(inputReq.id, commandName, "Send request for rand_identification. For details read the manual.", inputReq.type_req);
-                }                    
-            }
-
-            bool permission = uc->check_permission(inputReq, connData.remoteConf, _wsds->deviceServer, _isGroup, mess);
-
-            if (mess.size())
-                INFO_STREAM << mess << endl;
-
-            if (!permission)
-            {
-                if (mess.size())
-                    return StringProc::exceptionStringOut(inputReq.id, commandName, mess, inputReq.type_req);
-                else 
-                    return StringProc::exceptionStringOut(inputReq.id, commandName, "Permission denied", inputReq.type_req);
-            }
-                
-            bool statusComm;
-            OUTPUT_DATA_TYPE odt = groupOrDevice->checkDataType(commandName);
-            if (odt == OUTPUT_DATA_TYPE::JSON)
-                resp_json = groupOrDevice->sendCommand(inputReq,statusComm);
-            if (odt == OUTPUT_DATA_TYPE::BINARY) {
-                resp_json = groupOrDevice->sendCommandBin(inputReq,statusComm);
-                isBinary = true;
-            }
-            bool isSent = uc->sendLogCommand(inputReq, connData.remoteConf, _wsds->deviceServer, _isGroup, statusComm);
-            if (isSent)
-                INFO_STREAM << "Information was sent to the log" << endl;
-            return resp_json;
+            return sendRequest_Command(inputReq, connData, isBinary);
         }
 
         if (typeWsReq == TYPE_WS_REQ::PIPE_COMM) {
-            if (inputReq.check_key("pipe_name") != TYPE_OF_VAL::VALUE)
-                return StringProc::exceptionStringOut(inputReq.id, "unknown", "Not found key pipe_name or pipe_name is not value", inputReq.type_req);
-            resp_json = groupOrDevice->sendPipeCommand(inputReq);
-            removeSymbolsForString(resp_json);
-            return resp_json;
+            return sendRequest_PipeComm(inputReq, connData);
         }
 
         if (typeWsReq == TYPE_WS_REQ::RIDENT_REQ) {
-            if (typeOfIdent != TYPE_OF_IDENT::RANDIDENT2)
-                return StringProc::exceptionStringOut(inputReq.id, "unknown", "This type_req is only used when TYPE_OF_IDENT is RANDIDENT2", inputReq.type_req);
-
-            if (connData.forRandIdent2.identState)
-                return StringProc::exceptionStringOut(inputReq.id, "unknown", "You have already been authorized ", inputReq.type_req);
-
-            std::uniform_int_distribution<int> dis(1000000, 9999999);
-            stringstream json;
-            int rand_ident = dis(generator);
-            connData.forRandIdent2.login = "";
-
-            if (inputReq.check_key("login") == TYPE_OF_VAL::VALUE)
-                connData.forRandIdent2.login = inputReq.otherInpStr.at("login");
-
-            json << "{\"event\": \"read\", \"type_req\": \"rident_req\", ";
-            try {
-                auto idTmp = stoi(inputReq.id);
-                json << "\"id_req\": " << idTmp << ", ";
-            }
-            catch (...) {
-                // id_req может быть числом, либо случайной строкой
-                if (inputReq.id == NONE)
-                    json << "\"id_req\": " << inputReq.id << ", ";
-                else
-                    json << "\"id_req\": \"" << inputReq.id << "\", ";
-            }
-            json << "\"rident\": " << rand_ident << "}";
-            connData.forRandIdent2.rand_ident = rand_ident;
-            connData.forRandIdent2.isRandSended = true;
-            return json.str();
+            return sendRequest_RidentReq(inputReq, connData);
         }
 
         if (typeWsReq == TYPE_WS_REQ::RIDENT_ANS) {
-            if (typeOfIdent != TYPE_OF_IDENT::RANDIDENT2)
-                return StringProc::exceptionStringOut(inputReq.id, "unknown", "This type_req is only used when TYPE_OF_IDENT is RANDIDENT2", inputReq.type_req);
-
-            if (connData.forRandIdent2.identState)
-                return StringProc::exceptionStringOut(inputReq.id, "unknown", "You have already been authorized ", inputReq.type_req);
-
-            if (!connData.forRandIdent2.isRandSended)
-                return StringProc::exceptionStringOut(inputReq.id, "unknown", "Send request for rand_identification. For details read the manual.", inputReq.type_req);
-
-            if (inputReq.check_key("rident_hash") != TYPE_OF_VAL::VALUE){
-                if (connData.forRandIdent2.isRandSended)
-                    connData.forRandIdent2.isRandSended = false;
-
-                connData.forRandIdent2.rand_ident_hash = "";
-                connData.forRandIdent2.rand_ident = 0;
-
-                return StringProc::exceptionStringOut(inputReq.id, "unknown", "Send request for rand_identification. For details read the manual.", inputReq.type_req);
-            }
-
-            connData.forRandIdent2.rand_ident_hash = inputReq.otherInpStr.at("rident_hash");
-            
-            if (inputReq.check_key("login") == TYPE_OF_VAL::VALUE)
-                connData.forRandIdent2.login = inputReq.otherInpStr.at("login");
-            else if (!connData.forRandIdent2.login.size()) {
-                connData.forRandIdent2.rand_ident_hash = "";
-                connData.forRandIdent2.isRandSended = false;
-                connData.forRandIdent2.rand_ident = 0;
-
-                return StringProc::exceptionStringOut(inputReq.id, "unknown", "Send request for rand_identification. For details read the manual.", inputReq.type_req);
-            }
-            checkUser(connData);
-            if (!connData.userCheckStatus.first){
-                connData.forRandIdent2.rand_ident_hash = "";
-                connData.forRandIdent2.isRandSended = false;
-                connData.forRandIdent2.rand_ident = 0;
-                return StringProc::exceptionStringOut(inputReq.id, "unknown", connData.userCheckStatus.second + " Send request for rand_identification. For details read the manual.", inputReq.type_req);
-            }
-            connData.forRandIdent2.identState = true;
-            stringstream json;
-            json << "{\"event\": \"read\", \"type_req\": \"" + inputReq.type_req + "\", ";
-            try {
-                auto idTmp = stoi(inputReq.id);
-                json << "\"id_req\": " << idTmp << ", ";
-            }
-            catch (...) {
-                // id_req может быть числом, либо случайной строкой
-                if (inputReq.id == NONE)
-                    json << "\"id_req\": " << inputReq.id << ", ";
-                else
-                    json << "\"id_req\": \"" << inputReq.id << "\", ";
-            }
-            json << "\"success\": true }";
-            return json.str();
+            return sendRequest_RidentAns(inputReq, connData);
         }
+        // В обычном случае не возвращается никогда
+        return "{\"error\": \"Unknown Request\"}";
     }
 
     void WSTangoConn::checkUser(ConnectionData& connData)
@@ -361,5 +229,160 @@ namespace WebSocketDS_ns
         if (req == "rident_ans")
             return TYPE_WS_REQ::RIDENT_ANS;
         return TYPE_WS_REQ::UNKNOWN;
+    }
+
+    string WSTangoConn::sendRequest_Command(const ParsedInputJson &inputReq, ConnectionData &connData, bool &isBinary)
+    {
+        string resp_json;
+        if (inputReq.check_key("command_name") != TYPE_OF_VAL::VALUE)
+            return StringProc::exceptionStringOut(inputReq.id, "unknown", "Not found key command_name or command_name is not value", inputReq.type_req);
+        string commandName = inputReq.otherInpStr.at("command_name");
+        string mess;
+
+        // Пока логин пароль (и прочие аут-данные) вводятся при запросе
+        // В дальнейшем, когда будет режим проверки во время сессии
+        // дописать дополнительно проверку режима проверки.
+        if (!connData.userCheckStatus.first && typeOfIdent != TYPE_OF_IDENT::RANDIDENT2 ) {
+            mess = connData.userCheckStatus.second;
+            INFO_STREAM << mess << endl;
+            return StringProc::exceptionStringOut(inputReq.id, commandName, mess, inputReq.type_req);
+        }
+        else if (typeOfIdent == TYPE_OF_IDENT::RANDIDENT2) {
+            if (!connData.forRandIdent2.identState) {
+                if (connData.forRandIdent2.isRandSended)
+                    connData.forRandIdent2.isRandSended = false;
+                if (connData.forRandIdent2.rand_ident)
+                    connData.forRandIdent2.rand_ident = 0;
+                connData.forRandIdent2.login = "";
+                return StringProc::exceptionStringOut(inputReq.id, commandName, "Send request for rand_identification. For details read the manual.", inputReq.type_req);
+            }
+        }
+
+        bool permission = uc->check_permission(inputReq, connData.remoteConf, _wsds->deviceServer, _isGroup, mess);
+
+        if (mess.size())
+            INFO_STREAM << mess << endl;
+
+        if (!permission)
+        {
+            if (mess.size())
+                return StringProc::exceptionStringOut(inputReq.id, commandName, mess, inputReq.type_req);
+            else
+                return StringProc::exceptionStringOut(inputReq.id, commandName, "Permission denied", inputReq.type_req);
+        }
+
+        bool statusComm;
+        OUTPUT_DATA_TYPE odt = groupOrDevice->checkDataType(commandName);
+        if (odt == OUTPUT_DATA_TYPE::JSON)
+            resp_json = groupOrDevice->sendCommand(inputReq,statusComm);
+        if (odt == OUTPUT_DATA_TYPE::BINARY) {
+            resp_json = groupOrDevice->sendCommandBin(inputReq,statusComm);
+            isBinary = true;
+        }
+        bool isSent = uc->sendLogCommand(inputReq, connData.remoteConf, _wsds->deviceServer, _isGroup, statusComm);
+        if (isSent)
+            INFO_STREAM << "Information was sent to the log" << endl;
+        return resp_json;
+    }
+
+    string WSTangoConn::sendRequest_PipeComm(const ParsedInputJson &inputReq, ConnectionData &connData)
+    {
+        string resp_json;
+        if (inputReq.check_key("pipe_name") != TYPE_OF_VAL::VALUE)
+            return StringProc::exceptionStringOut(inputReq.id, "unknown", "Not found key pipe_name or pipe_name is not value", inputReq.type_req);
+        resp_json = groupOrDevice->sendPipeCommand(inputReq);
+        removeSymbolsForString(resp_json);
+        return resp_json;
+    }
+
+    string WSTangoConn::sendRequest_RidentReq(const ParsedInputJson &inputReq, ConnectionData &connData)
+    {
+        if (typeOfIdent != TYPE_OF_IDENT::RANDIDENT2)
+            return StringProc::exceptionStringOut(inputReq.id, "unknown", "This type_req is only used when TYPE_OF_IDENT is RANDIDENT2", inputReq.type_req);
+
+        if (connData.forRandIdent2.identState)
+            return StringProc::exceptionStringOut(inputReq.id, "unknown", "You have already been authorized ", inputReq.type_req);
+
+        std::uniform_int_distribution<int> dis(1000000, 9999999);
+        stringstream json;
+        int rand_ident = dis(generator);
+        connData.forRandIdent2.login = "";
+
+        if (inputReq.check_key("login") == TYPE_OF_VAL::VALUE)
+            connData.forRandIdent2.login = inputReq.otherInpStr.at("login");
+
+        json << "{\"event\": \"read\", \"type_req\": \"rident_req\", ";
+        try {
+            auto idTmp = stoi(inputReq.id);
+            json << "\"id_req\": " << idTmp << ", ";
+        }
+        catch (...) {
+            // id_req может быть числом, либо случайной строкой
+            if (inputReq.id == NONE)
+                json << "\"id_req\": " << inputReq.id << ", ";
+            else
+                json << "\"id_req\": \"" << inputReq.id << "\", ";
+        }
+        json << "\"rident\": " << rand_ident << "}";
+        connData.forRandIdent2.rand_ident = rand_ident;
+        connData.forRandIdent2.isRandSended = true;
+        return json.str();
+    }
+
+    string WSTangoConn::sendRequest_RidentAns(const ParsedInputJson &inputReq, ConnectionData &connData)
+    {
+        if (typeOfIdent != TYPE_OF_IDENT::RANDIDENT2)
+            return StringProc::exceptionStringOut(inputReq.id, "unknown", "This type_req is only used when TYPE_OF_IDENT is RANDIDENT2", inputReq.type_req);
+
+        if (connData.forRandIdent2.identState)
+            return StringProc::exceptionStringOut(inputReq.id, "unknown", "You have already been authorized ", inputReq.type_req);
+
+        if (!connData.forRandIdent2.isRandSended)
+            return StringProc::exceptionStringOut(inputReq.id, "unknown", "Send request for rand_identification. For details read the manual.", inputReq.type_req);
+
+        if (inputReq.check_key("rident_hash") != TYPE_OF_VAL::VALUE){
+            if (connData.forRandIdent2.isRandSended)
+                connData.forRandIdent2.isRandSended = false;
+
+            connData.forRandIdent2.rand_ident_hash = "";
+            connData.forRandIdent2.rand_ident = 0;
+
+            return StringProc::exceptionStringOut(inputReq.id, "unknown", "Send request for rand_identification. For details read the manual.", inputReq.type_req);
+        }
+
+        connData.forRandIdent2.rand_ident_hash = inputReq.otherInpStr.at("rident_hash");
+
+        if (inputReq.check_key("login") == TYPE_OF_VAL::VALUE)
+            connData.forRandIdent2.login = inputReq.otherInpStr.at("login");
+        else if (!connData.forRandIdent2.login.size()) {
+            connData.forRandIdent2.rand_ident_hash = "";
+            connData.forRandIdent2.isRandSended = false;
+            connData.forRandIdent2.rand_ident = 0;
+
+            return StringProc::exceptionStringOut(inputReq.id, "unknown", "Send request for rand_identification. For details read the manual.", inputReq.type_req);
+        }
+        checkUser(connData);
+        if (!connData.userCheckStatus.first){
+            connData.forRandIdent2.rand_ident_hash = "";
+            connData.forRandIdent2.isRandSended = false;
+            connData.forRandIdent2.rand_ident = 0;
+            return StringProc::exceptionStringOut(inputReq.id, "unknown", connData.userCheckStatus.second + " Send request for rand_identification. For details read the manual.", inputReq.type_req);
+        }
+        connData.forRandIdent2.identState = true;
+        stringstream json;
+        json << "{\"event\": \"read\", \"type_req\": \"" + inputReq.type_req + "\", ";
+        try {
+            auto idTmp = stoi(inputReq.id);
+            json << "\"id_req\": " << idTmp << ", ";
+        }
+        catch (...) {
+            // id_req может быть числом, либо случайной строкой
+            if (inputReq.id == NONE)
+                json << "\"id_req\": " << inputReq.id << ", ";
+            else
+                json << "\"id_req\": \"" << inputReq.id << "\", ";
+        }
+        json << "\"success\": true }";
+        return json.str();
     }
 }

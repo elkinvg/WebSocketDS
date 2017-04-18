@@ -55,6 +55,11 @@ namespace WebSocketDS_ns
 
         TYPE_WS_REQ getTypeWsReq(const string& req);
 
+        string sendRequest_Command(const ParsedInputJson& inputReq, ConnectionData& connData, bool& isBinary);
+        string sendRequest_PipeComm(const ParsedInputJson& inputReq, ConnectionData& connData);
+        string sendRequest_RidentReq(const ParsedInputJson& inputReq, ConnectionData& connData);
+        string sendRequest_RidentAns(const ParsedInputJson& inputReq, ConnectionData& connData);
+
 
 
     private:
