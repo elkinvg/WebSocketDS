@@ -12,6 +12,7 @@ namespace WebSocketDS_ns
         std::string rand_ident_hash;
         std::string login;
         int rand_ident;
+        string rand_ident_str;
     };
 
     struct ConnectionData {

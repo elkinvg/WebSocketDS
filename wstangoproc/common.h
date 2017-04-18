@@ -10,14 +10,14 @@ namespace WebSocketDS_ns
 {
     // тип запроса. 
     enum class TYPE_WS_REQ { ATTRIBUTE, COMMAND, PIPE, PIPE_COMM,
-                             RIDENT_REQ, RIDENT_ANS,
+                             RIDENT_REQ, RIDENT_ANS, RIDENT,
                              UNKNOWN};
     // форматы для IOS
     enum class TYPE_IOS_OPT { PREC, PRECF, PRECS };
     // тип 
     enum class OUTPUT_DATA_TYPE { JSON, BINARY };
 
-    enum class TYPE_OF_IDENT { SIMPLE, RANDIDENT, RANDIDENT2};
+    enum class TYPE_OF_IDENT { SIMPLE, RANDIDENT, RANDIDENT2, RANDIDENT3 };
 
     const std::string NONE = "\"NONE\"";
 

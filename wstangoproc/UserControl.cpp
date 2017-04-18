@@ -71,7 +71,7 @@ pair<bool, string> WebSocketDS_ns::UserControl::getInformationFromCheckingUser(c
                 mess = "incorrect login or password";
         }
     }
-    else if (_toi == TYPE_OF_IDENT::RANDIDENT || _toi == TYPE_OF_IDENT::RANDIDENT2) {
+    else if (_toi == TYPE_OF_IDENT::RANDIDENT || _toi == TYPE_OF_IDENT::RANDIDENT2 || _toi == TYPE_OF_IDENT::RANDIDENT3) {
         string login, rand_ident, rand_ident_hash;
 
         if (_toi == TYPE_OF_IDENT::RANDIDENT) {
@@ -79,11 +79,15 @@ pair<bool, string> WebSocketDS_ns::UserControl::getInformationFromCheckingUser(c
             rand_ident = connectionData.remoteConf.at("rand_ident");
             rand_ident_hash = connectionData.remoteConf.at("rand_ident_hash");
         }
-        if (_toi == TYPE_OF_IDENT::RANDIDENT2) {
+        if (_toi == TYPE_OF_IDENT::RANDIDENT2 || _toi == TYPE_OF_IDENT::RANDIDENT3) {
             login = connectionData.forRandIdent2.login;
-            rand_ident = std::to_string(connectionData.forRandIdent2.rand_ident);
             rand_ident_hash = connectionData.forRandIdent2.rand_ident_hash;
         }
+
+        if (_toi == TYPE_OF_IDENT::RANDIDENT3)
+            rand_ident = connectionData.forRandIdent2.rand_ident_str;
+        if (_toi == TYPE_OF_IDENT::RANDIDENT2)
+            rand_ident = std::to_string(connectionData.forRandIdent2.rand_ident);
 
         isAuth = check_user_rident(login, rand_ident, rand_ident_hash, mess);
 

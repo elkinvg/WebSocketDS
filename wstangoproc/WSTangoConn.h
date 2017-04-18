@@ -59,6 +59,7 @@ namespace WebSocketDS_ns
         string sendRequest_PipeComm(const ParsedInputJson& inputReq, ConnectionData& connData);
         string sendRequest_RidentReq(const ParsedInputJson& inputReq, ConnectionData& connData);
         string sendRequest_RidentAns(const ParsedInputJson& inputReq, ConnectionData& connData);
+        string sendRequest_Rident(const ParsedInputJson& inputReq, ConnectionData& connData);
 
 
 

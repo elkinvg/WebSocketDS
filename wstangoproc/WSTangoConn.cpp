@@ -116,6 +116,9 @@ namespace WebSocketDS_ns
         if (typeWsReq == TYPE_WS_REQ::RIDENT_ANS) {
             return sendRequest_RidentAns(inputReq, connData);
         }
+        if (typeWsReq == TYPE_WS_REQ::RIDENT) {
+            return sendRequest_Rident(inputReq, connData);
+        }
         // В обычном случае не возвращается никогда
         return "{\"error\": \"Unknown Request\"}";
     }
@@ -161,6 +164,8 @@ namespace WebSocketDS_ns
                             typeOfIdent = TYPE_OF_IDENT::SIMPLE;
                         else if (gettedIdentOpt[1] == "rndid2")
                             typeOfIdent = TYPE_OF_IDENT::RANDIDENT2;
+                        else if (gettedIdentOpt[1] == "rndid3")
+                            typeOfIdent = TYPE_OF_IDENT::RANDIDENT3;
                         else
                             typeOfIdent = TYPE_OF_IDENT::SIMPLE;
                     }
@@ -228,6 +233,8 @@ namespace WebSocketDS_ns
             return TYPE_WS_REQ::RIDENT_REQ;
         if (req == "rident_ans")
             return TYPE_WS_REQ::RIDENT_ANS;
+        if (req == "rident")
+            return TYPE_WS_REQ::RIDENT;
         return TYPE_WS_REQ::UNKNOWN;
     }
 
@@ -242,12 +249,12 @@ namespace WebSocketDS_ns
         // Пока логин пароль (и прочие аут-данные) вводятся при запросе
         // В дальнейшем, когда будет режим проверки во время сессии
         // дописать дополнительно проверку режима проверки.
-        if (!connData.userCheckStatus.first && typeOfIdent != TYPE_OF_IDENT::RANDIDENT2 ) {
+        if (!connData.userCheckStatus.first && typeOfIdent != TYPE_OF_IDENT::RANDIDENT2 && typeOfIdent != TYPE_OF_IDENT::RANDIDENT3) {
             mess = connData.userCheckStatus.second;
             INFO_STREAM << mess << endl;
             return StringProc::exceptionStringOut(inputReq.id, commandName, mess, inputReq.type_req);
         }
-        else if (typeOfIdent == TYPE_OF_IDENT::RANDIDENT2) {
+        else if (typeOfIdent == TYPE_OF_IDENT::RANDIDENT2 || typeOfIdent == TYPE_OF_IDENT::RANDIDENT3) {
             if (!connData.forRandIdent2.identState) {
                 if (connData.forRandIdent2.isRandSended)
                     connData.forRandIdent2.isRandSended = false;
@@ -369,6 +376,46 @@ namespace WebSocketDS_ns
             return StringProc::exceptionStringOut(inputReq.id, "unknown", connData.userCheckStatus.second + " Send request for rand_identification. For details read the manual.", inputReq.type_req);
         }
         connData.forRandIdent2.identState = true;
+        stringstream json;
+        json << "{\"event\": \"read\", \"type_req\": \"" + inputReq.type_req + "\", ";
+        try {
+            auto idTmp = stoi(inputReq.id);
+            json << "\"id_req\": " << idTmp << ", ";
+        }
+        catch (...) {
+            // id_req может быть числом, либо случайной строкой
+            if (inputReq.id == NONE)
+                json << "\"id_req\": " << inputReq.id << ", ";
+            else
+                json << "\"id_req\": \"" << inputReq.id << "\", ";
+        }
+        json << "\"success\": true }";
+        return json.str();
+    }
+
+    string WSTangoConn::sendRequest_Rident(const ParsedInputJson& inputReq, ConnectionData& connData) 
+    {
+        if (typeOfIdent != TYPE_OF_IDENT::RANDIDENT3)
+            return StringProc::exceptionStringOut(inputReq.id, "unknown", "This type_req is only used when TYPE_OF_IDENT is RANDIDENT3", inputReq.type_req);
+
+        if (connData.forRandIdent2.identState)
+            return StringProc::exceptionStringOut(inputReq.id, "unknown", "You have already been authorized ", inputReq.type_req);
+
+        if (inputReq.check_key("rident_hash") != TYPE_OF_VAL::VALUE 
+            || inputReq.check_key("login") != TYPE_OF_VAL::VALUE 
+            || inputReq.check_key("rident") != TYPE_OF_VAL::VALUE )
+            return StringProc::exceptionStringOut(inputReq.id, "unknown", "Send request for rand_identification. For details read the manual.", inputReq.type_req);
+
+        connData.forRandIdent2.rand_ident_hash = inputReq.otherInpStr.at("rident_hash");
+        connData.forRandIdent2.login = inputReq.otherInpStr.at("login");
+        connData.forRandIdent2.rand_ident_str = inputReq.otherInpStr.at("rident");
+        checkUser(connData);
+
+        if (!connData.userCheckStatus.first)
+            return StringProc::exceptionStringOut(inputReq.id, "unknown", connData.userCheckStatus.second + " Send request for rand_identification. For details read the manual.", inputReq.type_req);
+
+        connData.forRandIdent2.identState = true;
+
         stringstream json;
         json << "{\"event\": \"read\", \"type_req\": \"" + inputReq.type_req + "\", ";
         try {

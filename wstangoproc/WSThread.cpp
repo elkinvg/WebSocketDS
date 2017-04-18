@@ -70,7 +70,7 @@ namespace WebSocketDS_ns
         websocketpp::lib::unique_lock<websocketpp::lib::mutex> con_lock(m_connection_lock);
         ConnectionData conn_data;
         conn_data.remoteConf = getRemoteConf(hdl);
-        if (_tc->getTypeOfIdent() != TYPE_OF_IDENT::RANDIDENT2)
+        if (_tc->getTypeOfIdent() != TYPE_OF_IDENT::RANDIDENT2 && _tc->getTypeOfIdent() != TYPE_OF_IDENT::RANDIDENT3)
             _tc->checkUser(conn_data);
         conn_data.sessionId = m_next_sessionid++;
         
