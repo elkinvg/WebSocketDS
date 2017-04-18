@@ -233,7 +233,7 @@ namespace WebSocketDS_ns
             errorMessInJson = StringProc::exceptionStringOut(dataFromJson.id, commandName, tangoErrors, dataFromJson.type_req);
         }
         catch (std::exception &exc) {
-            // ??? !!! if cannot convert input str
+            // if cannot convert input str
             errorMessInJson = StringProc::exceptionStringOut(dataFromJson.id, commandName, exc.what(), dataFromJson.type_req);
         }
 

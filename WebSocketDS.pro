@@ -10,13 +10,14 @@ INCLUDEPATH += /usr/local/include/tango \
             /usr/local/include  \
             /usr/local/include/omniORB4 \
             /usr/local/include/omnithread \
-            /usr/include/mysql
+            /usr/include/mysql \
+            wstangoproc
             
 SOURCES += main.cpp \
+wstangoproc/*.h \
+wstangoproc/*.cpp \
 *.cpp \
-*.h \
-    WSThread_tls.cpp \
-    WSThread_plain.cpp
+*.h
 
 HEADERS += \
     common.h

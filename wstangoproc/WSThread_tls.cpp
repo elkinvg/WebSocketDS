@@ -85,12 +85,12 @@ void WSThread_tls::send_all(std::string msg) {
 
     for (it = m_connections.begin(); it != m_connections.end();) {
         try {
-            size_t buffered_amount = get_buffered_amount(*(it));
+            size_t buffered_amount = get_buffered_amount((it->first));
 
             if (buffered_amount<maxBuffSize)
-                m_server.send(*it, msg, websocketpp::frame::opcode::text);
+                m_server.send((it->first), msg, websocketpp::frame::opcode::text);
             else {
-                close_from_server(*(it++));
+                close_from_server((it++->first));
                 continue;
             }
 
@@ -98,15 +98,15 @@ void WSThread_tls::send_all(std::string msg) {
         }
         catch (websocketpp::exception const & e) {
             ERROR_STREAM_F << "exception from send_all: " << e.what() << endl;
-            close_from_server(*(it++));
+            close_from_server((it++->first));
         }
         catch (std::exception& e) {
             ERROR_STREAM_F << "exception from send_all: " << e.what() << endl;
-            close_from_server(*(it++));
+            close_from_server((it++->first));
         }
         catch (...) {
             ERROR_STREAM_F << "unknown error from send_all " << endl;
-            close_from_server(*(it++));
+            close_from_server((it++->first));
         }
     }
 }
@@ -173,7 +173,7 @@ std::unordered_map<string, string> WSThread_tls::getRemoteConf(websocketpp::conn
 }
 
 context_ptr WSThread_tls::on_tls_init(websocketpp::connection_hdl hdl) {
-    std::cout << "on_tls_init called with hdl: " << hdl.lock().get() << std::endl;
+    //std::cout << "on_tls_init called with hdl: " << hdl.lock().get() << std::endl;
     //context_ptr ctx(new boost::asio::ssl::context(boost::asio::ssl::context::tlsv1));
     context_ptr ctx(new boost::asio::ssl::context(boost::asio::ssl::context::sslv23));
 

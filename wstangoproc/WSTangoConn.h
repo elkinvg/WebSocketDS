@@ -10,6 +10,10 @@
 #include "common.h"
 #include <array>
 
+#include <random>
+
+#include "ConnectionData.h"
+
 using std::array;
 
 namespace WebSocketDS_ns
@@ -29,7 +33,9 @@ namespace WebSocketDS_ns
         ~WSTangoConn();
 
         string for_update_data();
-        string sendRequest(const ParsedInputJson& inputReq, bool& isBinary);
+        string sendRequest(const ParsedInputJson& inputReq, bool& isBinary, ConnectionData& connData);
+
+        void checkUser(ConnectionData& connData);
 
         void setNumOfConnections(unsigned long num) {_numOfConnections = num; }
         unsigned long getNumOfConnections() {return _numOfConnections;}
@@ -64,6 +70,7 @@ namespace WebSocketDS_ns
         bool _isShortAttr{ true };
         unsigned long _numOfConnections{0};
         string errorMessage;
+        std::default_random_engine generator;
     };
 }
 #endif

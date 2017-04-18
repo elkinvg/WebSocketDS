@@ -111,6 +111,7 @@
     <ClInclude Include="..\WebSocketDSClass.h">
     </ClInclude>
     <ClInclude Include="..\wstangoproc\common.h" />
+    <ClInclude Include="..\wstangoproc\ConnectionData.h" />
     <ClInclude Include="..\wstangoproc\DeviceForWs.h" />
     <ClInclude Include="..\wstangoproc\GroupForWs.h" />
     <ClInclude Include="..\wstangoproc\GroupOrDeviceForWs.h" />

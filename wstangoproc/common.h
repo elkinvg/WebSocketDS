@@ -9,13 +9,15 @@
 namespace WebSocketDS_ns
 {
     // тип запроса. 
-    enum class TYPE_WS_REQ { ATTRIBUTE, COMMAND, PIPE, PIPE_COMM , UNKNOWN};
+    enum class TYPE_WS_REQ { ATTRIBUTE, COMMAND, PIPE, PIPE_COMM,
+                             RIDENT_REQ, RIDENT_ANS,
+                             UNKNOWN};
     // форматы для IOS
     enum class TYPE_IOS_OPT { PREC, PRECF, PRECS };
     // тип 
     enum class OUTPUT_DATA_TYPE { JSON, BINARY };
 
-    enum class TYPE_OF_IDENT { SIMPLE, RANDIDENT};
+    enum class TYPE_OF_IDENT { SIMPLE, RANDIDENT, RANDIDENT2};
 
     const std::string NONE = "\"NONE\"";
 
@@ -44,7 +46,7 @@ namespace WebSocketDS_ns
         std::string inputJson;
         std::unordered_map<std::string, std::vector<std::string>> otherInpVec;
         std::unordered_map<std::string, std::string> otherInpStr;
-        std::unordered_map<std::string, std::string> remoteConf;
+        //std::unordered_map<std::string, std::string> remoteConf;
     };
 }
 

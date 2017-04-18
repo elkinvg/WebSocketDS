@@ -15,7 +15,8 @@
 
 namespace WebSocketDS_ns
 {
-    WSThread::WSThread(WSTangoConn *tc, int portNumber) : omni_thread()
+    WSThread::WSThread(WSTangoConn *tc, int portNumber) 
+        : omni_thread(), m_next_sessionid(1)
     {
         port = portNumber;
         _tc = tc;
@@ -23,7 +24,6 @@ namespace WebSocketDS_ns
     }
 
     void WSThread::on_message(websocketpp::connection_hdl hdl, server::message_ptr msg) {
-
         string data_from_client = msg->get_payload();
         INFO_STREAM_F <<  " Input message: " << data_from_client << endl;
 
@@ -53,13 +53,12 @@ namespace WebSocketDS_ns
         }
 
         parsedInputJson.inputJson = data_from_client;
-        parsedInputJson.remoteConf =  getRemoteConf(hdl);
 
         // Проверка типа запроса происходит в WSTangoConn::getTypeWsReq
         // Если вводимый type_req не соответствует ни одному из перечисленных,
         // высылается сообщение об ошибке
         bool isBinary;
-        string resp = _tc->sendRequest(parsedInputJson, isBinary);
+        string resp = _tc->sendRequest(parsedInputJson, isBinary, m_connections[hdl]);
         if (isBinary)
             send(hdl, resp.c_str(), resp.size());
         else
@@ -68,10 +67,16 @@ namespace WebSocketDS_ns
     }
 
     void WSThread::on_open(websocketpp::connection_hdl hdl) {
-        DEBUG_STREAM_F << "New user has been connected!!" << endl;
         websocketpp::lib::unique_lock<websocketpp::lib::mutex> con_lock(m_connection_lock);
-        m_connections.insert(hdl);
+        ConnectionData conn_data;
+        conn_data.remoteConf = getRemoteConf(hdl);
+        if (_tc->getTypeOfIdent() != TYPE_OF_IDENT::RANDIDENT2)
+            _tc->checkUser(conn_data);
+        conn_data.sessionId = m_next_sessionid++;
+        
+        m_connections[hdl] = conn_data;
         _tc->setNumOfConnections(m_connections.size());
+        DEBUG_STREAM_F << "New user has been connected!! sessionId = " << conn_data.sessionId << endl;
         DEBUG_STREAM_F << m_connections.size() << " client connected!!" << endl;
         send(hdl, cache);
     }

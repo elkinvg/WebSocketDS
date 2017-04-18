@@ -13,6 +13,8 @@
 #include <websocketpp/server.hpp>
 #include <websocketpp/common/thread.hpp>
 
+#include "ConnectionData.h"
+
 #define INFO_STREAM_F logger->info_stream()
 #define DEBUG_STREAM_F logger->debug_stream()
 #define FATAL_STREAM_F logger->fatal_stream()
@@ -66,12 +68,15 @@ namespace WebSocketDS_ns
         const unsigned long maximumBufferSizeMax = 10000;
         const unsigned long maximumBufferSizeDef = 1000;
 
-        typedef std::set<websocketpp::connection_hdl, std::owner_less<websocketpp::connection_hdl> > con_list;
+        //typedef std::set<websocketpp::connection_hdl, std::owner_less<websocketpp::connection_hdl> > con_list;
+        typedef std::map<websocketpp::connection_hdl, ConnectionData, std::owner_less<websocketpp::connection_hdl> > con_list;
         con_list m_connections;
 
         websocketpp::lib::mutex m_connection_lock;
         log4tango::Logger *logger;
-         WSTangoConn* _tc;
+        WSTangoConn* _tc;
+
+        unsigned long m_next_sessionid;
 
     private:
         vector<string> &split(const string &s, char delim, vector<string> &elems);

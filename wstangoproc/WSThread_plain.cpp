@@ -78,17 +78,16 @@ namespace WebSocketDS_ns
         for (it = m_connections.begin(); it != m_connections.end();) {
             try {
                 websocketpp::lib::error_code erc;
-
-                size_t buffered_amount = get_buffered_amount(*(it));
+                size_t buffered_amount = get_buffered_amount((it->first));
 
                 total += buffered_amount;
                 DEBUG_STREAM_F << "con: " << ii << " bufersize: " << buffered_amount << " bytes | " << std::fixed << std::setprecision(3) << (buffered_amount / (1024. * 1024.)) << " Mb" << endl;
 
                 if (buffered_amount<maxBuffSize)
-                    m_server.send(*it, msg, websocketpp::frame::opcode::text);
+                    m_server.send((it->first), msg, websocketpp::frame::opcode::text);
                 else {
                     ii++;
-                    close_from_server(*(it++));
+                    close_from_server((it++->first));
                     continue;
                 }
 
@@ -98,18 +97,18 @@ namespace WebSocketDS_ns
             catch (websocketpp::exception const & e) {
                 ERROR_STREAM_F << "exception from send_all: " << e.what() << endl;
                 ii++;
-                close_from_server(*(it++));
+                close_from_server((it++->first));
             }
             catch (std::exception& e)
             {
                 ERROR_STREAM_F << "exception from send_all: " << e.what() << endl;
                 ii++;
-                close_from_server(*(it++));
+                close_from_server((it++->first));
             }
             catch (...) {
                 ERROR_STREAM_F << "unknown error from send_all " << endl;
                 ii++;
-                close_from_server(*(it++));
+                close_from_server((it++->first));
             }
         }
         DEBUG_STREAM_F << std::fixed << "total bufersize: " << total << " | " << std::setprecision(3) << (total / (1024.*1024.)) << "  Mb: " << endl;
