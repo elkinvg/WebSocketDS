@@ -97,7 +97,9 @@
     <ClCompile Include="..\wstangoproc\DeviceForWs.cpp" />
     <ClCompile Include="..\wstangoproc\GroupForWs.cpp" />
     <ClCompile Include="..\wstangoproc\GroupOrDeviceForWs.cpp" />
+    <ClCompile Include="..\wstangoproc\ParsingInputJson.cpp" />
     <ClCompile Include="..\wstangoproc\StringProc.cpp" />
+    <ClCompile Include="..\wstangoproc\TangoConnForClient.cpp" />
     <ClCompile Include="..\wstangoproc\TangoProcessor.cpp" />
     <ClCompile Include="..\wstangoproc\UserControl.cpp" />
     <ClCompile Include="..\wstangoproc\WSTangoConn.cpp" />
@@ -115,7 +117,9 @@
     <ClInclude Include="..\wstangoproc\DeviceForWs.h" />
     <ClInclude Include="..\wstangoproc\GroupForWs.h" />
     <ClInclude Include="..\wstangoproc\GroupOrDeviceForWs.h" />
+    <ClInclude Include="..\wstangoproc\ParsingInputJson.h" />
     <ClInclude Include="..\wstangoproc\StringProc.h" />
+    <ClInclude Include="..\wstangoproc\TangoConnForClient.h" />
     <ClInclude Include="..\wstangoproc\TangoProcessor.h" />
     <ClInclude Include="..\wstangoproc\UserControl.h" />
     <ClInclude Include="..\wstangoproc\WSTangoConn.h" />

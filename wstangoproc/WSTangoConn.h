@@ -40,6 +40,8 @@ namespace WebSocketDS_ns
         void setNumOfConnections(unsigned long num) {_numOfConnections = num; }
         unsigned long getNumOfConnections() {return _numOfConnections;}
         TYPE_OF_IDENT getTypeOfIdent() {return typeOfIdent;}
+        MODE getMode() {return ws_mode;}
+        bool isServerMode();
         bool isLogActive() {return _isLogActive; }
         bool isInitDs(string &errorMessage) {errorMessage = this->errorMessage; return _isInitDs; }
         unsigned int getMaxBuffSize();
@@ -48,8 +50,10 @@ namespace WebSocketDS_ns
 
     private:
         void init_wstc(WebSocketDS *dev, pair<string, string> &dsAndOptions, array<vector<string>, 3> &attrCommPipe);
-        void initOptionsAndDeviceServer(pair<string, string>& dsAndOptions);
+        void initOptionsAndDeviceServer(pair<string, string>& dsAndOptions, array<vector<string>, 3> &attrCommPipe);
         bool initDeviceServer();
+        bool initDeviceServer(array<vector<string>, 3> &attrCommPipe);
+
         string fromException(Tango::DevFailed &e, string func);
         void  removeSymbolsForString(string &str);
 
@@ -69,6 +73,7 @@ namespace WebSocketDS_ns
         std::unique_ptr<GroupOrDeviceForWs> groupOrDevice;
         std::unique_ptr<UserControl> uc;
         TYPE_OF_IDENT typeOfIdent{ TYPE_OF_IDENT::SIMPLE };
+        MODE ws_mode { MODE::SERVER};
         string _deviceName;
         bool  _isLogActive{ false };
         bool _isInitDs{ false };

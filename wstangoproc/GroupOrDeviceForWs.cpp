@@ -15,7 +15,9 @@ namespace WebSocketDS_ns
 
     void GroupOrDeviceForWs::initAttrCommPipe(array<vector<string>, 3>& attrCommPipe)
     {
-        initAttrAndPipe(attrCommPipe[0], attrCommPipe[2]);
+        //initAttrAndPipe(attrCommPipe[0], attrCommPipe[2]);
+        initAttr(attrCommPipe[0]);
+        initPipe(attrCommPipe[2]);
         initComm(attrCommPipe[1]);
     }
 
@@ -39,80 +41,127 @@ namespace WebSocketDS_ns
             return OUTPUT_DATA_TYPE::JSON;
     }
 
-    void GroupOrDeviceForWs::initAttrAndPipe(vector<string> &attributes, vector<string>&pipeName)
+    string GroupOrDeviceForWs::insertAttrToList(vector<string> &attrNames)
+    {
+        string fndat;
+        string addat;
+        string out;
+        for (auto& attr: attrNames) {
+            vector<string> gettedOptions = StringProc::parseInputString(attr, ";");
+
+            if (std::find(_attributes.begin(),_attributes.end(),attr) == _attributes.end()) {
+                processor->initOptionsForAttrOrComm(attr, gettedOptions, TYPE_WS_REQ::ATTRIBUTE);
+                _attributes.push_back(attr);
+                addat += (" " + attr);
+                forNiterOpt(attr);
+            }
+            else {
+                fndat += ( " " + attr);
+            }
+        }
+
+        if (addat.size())
+            out += " Attributes ( " + addat + " ) are added to list ";
+
+        if (fndat.size())
+            out += " Attributes ( " + fndat + " ) have already been added to the list before ";
+
+        /*for (auto& pipe: attrOrPipeNames.second) {
+            if (std::find(_pipeAttr.begin(),_pipeAttr.end(),pipe) == _pipeAttr.end())
+                _pipeAttr.push_back(pipe.);
+        }*/
+        nAttributes = _attributes.size();
+        return out;
+    }
+
+    string GroupOrDeviceForWs::eraseAttrFromList(vector<string> &attrNames)
+    {
+        string nfndat;
+        string remat;
+        string out;
+
+        for (auto& attr: attrNames) {
+            auto iterator = std::find(_attributes.begin(),_attributes.end(),attr);
+            if (iterator != _attributes.end()) {
+                // Удаление аттрибута из map с niter опциями
+                _attributes.erase(iterator);
+                remat += (" " + attr);
+                nIters.erase(attr);
+                // Удаление аттрибута из списка с JSON output
+                if (isJsonAttribute.find(attr) != isJsonAttribute.end())
+                    isJsonAttribute.erase(attr);
+            }
+            else {
+                nfndat += (" " + attr);
+            }
+        }
+
+        if ( remat.size() )
+            out += (" Attributes ( " + remat + " ) removed from list ");
+
+        if (nfndat.size())
+            out += (" Attributes ( " + nfndat + " ) were not found in the list ");
+
+        /*for (auto& pipe: attrOrPipeNames.second) {
+            auto iterator = std::find(_pipeAttr.begin(),_pipeAttr.end(),pipe);
+            if (iterator != _pipeAttr.end())
+                _pipeAttr.erase(iterator);
+        }*/
+        nAttributes = _attributes.size();
+        return out;
+    }
+
+    void GroupOrDeviceForWs::initAttr(vector<string> &attributes)
     {
         //DEBUG_STREAM << "Attributes: " << endl;
         // Method gettingAttrUserConf added for Searhing of additional options for attributes
         // Now it is options "prec", "precf", "precs" for precision
         // And "niter"
-        nIters.clear();
-        nIters.reserve(attributes.size());
 
-        // Лямда функция для парсинга niter. Формат niter=N niter=N/M
-        // N - периодичность (unsigned short) вывода
-        // M (unsigned short) - смещение относительно первой итерации периода
-        // M < N
-        auto getPairOfParams = [](string inp_param) {
-            std::pair<unsigned short, unsigned short> outPair;
-            outPair = std::make_pair(0, 0);
-            size_t pos = 0;
-            string delimiter = "/";
-
-            if ((pos = inp_param.find(delimiter)) != std::string::npos) {
-                string first = inp_param.substr(0, pos);
-                inp_param.erase(0, pos + delimiter.length());
-                try {
-                    unsigned short tmp1 = stoi(first);
-                    unsigned short tmp2 = stoi(inp_param);
-                    if (tmp1 > tmp2) {
-                        outPair.first = tmp1;
-                        outPair.second = tmp2;
-                    }
-                }
-                catch (...) {
-                }
-            }
-            else {
-                unsigned short tmpsz = 0;
-                try {
-                    tmpsz = stoi(inp_param);
-                    outPair.first = tmpsz;
-                }
-                catch (...) {
-                }
-            }
-            return outPair;
-        };
+        bool isAllAttrs = false;
+        auto iterator = std::find(attributes.begin(), attributes.end(), "__all_attrs__");
+        if (iterator != attributes.end()) {
+            attributes.erase(iterator);
+            isAllAttrs = initAllAttrs();
+        }
 
         for (auto& attr : attributes) {
-            string tmpAttrName = attr;
-            std::transform(tmpAttrName.begin(), tmpAttrName.end(), tmpAttrName.begin(), ::tolower);
-            isJsonAttribute.push_back(tmpAttrName.find("json") != std::string::npos);
+            if (!isAllAttrs) {
+                string tmpAttrName = attr;
+                std::transform(tmpAttrName.begin(), tmpAttrName.end(), tmpAttrName.begin(), ::tolower);
+                if (tmpAttrName.find("json") != std::string::npos)
+                    isJsonAttribute.insert(tmpAttrName);
+            }
 
             //DEBUG_STREAM << attr << endl;
 
             vector<string> gettedOptions = StringProc::parseInputString(attr, ";");
-            processor->initOptionsForAttrOrComm(attr,gettedOptions, TYPE_WS_REQ::ATTRIBUTE);
+            processor->initOptionsForAttrOrComm(attr, gettedOptions, TYPE_WS_REQ::ATTRIBUTE);
 
-            std::pair<unsigned short, unsigned short> tmpsz;
-            tmpsz = std::make_pair(0, 0);
-            // Если задан niter, производится парсинг, иначе (0,0)
-
-            pair<bool, string> niterOpt = processor->checkOption(attr,"niter",TYPE_WS_REQ::ATTRIBUTE);
-            if (niterOpt.first)
-                tmpsz = getPairOfParams(niterOpt.second);
-            nIters.push_back(tmpsz);
+            forNiterOpt(attr);            
         }
-        _attributes = attributes;
+        if (isAllAttrs) {
+            for (auto& attr : _attributes) {
+                string tmpAttrName = attr;
+                std::transform(tmpAttrName.begin(), tmpAttrName.end(), tmpAttrName.begin(), ::tolower);
+                if (tmpAttrName.find("json") != std::string::npos)
+                    isJsonAttribute.insert(tmpAttrName);
+            }
+        }
+        else 
+            _attributes = attributes;
         nAttributes = _attributes.size();
-        
+    }
+
+    void GroupOrDeviceForWs::initPipe(vector<string>&pipeName)
+    {
         if (pipeName.size())
             _pipeAttr = pipeName[0];
         if (pipeName.size() > 1) {
-            for (int i=1; i<pipeName.size(); i++) {
+            for (unsigned int i = 1; i<pipeName.size(); i++) {
                 string attrName = pipeName[i];
                 vector<string> gettedOptions = StringProc::parseInputString(attrName, ";");
-                processor->initOptionsForAttrOrComm(attrName,gettedOptions, TYPE_WS_REQ::PIPE);
+                processor->initOptionsForAttrOrComm(attrName, gettedOptions, TYPE_WS_REQ::PIPE);
             }
         }
     }
@@ -165,18 +214,22 @@ namespace WebSocketDS_ns
 
     void GroupOrDeviceForWs::generateAttrJson(std::stringstream& json, std::vector<Tango::DeviceAttribute> *attrList) {
         int it = 0;
+
         for (int i = 0; i < nAttributes; i++)
         {
             // Если задан niter для данного атрибута
             // Вывод будет только если iterator кратно nIters
-            if (nIters[i].first != 0) {
-                if ((iterator + (nIters[i].first - nIters[i].second)) % nIters[i].first != 0)
-                    continue;
+            Tango::DeviceAttribute att = attrList->at(i);
+            if (nIters.find(att.get_name()) != nIters.end()) {
+                if (nIters[att.get_name()].first != 0) {
+                    if ((iterator + (nIters[att.get_name()].first - nIters[att.get_name()].second)) % nIters[att.get_name()].first != 0)
+                        continue;
+                }
             }
             if (it != 0) json << ", ";
             it++;
-            Tango::DeviceAttribute att = attrList->at(i);
-            if (isJsonAttribute.at(i))
+            
+            if (isJsonAttribute.find(att.get_name()) != isJsonAttribute.end())
                 json << processor->process_device_attribute_json(att);
             else
                 json << processor->process_attribute_t(att, _isShortAttr);
@@ -224,7 +277,7 @@ namespace WebSocketDS_ns
         catch (Tango::DevFailed &e) {
             string tangoErrors;
 
-            for (int i = 0; i < e.errors.length(); i++) {
+            for (unsigned int i = 0; i < e.errors.length(); i++) {
                 if (i > 0)
                     tangoErrors += " ||| ";
                 tangoErrors += (string)e.errors[i].desc;
@@ -287,7 +340,7 @@ namespace WebSocketDS_ns
             const Tango::DevVarCharArray *vcharr;
             try {
                 outDeviceData >> vcharr;
-                for (int i = 0; i < vcharr->length(); i++) {
+                for (unsigned int i = 0; i < vcharr->length(); i++) {
                     argout.push_back((*vcharr)[i]);
                 }
             }
@@ -301,5 +354,54 @@ namespace WebSocketDS_ns
         }
 
         return argout;
+    }
+
+    void GroupOrDeviceForWs::forNiterOpt(string attrName)
+    {
+        // Лямда функция для парсинга niter. Формат niter=N niter=N/M
+        // N - периодичность (unsigned short) вывода
+        // M (unsigned short) - смещение относительно первой итерации периода
+        // M < N
+        auto getPairOfParams = [](string inp_param) {
+            std::pair<unsigned short, unsigned short> outPair;
+            outPair = std::make_pair(0, 0);
+            size_t pos = 0;
+            string delimiter = "/";
+
+            if ((pos = inp_param.find(delimiter)) != std::string::npos) {
+                string first = inp_param.substr(0, pos);
+                inp_param.erase(0, pos + delimiter.length());
+                try {
+                    unsigned short tmp1 = stoi(first);
+                    unsigned short tmp2 = stoi(inp_param);
+                    if (tmp1 > tmp2) {
+                        outPair.first = tmp1;
+                        outPair.second = tmp2;
+                    }
+                }
+                catch (...) {
+                }
+            }
+            else {
+                unsigned short tmpsz = 0;
+                try {
+                    tmpsz = stoi(inp_param);
+                    outPair.first = tmpsz;
+                }
+                catch (...) {
+                }
+            }
+            return outPair;
+        };
+
+        std::pair<unsigned short, unsigned short> tmpsz;
+        tmpsz = std::make_pair(0, 0);
+        // Если задан niter, производится парсинг, иначе (0,0)
+
+        pair<bool, string> niterOpt = processor->checkOption(attrName, "niter", TYPE_WS_REQ::ATTRIBUTE);
+        if (niterOpt.first)
+            tmpsz = getPairOfParams(niterOpt.second);
+        //nIters.push_back(tmpsz);
+        nIters[attrName] = tmpsz;
     }
 }

@@ -17,27 +17,31 @@ namespace WebSocketDS_ns
     :Tango::LogAdapter(dev)
     {
         groupOrDevice = nullptr;
-        wsThread = new WSThread_plain(this, portNumber);
-        init_wstc(dev,dsAndOptions,attrCommPipe);
+        init_wstc(dev, dsAndOptions, attrCommPipe);
+        if (_isInitDs)
+            wsThread = new WSThread_plain(this, portNumber);
     }
 
     WSTangoConn::WSTangoConn(WebSocketDS *dev, pair<string, string> dsAndOptions, array<vector<string>, 3> attrCommPipe, int portNumber, string cert, string key)
     :Tango::LogAdapter(dev)
     {
         groupOrDevice = nullptr;
-        wsThread = new WSThread_tls(this, portNumber, cert, key);
-        init_wstc(dev,dsAndOptions,attrCommPipe);
+        init_wstc(dev, dsAndOptions, attrCommPipe);
+        if (_isInitDs)
+            wsThread = new WSThread_tls(this, portNumber, cert, key);
     }
 
     void WSTangoConn::init_wstc(WebSocketDS *dev, pair<string, string> &dsAndOptions, array<vector<string>, 3> &attrCommPipe)
     {
-        // ??? !!! IF _isInitDs FALSE ???
-        initOptionsAndDeviceServer(dsAndOptions);
+        initOptionsAndDeviceServer(dsAndOptions, attrCommPipe);
         if (_isInitDs) {
-            groupOrDevice->initAttrCommPipe(attrCommPipe);
-
             _wsds = dev;
             uc = unique_ptr<UserControl> (new UserControl(dev->authDS, typeOfIdent, _isLogActive));
+        }
+        else {
+            // Если _isInitDs FALSE данный танго модуль будет перезагружаться 
+            // каждые 60  секунд.
+            // _isInitDs будет FALSЕ если подключаемый к WebSocketDS не прописан
         }
     }
 
@@ -78,7 +82,7 @@ namespace WebSocketDS_ns
             wasExc = true;
         }
         if (wasExc) {
-            // State отсаётся ON, но в STATUS выводится сообщение
+            // State остаётся ON, но в STATUS выводится сообщение
             _wsds->set_status(jsonStrOut);
 
             removeSymbolsForString(jsonStrOut);
@@ -88,7 +92,15 @@ namespace WebSocketDS_ns
             if (_wsds->get_status() != "The listening server is running")
                 _wsds->set_status("The listening server is running");
         }
-        wsThread->send_all(jsonStrOut);
+        if (
+            ws_mode == MODE::SERVER
+            || ws_mode == MODE::SERVNCLIENT_ALL_RO
+            || ws_mode == MODE::SERVNCLIENT_ALL
+            || ws_mode == MODE::SERVNCLIENT_ALIAS_RO
+            || ws_mode == MODE::SERVNCLIENT_ALIAS
+            )
+            // Только если используется серверный режим
+            wsThread->send_all(jsonStrOut);
         return jsonStrOut;
     }
 
@@ -98,7 +110,7 @@ namespace WebSocketDS_ns
         TYPE_WS_REQ typeWsReq = getTypeWsReq(inputReq.type_req);
 
         if (typeWsReq == TYPE_WS_REQ::UNKNOWN) {
-            return StringProc::exceptionStringOut(inputReq.id, "unknown", "This request type is not supported", inputReq.type_req);
+            return StringProc::exceptionStringOut(inputReq.id, NONE, "This request type is not supported", inputReq.type_req);
         }
 
         if (typeWsReq == TYPE_WS_REQ::COMMAND) {
@@ -143,7 +155,7 @@ namespace WebSocketDS_ns
         return _wsds->authDS;
     }
 
-    void WSTangoConn::initOptionsAndDeviceServer(pair<string, string>& dsAndOptions)
+    void WSTangoConn::initOptionsAndDeviceServer(pair<string, string>& dsAndOptions, array<vector<string>, 3> &attrCommPipe)
     {
         string options = dsAndOptions.second;
         _deviceName = dsAndOptions.first;
@@ -173,9 +185,55 @@ namespace WebSocketDS_ns
                 if (opt == "notshrtatt") {
                     _isShortAttr = false;
                 }
+                if (opt.find("mode") != string::npos) {
+                    auto gettedIdentOpt = StringProc::parseInputString(opt, "=", true);
+                    if (gettedIdentOpt.size() > 1) {
+                        if (gettedIdentOpt[1] == "ser_cli_all")
+                            ws_mode = MODE::SERVNCLIENT_ALL;
+                        if (gettedIdentOpt[1] == "ser_cli_all_ro")
+                            ws_mode = MODE::SERVNCLIENT_ALL_RO;
+
+                        if (gettedIdentOpt[1] == "ser_cli_ali")
+                            ws_mode = MODE::SERVNCLIENT_ALIAS;
+                        if (gettedIdentOpt[1] == "ser_cli_ali_ro")
+                            ws_mode = MODE::SERVNCLIENT_ALIAS_RO;
+
+                        if (gettedIdentOpt[1] == "cli_all")
+                            ws_mode = MODE::CLIENT_ALL;
+                        if (gettedIdentOpt[1] == "cli_all_ro")
+                            ws_mode = MODE::CLIENT_ALL_RO;
+
+                        if (gettedIdentOpt[1] == "cli_ali")
+                            ws_mode = MODE::CLIENT_ALIAS;
+                        if (gettedIdentOpt[1] == "cli_ali_ro")
+                            ws_mode = MODE::CLIENT_ALIAS_RO;
+                    }
+                }
             }
         }
-        _isInitDs = initDeviceServer();
+        _isInitDs = initDeviceServer(attrCommPipe);
+    }
+
+    bool WSTangoConn::initDeviceServer(array<vector<string>, 3> &attrCommPipe)
+    {
+        errorMessage.clear();
+        bool isInit = false;
+
+        try {
+            if (_isGroup) {
+                groupOrDevice = unique_ptr<GroupForWs>(new GroupForWs(_deviceName, attrCommPipe));
+            }
+            else
+                groupOrDevice = unique_ptr<DeviceForWs>(new DeviceForWs(_deviceName, attrCommPipe));
+            if (!_isShortAttr)
+                groupOrDevice->useNotShortAttrOut();
+            isInit = true;
+        }
+        catch (Tango::DevFailed &e)
+        {
+            errorMessage = fromException(e, "WSTangoConn::initDeviceServer()");
+        }
+        return isInit;
     }
 
     bool WSTangoConn::initDeviceServer()
@@ -204,7 +262,7 @@ namespace WebSocketDS_ns
     {
         string outErrMess;
         auto lnh = e.errors.length();
-        for (int i=0;i<lnh;i++) {
+        for (unsigned int i=0;i<lnh;i++) {
             if (i)
                 outErrMess += " ";
             ERROR_STREAM << " From " + func + ": " << e.errors[i].desc << endl;
@@ -238,11 +296,25 @@ namespace WebSocketDS_ns
         return TYPE_WS_REQ::UNKNOWN;
     }
 
+    bool WSTangoConn::isServerMode()
+    {
+        if (
+            ws_mode == MODE::SERVER
+            || ws_mode == MODE::SERVNCLIENT_ALIAS
+            || ws_mode == MODE::SERVNCLIENT_ALIAS_RO
+            || ws_mode == MODE::SERVNCLIENT_ALL
+            || ws_mode == MODE::SERVNCLIENT_ALL_RO
+            )
+            return true;
+        else
+            return false;
+    }
+
     string WSTangoConn::sendRequest_Command(const ParsedInputJson &inputReq, ConnectionData &connData, bool &isBinary)
     {
         string resp_json;
         if (inputReq.check_key("command_name") != TYPE_OF_VAL::VALUE)
-            return StringProc::exceptionStringOut(inputReq.id, "unknown", "Not found key command_name or command_name is not value", inputReq.type_req);
+            return StringProc::exceptionStringOut(inputReq.id, NONE, "Not found key command_name or command_name is not value", inputReq.type_req);
         string commandName = inputReq.otherInpStr.at("command_name");
         string mess;
 
@@ -296,7 +368,7 @@ namespace WebSocketDS_ns
     {
         string resp_json;
         if (inputReq.check_key("pipe_name") != TYPE_OF_VAL::VALUE)
-            return StringProc::exceptionStringOut(inputReq.id, "unknown", "Not found key pipe_name or pipe_name is not value", inputReq.type_req);
+            return StringProc::exceptionStringOut(inputReq.id, NONE, "Not found key pipe_name or pipe_name is not value", inputReq.type_req);
         resp_json = groupOrDevice->sendPipeCommand(inputReq);
         removeSymbolsForString(resp_json);
         return resp_json;
@@ -305,10 +377,10 @@ namespace WebSocketDS_ns
     string WSTangoConn::sendRequest_RidentReq(const ParsedInputJson &inputReq, ConnectionData &connData)
     {
         if (typeOfIdent != TYPE_OF_IDENT::RANDIDENT2)
-            return StringProc::exceptionStringOut(inputReq.id, "unknown", "This type_req is only used when TYPE_OF_IDENT is RANDIDENT2", inputReq.type_req);
+            return StringProc::exceptionStringOut(inputReq.id, NONE, "This type_req is only used when TYPE_OF_IDENT is RANDIDENT2", inputReq.type_req);
 
         if (connData.forRandIdent2.identState)
-            return StringProc::exceptionStringOut(inputReq.id, "unknown", "You have already been authorized ", inputReq.type_req);
+            return StringProc::exceptionStringOut(inputReq.id, NONE, "You have already been authorized ", inputReq.type_req);
 
         std::uniform_int_distribution<int> dis(1000000, 9999999);
         stringstream json;
@@ -339,13 +411,13 @@ namespace WebSocketDS_ns
     string WSTangoConn::sendRequest_RidentAns(const ParsedInputJson &inputReq, ConnectionData &connData)
     {
         if (typeOfIdent != TYPE_OF_IDENT::RANDIDENT2)
-            return StringProc::exceptionStringOut(inputReq.id, "unknown", "This type_req is only used when TYPE_OF_IDENT is RANDIDENT2", inputReq.type_req);
+            return StringProc::exceptionStringOut(inputReq.id, NONE, "This type_req is only used when TYPE_OF_IDENT is RANDIDENT2", inputReq.type_req);
 
         if (connData.forRandIdent2.identState)
-            return StringProc::exceptionStringOut(inputReq.id, "unknown", "You have already been authorized ", inputReq.type_req);
+            return StringProc::exceptionStringOut(inputReq.id, NONE, "You have already been authorized ", inputReq.type_req);
 
         if (!connData.forRandIdent2.isRandSended)
-            return StringProc::exceptionStringOut(inputReq.id, "unknown", "Send request for rand_identification. For details read the manual.", inputReq.type_req);
+            return StringProc::exceptionStringOut(inputReq.id, NONE, "Send request for rand_identification. For details read the manual.", inputReq.type_req);
 
         if (inputReq.check_key("rident_hash") != TYPE_OF_VAL::VALUE){
             if (connData.forRandIdent2.isRandSended)
@@ -354,7 +426,7 @@ namespace WebSocketDS_ns
             connData.forRandIdent2.rand_ident_hash = "";
             connData.forRandIdent2.rand_ident = 0;
 
-            return StringProc::exceptionStringOut(inputReq.id, "unknown", "Send request for rand_identification. For details read the manual.", inputReq.type_req);
+            return StringProc::exceptionStringOut(inputReq.id, NONE, "Send request for rand_identification. For details read the manual.", inputReq.type_req);
         }
 
         connData.forRandIdent2.rand_ident_hash = inputReq.otherInpStr.at("rident_hash");
@@ -366,14 +438,14 @@ namespace WebSocketDS_ns
             connData.forRandIdent2.isRandSended = false;
             connData.forRandIdent2.rand_ident = 0;
 
-            return StringProc::exceptionStringOut(inputReq.id, "unknown", "Send request for rand_identification. For details read the manual.", inputReq.type_req);
+            return StringProc::exceptionStringOut(inputReq.id, NONE, "Send request for rand_identification. For details read the manual.", inputReq.type_req);
         }
         checkUser(connData);
         if (!connData.userCheckStatus.first){
             connData.forRandIdent2.rand_ident_hash = "";
             connData.forRandIdent2.isRandSended = false;
             connData.forRandIdent2.rand_ident = 0;
-            return StringProc::exceptionStringOut(inputReq.id, "unknown", connData.userCheckStatus.second + " Send request for rand_identification. For details read the manual.", inputReq.type_req);
+            return StringProc::exceptionStringOut(inputReq.id, NONE, connData.userCheckStatus.second + " Send request for rand_identification. For details read the manual.", inputReq.type_req);
         }
         connData.forRandIdent2.identState = true;
         stringstream json;
@@ -396,15 +468,13 @@ namespace WebSocketDS_ns
     string WSTangoConn::sendRequest_Rident(const ParsedInputJson& inputReq, ConnectionData& connData) 
     {
         if (typeOfIdent != TYPE_OF_IDENT::RANDIDENT3)
-            return StringProc::exceptionStringOut(inputReq.id, "unknown", "This type_req is only used when TYPE_OF_IDENT is RANDIDENT3", inputReq.type_req);
+            return StringProc::exceptionStringOut(inputReq.id, NONE, "This type_req is only used when TYPE_OF_IDENT is RANDIDENT3", inputReq.type_req);
 
         if (connData.forRandIdent2.identState)
-            return StringProc::exceptionStringOut(inputReq.id, "unknown", "You have already been authorized ", inputReq.type_req);
+            return StringProc::exceptionStringOut(inputReq.id, NONE, "You have already been authorized ", inputReq.type_req);
 
-        if (inputReq.check_key("rident_hash") != TYPE_OF_VAL::VALUE 
-            || inputReq.check_key("login") != TYPE_OF_VAL::VALUE 
-            || inputReq.check_key("rident") != TYPE_OF_VAL::VALUE )
-            return StringProc::exceptionStringOut(inputReq.id, "unknown", "Send request for rand_identification. For details read the manual.", inputReq.type_req);
+        if (inputReq.check_keys({ "rident_hash", "login", "rident" }) != TYPE_OF_VAL::VALUE)
+            return StringProc::exceptionStringOut(inputReq.id, NONE, "Send request for rand_identification. For details read the manual.", inputReq.type_req);
 
         connData.forRandIdent2.rand_ident_hash = inputReq.otherInpStr.at("rident_hash");
         connData.forRandIdent2.login = inputReq.otherInpStr.at("login");
@@ -412,7 +482,7 @@ namespace WebSocketDS_ns
         checkUser(connData);
 
         if (!connData.userCheckStatus.first)
-            return StringProc::exceptionStringOut(inputReq.id, "unknown", connData.userCheckStatus.second + " Send request for rand_identification. For details read the manual.", inputReq.type_req);
+            return StringProc::exceptionStringOut(inputReq.id, NONE, connData.userCheckStatus.second + " Send request for rand_identification. For details read the manual.", inputReq.type_req);
 
         connData.forRandIdent2.identState = true;
 

@@ -1,10 +1,7 @@
 #ifndef COMMON_H
 #define COMMON_H
 
-#include <unordered_map>
 #include <string>
-#include <vector>
-
 
 namespace WebSocketDS_ns
 {
@@ -18,36 +15,32 @@ namespace WebSocketDS_ns
     enum class OUTPUT_DATA_TYPE { JSON, BINARY };
 
     enum class TYPE_OF_IDENT { SIMPLE, RANDIDENT, RANDIDENT2, RANDIDENT3 };
+    enum class TYPE_OF_VAL { VALUE, ARRAY, OBJECT, NONE };
+
+    enum class MODE
+    {
+        // только серверное управление выводом информации
+        SERVER,
+        
+        // как с севрвера, так и с клиента. Все сервера. 
+        SERVNCLIENT_ALL_RO,     // Режим ReadOnly.
+        SERVNCLIENT_ALL,        // Режим RW
+
+        // как с севрвера, так и с клиента. Модули прописанные в alias.
+        SERVNCLIENT_ALIAS_RO,   // Режим ReadOnly.
+        SERVNCLIENT_ALIAS,      // как с севрвера, так и с клиента. Модули прописанные в alias. режим RW
+
+        // Только с клиента. Все сервера.
+        CLIENT_ALL_RO,          //  Режим ReadOnly.
+        CLIENT_ALL,             //  Режим RW
+
+        // Только с клиента. Модули прописанные в alias
+        CLIENT_ALIAS_RO,        //  Режим ReadOnly.
+        CLIENT_ALIAS            //  Режим RW
+    };
 
     const std::string NONE = "\"NONE\"";
 
-    typedef std::unordered_multimap < std::string, std::string > stringunmap;
-    typedef std::pair<stringunmap::iterator, stringunmap::iterator> stringunmap_iter;
-
-    typedef std::unordered_map < std::string, std::string > stringmap;
-    typedef std::pair<stringmap::iterator, stringmap::iterator> stringmap_iter;
-
-    enum class TYPE_OF_VAL { VALUE, ARRAY, NONE };
-
-    struct ParsedInputJson {
-        TYPE_OF_VAL check_key(std::string key) const {
-            if (otherInpStr.find(key) != otherInpStr.end())
-                return TYPE_OF_VAL::VALUE;
-            if (otherInpVec.find(key) != otherInpVec.end())
-                return TYPE_OF_VAL::ARRAY;
-            else
-                return TYPE_OF_VAL::NONE;
-        };
-
-        bool isOk{ false };
-        std::string errMess;
-        std::string id;
-        std::string type_req;
-        std::string inputJson;
-        std::unordered_map<std::string, std::vector<std::string>> otherInpVec;
-        std::unordered_map<std::string, std::string> otherInpStr;
-        //std::unordered_map<std::string, std::string> remoteConf;
-    };
 }
 
 #endif // COMMON_H

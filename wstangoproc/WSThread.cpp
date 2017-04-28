@@ -12,6 +12,7 @@
 
 
 #include "StringProc.h"
+#include "ParsingInputJson.h"
 
 namespace WebSocketDS_ns
 {
@@ -25,16 +26,16 @@ namespace WebSocketDS_ns
 
     void WSThread::on_message(websocketpp::connection_hdl hdl, server::message_ptr msg) {
         string data_from_client = msg->get_payload();
-        INFO_STREAM_F <<  " Input message: " << data_from_client << endl;
+        INFO_STREAM_F << " Input message: " << data_from_client << endl;
 
-        ParsedInputJson parsedInputJson = StringProc::parseInputJson(data_from_client);
+        ParsedInputJson parsedInputJson = parsing.parseInputJson(data_from_client);
 
         if (!parsedInputJson.isOk) {
             string errorMess;
             if (parsedInputJson.errMess.size())
-                errorMess = StringProc::exceptionStringOut(NONE, NONE, parsedInputJson.errMess, "unknown");
+                errorMess = StringProc::exceptionStringOut(NONE, NONE, parsedInputJson.errMess, "unknown_req");
             else
-                errorMess = StringProc::exceptionStringOut(NONE, NONE, "Unknown message from parsing", "unknown");
+                errorMess = StringProc::exceptionStringOut(NONE, NONE, "Unknown message from parsing", "unknown_req");
             send(hdl, errorMess);
             return;
         }
@@ -46,10 +47,20 @@ namespace WebSocketDS_ns
                 parsedInputJson.otherInpStr["command_name"] = parsedInputJson.otherInpStr["command"];
             }
             else {
-                string errorMess = StringProc::exceptionStringOut(parsedInputJson.id, NONE, "Input json must contain key type_req", "unknown");
+                string errorMess = StringProc::exceptionStringOut(parsedInputJson.id, NONE, "Input json must contain key type_req", "unknown_req");
                 send(hdl, errorMess);
                 return;
             }
+        }
+
+        if (parsedInputJson.type_req.find("timer") != string::npos ) {
+            if (_tc->getMode() == MODE::SERVER) {
+                string errorMess = StringProc::exceptionStringOut(parsedInputJson.id, NONE, "Timer is not available in the current mode", parsedInputJson.type_req);
+                send(hdl,errorMess);
+            }
+            else
+                timerProc(parsedInputJson, hdl);
+            return;
         }
 
         parsedInputJson.inputJson = data_from_client;
@@ -67,23 +78,25 @@ namespace WebSocketDS_ns
     }
 
     void WSThread::on_open(websocketpp::connection_hdl hdl) {
-        websocketpp::lib::unique_lock<websocketpp::lib::mutex> con_lock(m_connection_lock);
+        if (_tc->isServerMode())
+            websocketpp::lib::unique_lock<websocketpp::lib::mutex> con_lock(m_connection_lock);
         ConnectionData conn_data;
         conn_data.remoteConf = getRemoteConf(hdl);
         if (_tc->getTypeOfIdent() != TYPE_OF_IDENT::RANDIDENT2 && _tc->getTypeOfIdent() != TYPE_OF_IDENT::RANDIDENT3)
             _tc->checkUser(conn_data);
         conn_data.sessionId = m_next_sessionid++;
         
-        m_connections[hdl] = conn_data;
+        m_connections[hdl] = std::move(conn_data);
         _tc->setNumOfConnections(m_connections.size());
-        DEBUG_STREAM_F << "New user has been connected!! sessionId = " << conn_data.sessionId << endl;
+        DEBUG_STREAM_F << "New user has been connected!! sessionId = " << m_connections[hdl].sessionId << endl;
         DEBUG_STREAM_F << m_connections.size() << " client connected!!" << endl;
         send(hdl, cache);
     }
 
     void WSThread::on_close(websocketpp::connection_hdl hdl) {
         DEBUG_STREAM_F << "User has been disconnected!!" << endl;
-        websocketpp::lib::unique_lock<websocketpp::lib::mutex> con_lock(m_connection_lock);
+        if (_tc->isServerMode())
+            websocketpp::lib::unique_lock<websocketpp::lib::mutex> con_lock(m_connection_lock);
         m_connections.erase(hdl);
         _tc->setNumOfConnections(m_connections.size());
         DEBUG_STREAM_F << m_connections.size() << " client connected!!" << endl;
@@ -91,6 +104,175 @@ namespace WebSocketDS_ns
 
     void  WSThread::on_fail(websocketpp::connection_hdl hdl) {
         ERROR_STREAM_F << " Fail from WSThread on_fail " << endl;
+    }
+
+    void WSThread::timerProc(const ParsedInputJson &parsedJson, websocketpp::connection_hdl hdl)
+    {
+        if (parsedJson.type_req == "timer_start"
+                || parsedJson.type_req == "timer_change") {
+            if (parsedJson.check_key("msec") != TYPE_OF_VAL::VALUE) {
+                send(hdl, StringProc::exceptionStringOut(parsedJson.id, NONE, "Check keys for Timer (msec)", parsedJson.type_req));
+                return;
+            }
+        }
+
+        if (parsedJson.type_req == "timer_stop"
+                || parsedJson.type_req == "timer_remove_devs"
+                || parsedJson.type_req == "timer_add_devs")
+        {
+            if (m_connections[hdl].timing == nullptr) {
+                send(hdl, StringProc::exceptionStringOut(parsedJson.id, NONE, "Timer not yet active", parsedJson.type_req));
+                return;
+            }
+        }
+
+        dev_attr_pipe_map devAttrPipeMap;
+
+        if (parsedJson.type_req == "timer_start"
+                || parsedJson.type_req == "timer_add_devs"
+                || parsedJson.type_req == "timer_upd_devs_add"
+                || parsedJson.type_req == "timer_upd_devs_rem")
+        {
+            if (parsedJson.check_key("devices") != TYPE_OF_VAL::OBJECT) {
+                send(hdl, StringProc::exceptionStringOut(parsedJson.id, NONE, "Check keys for Timer (devices) ", parsedJson.type_req));
+                return;
+                }
+            devAttrPipeMap = parsing.getListDevicesAttrPipe(parsedJson.otherInpObj);
+        }
+
+        if (parsedJson.type_req == "timer_start") {
+            //if (m_connections[hdl].timing.isTimerOn)
+            if (m_connections[hdl].timing != nullptr)
+            {
+                string errMess = "Timer already started. The timer period is " + to_string(m_connections[hdl].timing->msec) + " seconds";
+                send(hdl, StringProc::exceptionStringOut(errMess, "timer_start"));
+                DEBUG_STREAM_F << errMess;
+                return;
+            }
+
+            if (!devAttrPipeMap.size()) {
+                send(hdl, StringProc::exceptionStringOut(parsedJson.id, NONE, "No devices found. Check keys", parsedJson.type_req));
+                return;
+            }
+
+            try {
+                auto msec = stoi(parsedJson.otherInpStr.at("msec"));
+                if (msec > 1000) {
+                    m_connections[hdl].timing = unique_ptr<TimingStruct>(new TimingStruct());
+                    m_connections[hdl].timing->msec = msec;
+                }
+                else {
+                    send(hdl, StringProc::exceptionStringOut(parsedJson.id, NONE, "The timer period must be longer than 1000 milliseconds.", parsedJson.type_req));
+                    return;
+                }
+            }
+            catch (...){
+                send(hdl, StringProc::exceptionStringOut(parsedJson.id, NONE, "The timer period must be a number", parsedJson.type_req));
+                return;
+            }
+
+            if (m_connections[hdl].tangoConnForClient == nullptr)
+                m_connections[hdl].tangoConnForClient = unique_ptr<TangoConnForClient>(new TangoConnForClient(devAttrPipeMap));
+            else
+                m_connections[hdl].tangoConnForClient->addDevicesToUpdateList(devAttrPipeMap);
+
+            startTimer(hdl);
+            m_connections[hdl].timing->isTimerOn = true;
+            DEBUG_STREAM_F << "Started timer in session with id " << m_connections[hdl].sessionId;
+            return;
+        }
+
+        if (parsedJson.type_req == "timer_stop") {
+            m_connections[hdl].tangoConnForClient->removeAllDevices();
+            m_connections[hdl].timing.reset(nullptr);
+            return;
+        }
+
+        if (parsedJson.type_req == "timer_change") {
+            try {
+                auto msec = stoi(parsedJson.otherInpStr.at("msec"));
+                if (msec > 1000) 
+                    m_connections[hdl].timing->msec = msec;
+                else 
+                    send(hdl, StringProc::exceptionStringOut(parsedJson.id, NONE, "The timer period must be longer than 1000 milliseconds.", parsedJson.type_req));
+            }
+            catch (...){
+                send(hdl, StringProc::exceptionStringOut(parsedJson.id, NONE, "The timer period must be a number", parsedJson.type_req));
+            }
+            return;
+        }
+
+        if (parsedJson.type_req == "timer_add_devs") {
+            pair<string, string> errors = m_connections[hdl].tangoConnForClient->addDevicesToUpdateList(devAttrPipeMap);
+            if (errors.first.size() && errors.second.size()) {
+                if (errors.first.size() || errors.second.size()) {
+                    send(hdl, StringProc::exceptionStringOut(parsedJson.id, NONE, errors, parsedJson.type_req));
+                    return;
+                }
+
+                if (errors.first.size())
+                    send(hdl, StringProc::exceptionStringOut(parsedJson.id, NONE, errors.first, parsedJson.type_req));
+                if (errors.second.size())
+                    send(hdl, StringProc::exceptionStringOut(parsedJson.id, NONE, errors.second, parsedJson.type_req));                    
+            }
+            else {
+                send(hdl, StringProc::responseStringOut(parsedJson.id, "All devices from the list have been added", parsedJson.type_req));
+            }
+            return;
+        }
+
+        if (parsedJson.type_req == "timer_remove_devs") {
+            string keyDev = "devices";
+            TYPE_OF_VAL typeOfVal = parsedJson.check_key(keyDev);
+            if (typeOfVal != TYPE_OF_VAL::ARRAY &&
+                typeOfVal != TYPE_OF_VAL::VALUE) {
+                send(hdl, StringProc::exceptionStringOut(parsedJson.id, NONE, "Check keys for Timer", parsedJson.type_req));
+                return;
+            }
+            string outMess;
+            if (typeOfVal == TYPE_OF_VAL::ARRAY)
+                outMess = m_connections[hdl].tangoConnForClient->removeDevicesFromUpdateList(parsedJson.otherInpVec.at(keyDev));
+            if (typeOfVal == TYPE_OF_VAL::VALUE)
+                outMess = m_connections[hdl].tangoConnForClient->removeDevicesFromUpdateList(parsedJson.otherInpStr.at(keyDev));
+
+            if (outMess.size())
+                send(hdl, StringProc::exceptionStringOut(parsedJson.id, NONE, outMess, parsedJson.type_req));
+            else
+                send(hdl, StringProc::responseStringOut(parsedJson.id, "All devices from the list have been removed", parsedJson.type_req));
+            return;
+        }
+
+        if (parsedJson.type_req == "timer_upd_devs_add") {
+            vector<string> outMessages = m_connections[hdl].tangoConnForClient->addAttrToDevicesFromUpdatelist(devAttrPipeMap);
+            send(hdl, StringProc::responseStringOut(parsedJson.id, outMessages, parsedJson.type_req));
+            return;
+        }
+
+        if (parsedJson.type_req == "timer_upd_devs_rem") {
+            vector<string> outMessages = m_connections[hdl].tangoConnForClient->remAttrToDevicesFromUpdatelist(devAttrPipeMap);
+            send(hdl, StringProc::responseStringOut(parsedJson.id, outMessages, parsedJson.type_req));
+            return;
+        }
+        
+        send(hdl, StringProc::exceptionStringOut(parsedJson.id, NONE, "This request type is not supported", parsedJson.type_req));
+    }
+
+    bool WSThread::forRunTimer(websocketpp::connection_hdl hdl, int timerInd)
+    {
+        DEBUG_STREAM_F << "timer. SessionId = " << m_connections[hdl].sessionId;
+
+        DEBUG_STREAM_F << " ___ " << m_connections[hdl].timerInd  << " ___ " << timerInd;
+        if (m_connections[hdl].timerInd != timerInd){
+            DEBUG_STREAM_F << "Timer " << m_connections[hdl].timerInd <<  " was stopped";
+            return false;
+        }
+        timerInd = m_connections[hdl].timerInd;
+        string resp = m_connections[hdl].tangoConnForClient->getJsonForAttribute();
+        send(hdl, resp);
+        if (hdl.expired())
+            return true;
+        else
+            return false;
     }
 
 
@@ -120,7 +302,6 @@ namespace WebSocketDS_ns
         // For check_permission method Query mustcontain arguments "login" and "password"
         // If defined #USERANDIDENT method Query must contain 
         // arguments "login", "id_ri","rand_ident_hash" and "rand_ident"
-
 
         unordered_map<string, string> outMap;
         if (query.size() == 0)

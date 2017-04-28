@@ -35,7 +35,7 @@ bool WebSocketDS_ns::UserControl::check_permission(const ParsedInputJson& parsed
     catch (Tango::DevFailed &e) {
         std::stringstream ss;
         ss << "Could not connect to auth-device-server " << _authDS << " .. Desc:";
-        for (int i = 0; i < e.errors.length(); i++)
+        for (unsigned int i = 0; i < e.errors.length(); i++)
             ss << " " << e.errors[0].reason << ".";
         mess = ss.str();
         if (authProxy!=nullptr)
@@ -124,7 +124,7 @@ bool WebSocketDS_ns::UserControl::check_user(const unordered_map<string, string>
     catch (Tango::DevFailed &e) {
         std::stringstream ss;
         ss << "Could not connect to auth-device-server " << _authDS << " .. Desc:";
-        for (int i = 0; i < e.errors.length(); i++)
+        for (unsigned int i = 0; i < e.errors.length(); i++)
             ss << " " << i << ": " << e.errors[0].desc << ".";
         errMess = ss.str();
         if (authProxy != nullptr)
@@ -156,7 +156,7 @@ bool WebSocketDS_ns::UserControl::check_user_rident(string login, string rand_id
     catch (Tango::DevFailed &e) {
         std::stringstream ss;
         ss << "Could not connect to auth-device-server " << _authDS << " .. Desc:";
-        for (int i = 0; i < e.errors.length(); i++)
+        for (unsigned int i = 0; i < e.errors.length(); i++)
             ss << " " << i << ": " << e.errors[0].desc << ".";
         errMess = ss.str();
         if (authProxy != nullptr)

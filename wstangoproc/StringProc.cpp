@@ -1,11 +1,33 @@
 #include "StringProc.h"
 #include <sstream>
-#include <boost/property_tree/json_parser.hpp>
+//#include <boost/property_tree/json_parser.hpp>
 
 using std::stringstream;
 
 namespace WebSocketDS_ns
 {
+    string StringProc::responseStringOut(string id, string message, string type_req_str)
+    {
+        message = ("\"" + message + "\"");
+        return generateRespMess(id,message,type_req_str);
+    }
+
+    std::string StringProc::responseStringOut(std::string id, vector<std::string> messages, std::string type_req_str)
+    {
+        string inpMess;
+        inpMess += "[";
+        bool first = true;
+        for (auto& mess: messages) {
+            if (first) {
+                inpMess += ("\"" + mess+ "\"");
+                first = false;
+            }
+            else
+                inpMess += (", \"" + mess+ "\"");
+        }
+        inpMess += "]";
+        return generateRespMess(id, inpMess, type_req_str);
+    }
 
     string StringProc::exceptionStringOut(string id, string commandOrPipeName, string errorMessage, string type_req_str)
     {
@@ -26,10 +48,29 @@ namespace WebSocketDS_ns
         return generateExceptionMess(id, commandOrPipeName, errMess, type_req_str);
     }
 
+    string StringProc::exceptionStringOut(string id, string commandOrPipeName, pair<string, string> errorMessages, string type_req_str)
+    {
+        string errMess = "\"err_mess\": [";
+        errMess += ("\"" + errorMessages.first + "\", ");
+        errMess += ("\"" + errorMessages.second + "\"");
+        errMess += "]";
+        return generateExceptionMess(id, commandOrPipeName, errMess, type_req_str);
+    }
+
     string StringProc::exceptionStringOut(string errorMessage) {
         stringstream ss;
         ss << "{\"event\": \"error\", ";
         ss << "\"type_req\": \"" << "attribute" << "\", ";
+        ss << "\"err_mess\": \"" << errorMessage << "\"";
+        ss << "}";
+
+        return ss.str();
+    }
+
+    string StringProc::exceptionStringOut(string errorMessage, string type_attr_resp) {
+        stringstream ss;
+        ss << "{\"event\": \"error\", ";
+        ss << "\"type_req\": \"" << type_attr_resp << "\", ";
         ss << "\"err_mess\": \"" << errorMessage << "\"";
         ss << "}";
 
@@ -79,103 +120,11 @@ namespace WebSocketDS_ns
         return parsed;
     }
 
-    ParsedInputJson StringProc::parseInputJson(const string& json){
-        // Проверка входных парамеров JSON.
-
-        ParsedInputJson parsedJson;
-        stringstream ss;
-        ss << json;
-        boost::property_tree::ptree pt;
-
-        std::unordered_map<string, vector<string>> inpVec;
-        std::unordered_map<string, string> inpStr;
-
-        try {
-            boost::property_tree::read_json(ss, pt);
-
-            // id должен присутствовать, но не обязательно
-            if (pt.find("id") == pt.not_found()) {
-                parsedJson.id = NONE;
-            }
-
-
-            for (auto& elem : pt) {
-                string tmpStr;
-                if (elem.first == "id") {
-                    tmpStr = elem.second.data();
-                    if (!tmpStr.size()) {
-                        parsedJson.errMess = "type of id must be value";
-                        return parsedJson;
-                    }
-                    parsedJson.id = tmpStr;
-                    continue;
-                }
-
-                // type_req должен присутствовать 
-                // (для command можно не указывать ... оставлено для совместимости )
-                if (elem.first == "type_req") {
-                    tmpStr = elem.second.data();
-                    if (!tmpStr.size()) {
-                        parsedJson.errMess = "type of type_req must be value";
-                        return parsedJson;
-                    }
-                    parsedJson.type_req = tmpStr;
-                    continue;
-                }
-
-                // Если является значением
-                if (elem.second.data() != "") {
-                    inpStr[elem.first] = elem.second.data();
-                    continue;
-                }
-
-                // Если является массивом
-                vector<string> vecStr;
-                int it = 0;
-                try {
-                    for (boost::property_tree::ptree::value_type &v : elem.second) {
-                        if (!v.first.size()) {
-                            // Массив должен содержать только значения
-                            // Проверка содержит ли массив объекты {}
-                            if (!v.second.data().size()) {
-                                it = 0;
-                                break;
-                            }
-                            vecStr.push_back(v.second.data());
-                            it++;
-                        }
-                    }
-                }
-                catch (boost::property_tree::ptree_bad_data) { it = 0; }
-                if (it) {
-                    inpVec[elem.first] = vecStr;
-                }
-            }
-
-            if (inpStr.size()) {
-                parsedJson.otherInpStr = inpStr;
-            }
-            if (inpVec.size())
-                parsedJson.otherInpVec = inpVec;
-            parsedJson.isOk = true;
-        }
-        catch (boost::property_tree::json_parser::json_parser_error &je)
-        {
-            parsedJson.errMess = "Json parsed error. Message from Boost: " + je.message() ;
-        }
-        catch (...) {
-            parsedJson.errMess = "unknown error from parseInputJson ";
-        }
-        return parsedJson;
-    }
-
     string StringProc::generateExceptionMess(string id, string commandOrPipeName, string& inMessage, string type_req_str) {
         stringstream ss;
         ss << "{\"event\": \"error\", ";
         ss << "\"type_req\": \"" << type_req_str << "\", ";
-        if (commandOrPipeName == NONE)
-            ss << "\"" << "name_req" << "\": " << commandOrPipeName << ", ";
-        else
+        if (commandOrPipeName != NONE)
             ss << "\"" << "name_req" << "\": \"" << commandOrPipeName << "\", ";
 
         try {
@@ -192,6 +141,26 @@ namespace WebSocketDS_ns
         //ss << "\"err_mess\": \"" << inMessage << "\"";
         ss << "}";
 
+        return ss.str();
+    }
+
+    std::string StringProc::generateRespMess(std::string id, std::string &inMessage, std::string type_req_str)
+    {
+        stringstream ss;
+        ss << "{";
+        ss << "\"type_req\": \"" << type_req_str << "\", ";
+        try {
+            auto idTmp = stoi(id);
+            ss << "\"id_req\": " << idTmp << ", ";
+        }
+        catch (...) {
+            if (id == NONE)
+                ss << "\"id_req\": " << id << ", ";
+            else
+                ss << "\"id_req\": \"" << id << "\", ";
+        }
+        ss << "\"resp\": " << inMessage;
+        ss << "}";
         return ss.str();
     }
 }

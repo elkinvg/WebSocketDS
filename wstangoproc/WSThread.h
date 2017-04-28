@@ -52,6 +52,11 @@ namespace WebSocketDS_ns
         virtual void close_from_server(websocketpp::connection_hdl hdl) = 0;
         virtual size_t get_buffered_amount(websocketpp::connection_hdl hdl) = 0;
 
+        virtual void startTimer(websocketpp::connection_hdl hdl) = 0;
+        virtual void runTimer(const error_code & ec, websocketpp::connection_hdl hdl, int timerInd) = 0;
+        
+        bool forRunTimer(websocketpp::connection_hdl hdl, int timerInd);
+
         string parseOfAddress(string addrFromConn); // parsing of get_remote_endpoint-return
         // remoteEndpoint in websocket output formate[::ffff:127.0.0.1 : 11111]
 
@@ -68,7 +73,6 @@ namespace WebSocketDS_ns
         const unsigned long maximumBufferSizeMax = 10000;
         const unsigned long maximumBufferSizeDef = 1000;
 
-        //typedef std::set<websocketpp::connection_hdl, std::owner_less<websocketpp::connection_hdl> > con_list;
         typedef std::map<websocketpp::connection_hdl, ConnectionData, std::owner_less<websocketpp::connection_hdl> > con_list;
         con_list m_connections;
 
@@ -77,8 +81,11 @@ namespace WebSocketDS_ns
         WSTangoConn* _tc;
 
         unsigned long m_next_sessionid;
+        ParsingInputJson parsing;
 
     private:
+        void timerProc(const ParsedInputJson &parsedJson, websocketpp::connection_hdl hdl);
+
         vector<string> &split(const string &s, char delim, vector<string> &elems);
         vector<string> split(const string &s, char delim);
 

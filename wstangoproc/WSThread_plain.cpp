@@ -14,7 +14,7 @@
 
 namespace WebSocketDS_ns
 {
-    WSThread_plain::WSThread_plain(/*WebSocketDS *dev,*/ /*pair<string, string> deviceServerAndOptions, */WSTangoConn *tc, int portNumber) :
+    WSThread_plain::WSThread_plain(WSTangoConn *tc, int portNumber) :
         WSThread(tc, portNumber)
     {
         start_undetached();
@@ -43,7 +43,7 @@ namespace WebSocketDS_ns
         m_server.set_close_handler(websocketpp::lib::bind(&WSThread_plain::on_close, this, websocketpp::lib::placeholders::_1));
         m_server.set_message_handler(websocketpp::lib::bind(&WSThread_plain::on_message, this, websocketpp::lib::placeholders::_1, websocketpp::lib::placeholders::_2));//m_server.set_user_agent();
         m_server.set_validate_handler(bind(&WSThread_plain::on_validate, this, websocketpp::lib::placeholders::_1));
-        //test
+        
          m_server.set_fail_handler(bind(&WSThread_plain::on_fail,this,websocketpp::lib::placeholders::_1));
 
         // this will turn off console output for frame header and payload
@@ -177,8 +177,63 @@ namespace WebSocketDS_ns
         return parsedGet;
     }
 
+    void WSThread_plain::startTimer(websocketpp::connection_hdl hdl)
+    {
+        if (hdl.expired())
+            return;
+        
+        try {
+            
+            string resp = m_connections[hdl].tangoConnForClient->getJsonForAttribute();
+            send(hdl, resp);
+            if (hdl.expired())
+                return;
+            m_connections[hdl].timerInd++;
+            m_connections[hdl].timing->m_timer = m_server.set_timer(m_connections[hdl].timing->msec, bind(&WSThread_plain::runTimer
+                                                                                                          , this, placeholders::_1, hdl, m_connections[hdl].timerInd));
+        }
+        catch (...) {
+            // This exception is not thrown out in normal operation
+            ERROR_STREAM_F << "START EXCEPTION!!!!!!!";
+        }
+    }
+    
+    void WSThread_plain::runTimer(const error_code & ec, websocketpp::connection_hdl hdl, int timerInd)
+    {
+        // Все данные в m_connections[hdl]
+        if (hdl.expired())
+            return;
+
+        if (m_connections[hdl].timing == nullptr)
+            return;
+        if (!m_connections[hdl].timing->isTimerOn)
+            return;
+
+        if (ec.value() !=0 ) {
+            ERROR_STREAM_F << " Error code: " << ec.value() << " Mess: " << ec.message();
+        }
+
+        // if ec.value() !=0 and if ec.value()!= SUCCESS
+//        DEBUG_STREAM_F << ec.message();
+//        DEBUG_STREAM_F << ec.value();
+//        DEBUG_STREAM_F << ec.default_error_condition().message();
+
+        try {
+            if (forRunTimer(hdl, timerInd))
+                return;
+            
+            m_connections[hdl].timing->m_timer = m_server.set_timer(m_connections[hdl].timing->msec, bind(&WSThread_plain::runTimer
+                , this, placeholders::_1, hdl, timerInd));
+        }
+        catch (...) {
+            // This exception is not thrown out in normal operation
+            ERROR_STREAM_F << "RUN EXCEPTION!!!!!!!";
+        }
+    }
+
     void WSThread_plain::close_from_server(websocketpp::connection_hdl hdl) {
-        websocketpp::lib::unique_lock<websocketpp::lib::mutex> con_lock(m_connection_lock);
+        if (_tc->isServerMode())
+            websocketpp::lib::unique_lock<websocketpp::lib::mutex> con_lock(m_connection_lock);
         websocketpp::server<websocketpp::config::asio>::connection_ptr con = m_server.get_con_from_hdl(hdl);
         con->close(websocketpp::close::status::going_away, "");
         m_connections.erase(hdl);

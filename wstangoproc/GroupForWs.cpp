@@ -15,6 +15,27 @@ namespace WebSocketDS_ns
         deviceList = group->get_device_list(true);
     }
 
+    GroupForWs::GroupForWs(string pattern, std::pair<vector<string>, vector<string> > &attr_pipes)
+        :GroupForWs(pattern)
+    {
+        initAttr(attr_pipes.first);
+        initPipe(attr_pipes.second);
+    }
+
+    GroupForWs::GroupForWs(string pattern, array<vector<string>,3> &attrCommPipe)
+        :GroupForWs(pattern)
+    {
+        initAttr(attrCommPipe[0]);
+        initComm(attrCommPipe[1]);
+        initPipe(attrCommPipe[2]);
+    }
+
+    GroupForWs::GroupForWs(string pattern, vector<string> &commands)
+        :GroupForWs(pattern)
+    {
+        initComm(commands);
+    }
+
     GroupForWs::~GroupForWs()
     {
         if (group != nullptr)
@@ -89,6 +110,12 @@ namespace WebSocketDS_ns
 
         json << "}";
         return json.str();
+    }
+
+    void GroupForWs::generateJsonForUpdate(stringstream &json)
+    {
+        //  Должен использоваться при запуске update_data со стороны клиента
+        // ??? !!! Пока только для девайсов, а не для групп
     }
 
     string GroupForWs::sendPipeCommand(const ParsedInputJson& parsedInput)
@@ -263,7 +290,7 @@ namespace WebSocketDS_ns
         catch (Tango::DevFailed &e) {
             string tangoErrors;
 
-            for (int i = 0; i < e.errors.length(); i++) {
+            for (unsigned int i = 0; i < e.errors.length(); i++) {
                 if (i > 0)
                     tangoErrors += " ||| ";
                 tangoErrors += (string)e.errors[i].desc;
@@ -338,7 +365,7 @@ namespace WebSocketDS_ns
             catch (Tango::DevFailed &e){
                 json << "[";
                 string tmpErrMess;
-                for (int i = 0; i < e.errors.length(); i++) {
+                for (unsigned int i = 0; i < e.errors.length(); i++) {
                     if (i > 0) {
                         json << ", ";
                         tmpErrMess += " ||| ";
@@ -382,12 +409,16 @@ namespace WebSocketDS_ns
         }
         catch (Tango::DevFailed &e) {
             vector<string> errors;
-            for (int i = 0; i < e.errors.length(); i++)
+            for (unsigned int i = 0; i < e.errors.length(); i++)
                 errors.push_back((string)e.errors[i].desc);
 
             return StringProc::exceptionStringOut(parsedInput.id, pipeName, errors, parsedInput.type_req);
         }
 
         return json.str();
+    }
+
+    bool GroupForWs::initAllAttrs() {
+        return false;
     }
 }

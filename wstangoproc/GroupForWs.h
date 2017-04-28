@@ -18,15 +18,21 @@ namespace WebSocketDS_ns
     {
     public:
         GroupForWs(string pattern);
+        GroupForWs(string pattern, std::pair<vector<string>, vector<string>>& attr_pipes);
+        GroupForWs(string pattern, array<vector<string>, 3>& attrCommPipe);
+        GroupForWs(string pattern, vector<string> &commands);
         ~GroupForWs();
 
         virtual string generateJsonForUpdate() override;
+        virtual void generateJsonForUpdate(std::stringstream& json) override;
+
         virtual string sendPipeCommand(const ParsedInputJson& parsedInput) override;
         virtual string sendCommand(const ParsedInputJson& parsedInput, bool& statusComm) override;
         virtual string sendCommandBin(const ParsedInputJson& parsedInput, bool& statusComm) override;
 
     private:
         virtual Tango::CommandInfo getCommandInfo(const string& command_name) override;
+        virtual bool initAllAttrs() override;
         // For Group
         Tango::GroupCmdReplyList tangoCommandInoutForGroup(const ParsedInputJson& dataFromJson, string& errorMessInJson);
         // For device

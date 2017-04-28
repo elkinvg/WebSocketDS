@@ -13,8 +13,15 @@
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/foreach.hpp>
 
-#include "common.h"
+#include "ParsingInputJson.h"
+
 using Tango::DevicePipe;
+
+typedef std::unordered_map < std::string, std::string > stringmap;
+typedef std::pair<stringmap::iterator, stringmap::iterator> stringmap_iter;
+
+typedef std::unordered_multimap < std::string, std::string > stringunmap;
+typedef std::pair<stringunmap::iterator, stringunmap::iterator> stringunmap_iter;
 
 namespace WebSocketDS_ns
 {

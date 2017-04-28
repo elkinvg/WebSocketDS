@@ -11,6 +11,27 @@ namespace WebSocketDS_ns
         device->set_timeout_millis(3000);
     }
 
+    DeviceForWs::DeviceForWs(string deviceName, std::pair<vector<string>, vector<string> > &attr_pipes)
+        :DeviceForWs(deviceName)
+    {
+        initAttr(attr_pipes.first);
+        initPipe(attr_pipes.second);
+    }
+
+    DeviceForWs::DeviceForWs(string deviceName, array<vector<string>, 3> &attrCommPipe)
+        :DeviceForWs(deviceName)
+    {
+        initAttr(attrCommPipe[0]);
+        initComm(attrCommPipe[1]);
+        initPipe(attrCommPipe[2]);
+    }
+
+    DeviceForWs::DeviceForWs(string deviceName, vector<string> &commands)
+        :DeviceForWs(deviceName)
+    {
+        initComm(commands);
+    }
+
     DeviceForWs::~DeviceForWs() 
     {
         if (device != nullptr)
@@ -21,37 +42,19 @@ namespace WebSocketDS_ns
         device->ping();
 
         std::stringstream json;
-        std::vector<Tango::DeviceAttribute> *attrList = nullptr; 
 
         json << "{\"event\": \"read\", \"type_req\": \"attribute\", \"data\":[";
-
-        attrList = device->read_attributes(_attributes);
-        generateAttrJson(json, attrList);
-        json << "]";
-
-        if (_pipeAttr.size()) {
-            json << ", \"pipe\": ";
-            try {
-                Tango::DevicePipe devicePipe = device->read_pipe(_pipeAttr);
-                json << processor->processPipe(devicePipe, TYPE_WS_REQ::PIPE);
-            }
-            catch (Tango::DevFailed &e) {
-                json << "[";
-                for (int i = 0; i < e.errors.length(); i++) {
-                    if (i > 0)
-                        json << ", ";
-                    json << "\"" << e.errors[i].desc << "\"";
-                }
-                json << "]";                
-            }
-            
-        }
+        forGenerateJsonForUpdate(json);
         json << "}";
 
         iterator++;
-        if (attrList != nullptr)
-            delete attrList;
         return json.str();
+    }
+
+    void DeviceForWs::generateJsonForUpdate(stringstream &json)
+    {
+        forGenerateJsonForUpdate(json);
+        iterator++;
     }
 
     string DeviceForWs::sendPipeCommand(const ParsedInputJson& parsedInput)
@@ -99,5 +102,42 @@ namespace WebSocketDS_ns
     Tango::CommandInfo DeviceForWs::getCommandInfo(const string &command_name)
     {
         return device->command_query(command_name);
+    }
+
+    void DeviceForWs::forGenerateJsonForUpdate(stringstream &json)
+    {
+        std::vector<Tango::DeviceAttribute> *attrList = nullptr;
+
+        attrList = device->read_attributes(_attributes);
+        generateAttrJson(json, attrList);
+        json << "]";
+
+        if (_pipeAttr.size()) {
+            json << ", \"pipe\": ";
+            try {
+                Tango::DevicePipe devicePipe = device->read_pipe(_pipeAttr);
+                json << processor->processPipe(devicePipe, TYPE_WS_REQ::PIPE);
+            }
+            catch (Tango::DevFailed &e) {
+                json << "[";
+                for (unsigned int i = 0; i < e.errors.length(); i++) {
+                    if (i > 0)
+                        json << ", ";
+                    json << "\"" << e.errors[i].desc << "\"";
+                }
+                json << "]";
+            }
+        }
+
+        if (attrList != nullptr)
+            delete attrList;
+    }
+
+    bool DeviceForWs::initAllAttrs() {
+        auto attrList = device->attribute_list_query();
+        for (auto& attrFromList : *attrList) {
+            _attributes.push_back(attrFromList.name);
+        }
+        return true;
     }
 }
