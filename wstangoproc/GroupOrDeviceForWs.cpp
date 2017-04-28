@@ -130,7 +130,7 @@ namespace WebSocketDS_ns
                 string tmpAttrName = attr;
                 std::transform(tmpAttrName.begin(), tmpAttrName.end(), tmpAttrName.begin(), ::tolower);
                 if (tmpAttrName.find("json") != std::string::npos)
-                    isJsonAttribute.insert(tmpAttrName);
+                    isJsonAttribute.insert(attr);
             }
 
             //DEBUG_STREAM << attr << endl;
@@ -145,7 +145,7 @@ namespace WebSocketDS_ns
                 string tmpAttrName = attr;
                 std::transform(tmpAttrName.begin(), tmpAttrName.end(), tmpAttrName.begin(), ::tolower);
                 if (tmpAttrName.find("json") != std::string::npos)
-                    isJsonAttribute.insert(tmpAttrName);
+                    isJsonAttribute.insert(attr);
             }
         }
         else 
