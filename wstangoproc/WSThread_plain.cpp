@@ -213,11 +213,6 @@ namespace WebSocketDS_ns
             ERROR_STREAM_F << " Error code: " << ec.value() << " Mess: " << ec.message();
         }
 
-        // if ec.value() !=0 and if ec.value()!= SUCCESS
-//        DEBUG_STREAM_F << ec.message();
-//        DEBUG_STREAM_F << ec.value();
-//        DEBUG_STREAM_F << ec.default_error_condition().message();
-
         try {
             if (forRunTimer(hdl, timerInd))
                 return;
@@ -244,6 +239,13 @@ namespace WebSocketDS_ns
         return con->get_buffered_amount();
     }
 
-    WSThread_plain::~WSThread_plain() {}
+    WSThread_plain::~WSThread_plain() {
+        // Выскакивал access violation reading location, если таймер запущен
+        for (auto &cn : m_connections) {
+            if (cn.second.timing != nullptr) {
+                cn.second.timing.reset(nullptr);
+            }
+        }
+    }
 
 }

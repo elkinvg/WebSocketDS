@@ -105,7 +105,7 @@ namespace WebSocketDS_ns
         return parsedJson;
     }
 
-    dev_attr_pipe_map ParsingInputJson::getListDevicesAttrPipe(const json_obj_map& objMap)
+    dev_attr_pipe_map ParsingInputJson::getListDevicesAttrPipe(const json_obj_map& objMap, string& errorMessage, bool isAlias)
     {
         //{
         //    "devices": {
@@ -120,11 +120,17 @@ namespace WebSocketDS_ns
         //    }
         //}
         // input JSON is value for key "devices"
-        // Провеляется наличия хотя бы одного из ключей, attr или pipe
+        // Проверяется наличия хотя бы одного из ключей, attr или pipe
         // Если один из ключей найден значения добавляются в map
         // Проверка наличия ключа devices производится ранее
-        dev_attr_pipe_map attrPipeMap;
-        auto devices = objMap.at("devices");
+        dev_attr_pipe_map attrPipeMap; 
+        ptree devices;
+
+        if (isAlias)
+            devices = objMap.at("devices_al");
+        else 
+            devices = objMap.at("devices");
+
         for (auto &dev : devices) {
             auto attr_pipe = make_pair(
                 getArrayOfStr("attr", dev.second),
@@ -133,6 +139,22 @@ namespace WebSocketDS_ns
             if (attr_pipe.first.size() || attr_pipe.second.size())
                 attrPipeMap[dev.first] = move(attr_pipe);
 
+        }
+        return attrPipeMap;
+    }
+
+    dev_attr_pipe_map ParsingInputJson::getListDevicesAttrPipe(const ptree &devices)
+    {
+        dev_attr_pipe_map attrPipeMap;
+
+        for (auto &dev : devices) {
+            auto attr_pipe = make_pair(
+                getArrayOfStr("attr", dev.second),
+                getArrayOfStr("pipe", dev.second)
+                );
+            if (attr_pipe.first.size() || attr_pipe.second.size()) {
+                attrPipeMap[dev.first] = move(attr_pipe);
+            }
         }
         return attrPipeMap;
     }

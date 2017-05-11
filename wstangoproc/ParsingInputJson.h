@@ -69,7 +69,8 @@ namespace WebSocketDS_ns
         ~ParsingInputJson(){}
 
         ParsedInputJson parseInputJson(const string& json);
-        dev_attr_pipe_map getListDevicesAttrPipe(const json_obj_map& objMap);
+        dev_attr_pipe_map getListDevicesAttrPipe(const json_obj_map& objMap, string& errorMessage, bool isAlias);
+        dev_attr_pipe_map getListDevicesAttrPipe(const ptree &devices);
         vector<string> getArrayOfStr(string key, const ptree& inPtree);
     };
 }

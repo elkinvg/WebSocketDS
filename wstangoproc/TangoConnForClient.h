@@ -26,6 +26,8 @@ namespace WebSocketDS_ns
         ~TangoConnForClient();
         string getJsonForAttribute();
         bool removeAllDevices();
+        int numOfListeningDevices();
+
 
     private:
         std::unordered_map<string, std::unique_ptr<GroupOrDeviceForWs>> devices;

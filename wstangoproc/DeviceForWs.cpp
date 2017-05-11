@@ -7,6 +7,9 @@ namespace WebSocketDS_ns
 {
     DeviceForWs::DeviceForWs(string deviceName)
     {
+        StringProc::isNameAlias(deviceName);
+            getDeviceNameFromAlias(deviceName);
+
         device = new Tango::DeviceProxy(deviceName);
         device->set_timeout_millis(3000);
     }
@@ -57,6 +60,34 @@ namespace WebSocketDS_ns
         iterator++;
     }
 
+    string DeviceForWs::generateJsonForAttrReadCl(const ParsedInputJson& parsedInput)
+    {
+        std::stringstream json;
+
+        json << "{\"event\": \"read\", \"type_req\": \"" << parsedInput.type_req << "\", ";
+        if (parsedInput.check_key("device_name") == TYPE_OF_VAL::VALUE)
+            json << "\"device_name\": \"" << parsedInput.otherInpStr.at("device_name") << "\", ";
+        
+        try {
+            auto idTmp = stoi(parsedInput.id);
+            json << "\"id_req\": " << idTmp << ", ";
+        }
+        catch (...) {
+            // id_req может быть числом, либо случайной строкой
+            if (parsedInput.id == NONE)
+                json << "\"id_req\": " << parsedInput.id << ", ";
+            else
+                json << "\"id_req\": \"" << parsedInput.id << "\", ";
+        }
+
+        json << "\"data\": [";
+
+        forGenerateJsonForUpdate(json);
+        json << "}";
+
+        return json.str();
+    }
+
     string DeviceForWs::sendPipeCommand(const ParsedInputJson& parsedInput)
     {
         string pipeName = parsedInput.otherInpStr.at("pipe_name");
@@ -81,11 +112,13 @@ namespace WebSocketDS_ns
 
     string DeviceForWs::sendCommand(const ParsedInputJson& parsedInput, bool& statusComm) {
         statusComm = false;
-        if (parsedInput.type_req != "command")
-            return StringProc::exceptionStringOut(parsedInput.id, parsedInput.otherInpStr.at("command_name"),"type_req must be command","command");
 
         string errorMess;
-        Tango::DeviceData outDeviceData = tangoCommandInoutForDevice(device, parsedInput, errorMess);
+        Tango::DeviceData outDeviceData;
+        if (parsedInput.type_req == "command")
+            outDeviceData = tangoCommandInoutForDevice(device, parsedInput, errorMess);
+        else if (parsedInput.type_req == "command_device_cl")
+            outDeviceData = tangoCommandInoutForDeviceCl(device, parsedInput, errorMess);
 
         if (errorMess.size())
             return errorMess;
@@ -139,5 +172,15 @@ namespace WebSocketDS_ns
             _attributes.push_back(attrFromList.name);
         }
         return true;
+    }
+
+    void DeviceForWs::getDeviceNameFromAlias(string& alias) {
+        string device_name_from_alias;
+        try {
+            Tango::Database *db = Tango::Util::instance()->get_database();
+            db->get_device_alias(alias, device_name_from_alias);
+            alias = device_name_from_alias;
+        }
+        catch (Tango::DevFailed& e) {}
     }
 }

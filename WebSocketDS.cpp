@@ -634,7 +634,10 @@ void WebSocketDS::check_poll()
      attr_TimestampDiff_read[0] = cpTime - updTime;
      DEBUG_STREAM << "WebSocketDS::CheckPoll()  - " << device_name << " time difference: " << attr_TimestampDiff_read[0]  << endl;
 
-     if (attr_TimestampDiff_read[0] > resetTimestampDifference)
+     if (
+         wsTangoConn->isServerMode() && 
+         attr_TimestampDiff_read[0] > resetTimestampDifference
+         )
          reset();
 
 	

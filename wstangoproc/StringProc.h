@@ -27,6 +27,7 @@ namespace WebSocketDS_ns
         static string exceptionStringOut(string errorMessage, string type_attr_resp);
         // parse
         static vector<string> parseInputString(string &inp, string delimiter, bool isAllParts = false);
+        static bool isNameAlias(const string& deviceName);
         //static map<std::string, std::string> parseJsonFromCommand(const string& jsonInput, bool isGroup);
         //static ParsedInputJson parseInputJson(const string& json);
     private:

@@ -77,6 +77,19 @@ namespace WebSocketDS_ns
         return ss.str();
     }
 
+    bool StringProc::isNameAlias(const string& deviceName)
+    {
+        bool isAlias = false;
+        int slashNum = 0;
+        for (auto& chr : deviceName) {
+            if (chr == '/')
+                slashNum++;
+        }
+        if (slashNum != 2)
+            isAlias = true;
+        return isAlias;
+    }
+
     std::vector<std::string> StringProc::parseInputString(string &inp, string delimiter, bool isAllParts) {
         // Если isAllParts == true в вектор помещаются все части входящей строки
         // Иначе все кроме первой (для команд и аттрибутов первая часть содержит имя)

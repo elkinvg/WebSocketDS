@@ -5,6 +5,7 @@
 #include <type_traits>
 
 #include <algorithm>
+#include "StringProc.h"
 
 namespace WebSocketDS_ns
 {
@@ -105,11 +106,22 @@ namespace WebSocketDS_ns
 
         string command_name = inputArgs.otherInpStr.at("command_name");
 
+        // В режимах SERVER* дополнительные параметры команд 
+        // прописываются в property
+        // Здесь, при отправлении команды от клиента дополнительные выставляются
+        // в имени команды.
+        // Пример: CommandName;precf=15
+        if (inputArgs.type_req == "command_device_cl")
+            StringProc::parseInputString(command_name, ";");
+
         json << "{";
         json << "\"command_name\": " << "\"" << command_name << "\",";
 
-        if (inputArgs.type_req == "command_device" && inputArgs.check_key("device_name") == TYPE_OF_VAL::VALUE)
-            json << "\"device_name\": " << "\"" << inputArgs.otherInpStr.at("device_name") << "\",";
+        if (inputArgs.type_req == "command_device" || inputArgs.type_req == "command_device_cl")
+        {
+            if (inputArgs.check_key("device_name") == TYPE_OF_VAL::VALUE)
+                json << "\"device_name\": " << "\"" << inputArgs.otherInpStr.at("device_name") << "\",";
+        }
 
         json << "\"argout\":";
         generateArgoutForJson(devData,json,command_name);

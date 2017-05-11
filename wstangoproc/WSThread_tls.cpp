@@ -64,7 +64,14 @@ namespace WebSocketDS_ns
         return 0;
     }
 
-    WSThread_tls::~WSThread_tls() {}
+    WSThread_tls::~WSThread_tls() {
+        for (auto &cn : m_connections) {
+            // Выскакивал access violation reading location, если таймер запущен
+            if (cn.second.timing != nullptr) {
+                cn.second.timing.reset(nullptr);
+            }
+        }
+    }
 
     std::string WSThread_tls::get_password() {
         return "test";

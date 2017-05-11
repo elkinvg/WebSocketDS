@@ -118,6 +118,11 @@ namespace WebSocketDS_ns
         // ??? !!! Пока только для девайсов, а не для групп
     }
 
+    string GroupForWs::generateJsonForAttrReadCl(const ParsedInputJson& parsedInput)
+    {
+        return "??? !!!";
+    }
+
     string GroupForWs::sendPipeCommand(const ParsedInputJson& parsedInput)
     {
         string output;
@@ -140,8 +145,6 @@ namespace WebSocketDS_ns
     string GroupForWs::sendCommand(const ParsedInputJson& parsedInput, bool& statusComm)
     {
         statusComm = false;
-        if (parsedInput.type_req != "command_device" && parsedInput.type_req != "command_group")
-            return StringProc::exceptionStringOut(parsedInput.id, parsedInput.otherInpStr.at("command_name"), "type_req must be command_device or command_group", "command");
 
         // command_device or command_group
         string resp;
@@ -194,11 +197,11 @@ namespace WebSocketDS_ns
         string commandName = parsedInput.otherInpStr.at("command_name");
 
         if (parsedInput.type_req != "command_device" )
-            return StringProc::exceptionStringOut(parsedInput.id, commandName, "type_req must be command_device", "command").insert(0, ERR_PRED);
+            return StringProc::exceptionStringOut(parsedInput.id, commandName, "type_req must be command_device", "command");
 
 
         if (parsedInput.check_key("device_name") != TYPE_OF_VAL::VALUE)
-            return StringProc::exceptionStringOut(parsedInput.id, commandName, "This request (command_device) must contain a key device_name", parsedInput.type_req).insert(0, ERR_PRED);
+            return StringProc::exceptionStringOut(parsedInput.id, commandName, "This request (command_device) must contain a key device_name", parsedInput.type_req);
 
         string deviceName = parsedInput.otherInpStr.at("device_name");
 
@@ -211,12 +214,12 @@ namespace WebSocketDS_ns
                 dp = group->get_device(deviceName);
                 if (dp == 0)
                 {
-                    return StringProc::exceptionStringOut(parsedInput.id, commandName, deviceName + " does not belongs to the group", parsedInput.type_req).insert(0, ERR_PRED);
+                    return StringProc::exceptionStringOut(parsedInput.id, commandName, deviceName + " does not belongs to the group", parsedInput.type_req);
                 }
             }
             catch (const Tango::DevFailed &df)
             {
-                return StringProc::exceptionStringOut(parsedInput.id, commandName, deviceName + "  belongs to the group but can’t be reached", parsedInput.type_req).insert(0, ERR_PRED);
+                return StringProc::exceptionStringOut(parsedInput.id, commandName, deviceName + "  belongs to the group but can’t be reached", parsedInput.type_req);
             }
 
             return sendCommandBinForDevice(dp, parsedInput, statusComm);

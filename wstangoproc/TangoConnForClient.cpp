@@ -169,3 +169,8 @@ bool WebSocketDS_ns::TangoConnForClient::removeAllDevices()
     devices.clear();
     return true;
 }
+
+int WebSocketDS_ns::TangoConnForClient::numOfListeningDevices()
+{
+    return devices.size();
+}

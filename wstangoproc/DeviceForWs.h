@@ -17,6 +17,8 @@ namespace WebSocketDS_ns
         virtual string generateJsonForUpdate() override;
         virtual void generateJsonForUpdate(std::stringstream& json) override;
 
+        virtual string generateJsonForAttrReadCl(const ParsedInputJson& parsedInput) override;
+
         virtual string sendPipeCommand(const ParsedInputJson& parsedInput) override;
         virtual string sendCommand(const ParsedInputJson& parsedInput, bool& statusComm) override;
 
@@ -26,6 +28,7 @@ namespace WebSocketDS_ns
         virtual Tango::CommandInfo getCommandInfo(const string& command_name) override;
         virtual bool initAllAttrs() override;
         void forGenerateJsonForUpdate(stringstream &json);
+        void getDeviceNameFromAlias(string& alias);
 
     private:
         Tango::DeviceProxy *device = nullptr;

@@ -240,6 +240,12 @@ namespace WebSocketDS_ns
     {
         Tango::DeviceData outDeviceData;
         string commandName = dataFromJson.otherInpStr.at("command_name");
+        // В режимах SERVER* дополнительные параметры команд 
+        // прописываются в property
+        // Здесь, при отправлении команды от клиента дополнительные выставляются
+        // в имени команды.
+        // Пример: CommandName;precf=15
+        StringProc::parseInputString(commandName, ";");
 
         if (accessibleCommandInfo.find(commandName) == accessibleCommandInfo.end()) {
             errorMessInJson = StringProc::exceptionStringOut(dataFromJson.id, commandName, "This Command not found in the list of available commands or not found on DeviceServer", dataFromJson.type_req);
@@ -249,30 +255,27 @@ namespace WebSocketDS_ns
         Tango::CommandInfo comInfo = accessibleCommandInfo[commandName];
         int type = comInfo.in_type;
 
-        // Вызов правильного метода  command_inout
-        // Проверка типа входных аргументов Void, Array, Data
+        _tangoCommandInoutForDevice(outDeviceData, deviceProxy, dataFromJson, commandName, errorMessInJson, type);
+
+        return outDeviceData;
+    }
+
+    Tango::DeviceData GroupOrDeviceForWs::tangoCommandInoutForDeviceCl(Tango::DeviceProxy *deviceProxy, const ParsedInputJson& dataFromJson, string& errorMessInJson)
+    {
+        Tango::DeviceData outDeviceData;
+        string commandName = dataFromJson.otherInpStr.at("command_name");
+        // В режимах SERVER* дополнительные параметры команд 
+        // прописываются в property
+        // Здесь, при отправлении команды от клиента дополнительные выставляются
+        // в имени команды.
+        // Пример: CommandName;precf=15
+        StringProc::parseInputString(commandName, ";");
+
         try {
-            if (type == Tango::DEV_VOID) {
-                outDeviceData = deviceProxy->command_inout(commandName);
-            }
-            else {
-                if (dataFromJson.check_key("argin") == TYPE_OF_VAL::NONE) {
-                    errorMessInJson = StringProc::exceptionStringOut(dataFromJson.id, commandName, "argin not found", dataFromJson.type_req);
-                    return outDeviceData;
-                }
+            Tango::CommandInfo info = getCommandInfo(commandName);
+            int type = info.in_type;
 
-                // если argin - массив
-                // и если требуемый type не является массивом
-                if (dataFromJson.check_key("argin") == TYPE_OF_VAL::ARRAY && !processor->isMassive(type)) {
-                    errorMessInJson = StringProc::exceptionStringOut(dataFromJson.id, commandName, "The input data should not be an array", dataFromJson.type_req);
-                    return outDeviceData;
-                }
-
-                Tango::DeviceData inDeviceData;
-                inDeviceData = processor->getDeviceDataFromParsedJson(dataFromJson, type);
-
-                outDeviceData = deviceProxy->command_inout(commandName, inDeviceData);
-            }
+            _tangoCommandInoutForDevice(outDeviceData, deviceProxy, dataFromJson, commandName, errorMessInJson, type);
         }
         catch (Tango::DevFailed &e) {
             string tangoErrors;
@@ -285,11 +288,6 @@ namespace WebSocketDS_ns
 
             errorMessInJson = StringProc::exceptionStringOut(dataFromJson.id, commandName, tangoErrors, dataFromJson.type_req);
         }
-        catch (std::exception &exc) {
-            // if cannot convert input str
-            errorMessInJson = StringProc::exceptionStringOut(dataFromJson.id, commandName, exc.what(), dataFromJson.type_req);
-        }
-
         return outDeviceData;
     }
 
@@ -318,21 +316,32 @@ namespace WebSocketDS_ns
 
     string GroupOrDeviceForWs::sendCommandBinForDevice(Tango::DeviceProxy *deviceProxy, const ParsedInputJson& parsedInput, bool& statusComm)
     {
+
+
         statusComm = false;
         string argout;
-        string commandName = parsedInput.otherInpStr.at("command_name");
+        
         string typeReq = parsedInput.type_req;
 
-
         string errorMess;
+
+        string commandName = parsedInput.otherInpStr.at("command_name");
+        // В режимах SERVER* дополнительные параметры команд 
+        // прописываются в property
+        // Здесь, при отправлении команды от клиента дополнительные выставляются
+        // в имени команды.
+        // Пример: CommandName;precf=15
+        StringProc::parseInputString(commandName, ";");
+
+        Tango::CommandInfo info = getCommandInfo(commandName);
+        if (info.out_type != Tango::DEVVAR_CHARARRAY)
+            return StringProc::exceptionStringOut(parsedInput.id, commandName, "Output data must be Tango::DevVarCharArray", typeReq);
 
         Tango::DeviceData outDeviceData = tangoCommandInoutForDevice(deviceProxy, parsedInput, errorMess);
 
         // Если при отправлении команды на девайс выявлена ошибка
         if (errorMess.size())
-            return errorMess.insert(0,ERR_PRED);
-
-        statusComm = true;
+            return errorMess;
 
         int type = outDeviceData.get_type();
 
@@ -343,14 +352,15 @@ namespace WebSocketDS_ns
                 for (unsigned int i = 0; i < vcharr->length(); i++) {
                     argout.push_back((*vcharr)[i]);
                 }
+                statusComm = true;
             }
             catch (Tango::DevFailed &e) {
-                argout = StringProc::exceptionStringOut(parsedInput.id, commandName, "Exception From sendCommandBin", typeReq).insert(0, ERR_PRED);
+                argout = StringProc::exceptionStringOut(parsedInput.id, commandName, "Exception From sendCommandBin", typeReq);
             }
         }
         else
         {
-            argout = StringProc::exceptionStringOut(parsedInput.id, commandName, "Output data must be Tango::DevVarCharArray", typeReq).insert(0, ERR_PRED);
+            argout = StringProc::exceptionStringOut(parsedInput.id, commandName, "Output data must be Tango::DevVarCharArray", typeReq);
         }
 
         return argout;
@@ -403,5 +413,49 @@ namespace WebSocketDS_ns
             tmpsz = getPairOfParams(niterOpt.second);
         //nIters.push_back(tmpsz);
         nIters[attrName] = tmpsz;
+    }
+
+    void GroupOrDeviceForWs::_tangoCommandInoutForDevice(Tango::DeviceData &outDeviceData, Tango::DeviceProxy *deviceProxy, const ParsedInputJson& dataFromJson, string& commandName, string& errorMessInJson, int type)
+    {
+        // Вызов правильного метода  command_inout
+        // Проверка типа входных аргументов Void, Array, Data
+        try {
+            if (type == Tango::DEV_VOID) {
+                outDeviceData = deviceProxy->command_inout(commandName);
+            }
+            else {
+                if (dataFromJson.check_key("argin") == TYPE_OF_VAL::NONE) {
+                    errorMessInJson = StringProc::exceptionStringOut(dataFromJson.id, commandName, "argin not found", dataFromJson.type_req);
+                    return;
+                }
+
+                // если argin - массив
+                // и если требуемый type не является массивом
+                if (dataFromJson.check_key("argin") == TYPE_OF_VAL::ARRAY && !processor->isMassive(type)) {
+                    errorMessInJson = StringProc::exceptionStringOut(dataFromJson.id, commandName, "The input data should not be an array", dataFromJson.type_req);
+                    return;
+                }
+
+                Tango::DeviceData inDeviceData;
+                inDeviceData = processor->getDeviceDataFromParsedJson(dataFromJson, type);
+
+                outDeviceData = deviceProxy->command_inout(commandName, inDeviceData);
+            }
+        }
+        catch (Tango::DevFailed &e) {
+            string tangoErrors;
+
+            for (unsigned int i = 0; i < e.errors.length(); i++) {
+                if (i > 0)
+                    tangoErrors += " ||| ";
+                tangoErrors += (string)e.errors[i].desc;
+            }
+
+            errorMessInJson = StringProc::exceptionStringOut(dataFromJson.id, commandName, tangoErrors, dataFromJson.type_req);
+        }
+        catch (std::exception &exc) {
+            // if cannot convert input str
+            errorMessInJson = StringProc::exceptionStringOut(dataFromJson.id, commandName, exc.what(), dataFromJson.type_req);
+        }
     }
 }

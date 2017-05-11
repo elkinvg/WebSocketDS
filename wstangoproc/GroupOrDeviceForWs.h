@@ -29,6 +29,8 @@ namespace WebSocketDS_ns
         virtual string generateJsonForUpdate() = 0;
         virtual void generateJsonForUpdate(std::stringstream& json) = 0;
 
+        virtual string generateJsonForAttrReadCl(const ParsedInputJson& parsedInput) = 0;
+
         virtual string sendPipeCommand(const ParsedInputJson& parsedInput) = 0;
         virtual string sendCommand(const ParsedInputJson& parsedInput, bool& statusComm) = 0;
         virtual string sendCommandBin(const ParsedInputJson& parsedInput, bool& statusComm) = 0;
@@ -42,6 +44,7 @@ namespace WebSocketDS_ns
         void generateAttrJson(std::stringstream& json, std::vector<Tango::DeviceAttribute> *attrList);
 
         Tango::DeviceData tangoCommandInoutForDevice(Tango::DeviceProxy *deviceProxy, const ParsedInputJson& dataFromJson, string& errorMessInJson);
+        Tango::DeviceData tangoCommandInoutForDeviceCl(Tango::DeviceProxy *deviceProxy, const ParsedInputJson& dataFromJson, string& errorMessInJson);
 
         void generateJsonHeadForPipeComm(const ParsedInputJson& parsedInput, stringstream &json);
 
@@ -58,6 +61,7 @@ namespace WebSocketDS_ns
 
     private:
         void forNiterOpt(string attrName);
+        void _tangoCommandInoutForDevice(Tango::DeviceData &outDeviceData, Tango::DeviceProxy *deviceProxy, const ParsedInputJson& dataFromJson, string& commandName, string& errorMessInJson, int type);
 
     protected:
         //std::vector<std::pair<unsigned short, unsigned short>> nIters;
@@ -70,7 +74,7 @@ namespace WebSocketDS_ns
         int nAttributes{0};
         std::unordered_map<std::string, Tango::CommandInfo> accessibleCommandInfo;
         std::unique_ptr<TangoProcessor> processor;
-        const string ERR_PRED = "err";
+        //const string ERR_PRED = "err"; // .insert(0, ERR_PRED)
     
     private:
         bool _isShortAttr{ true };

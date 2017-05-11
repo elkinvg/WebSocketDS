@@ -44,9 +44,12 @@ namespace WebSocketDS_ns
         bool isServerMode();
         bool isLogActive() {return _isLogActive; }
         bool isInitDs(string &errorMessage) {errorMessage = this->errorMessage; return _isInitDs; }
+        bool isTm100ms() { return _istm100ms; }
         unsigned int getMaxBuffSize();
         unsigned short getMaxNumberOfConnections();
         string getAuthDS();
+
+        string getDeviceNameFromAlias(string alias, string& errorMessage);
 
     private:
         void init_wstc(WebSocketDS *dev, pair<string, string> &dsAndOptions, array<vector<string>, 3> &attrCommPipe);
@@ -60,11 +63,17 @@ namespace WebSocketDS_ns
         TYPE_WS_REQ getTypeWsReq(const string& req);
 
         string sendRequest_Command(const ParsedInputJson& inputReq, ConnectionData& connData, bool& isBinary);
+        string sendRequest_Command_DevClient(const ParsedInputJson& inputReq, ConnectionData& connData, bool& isBinary);
         string sendRequest_PipeComm(const ParsedInputJson& inputReq, ConnectionData& connData);
         string sendRequest_RidentReq(const ParsedInputJson& inputReq, ConnectionData& connData);
         string sendRequest_RidentAns(const ParsedInputJson& inputReq, ConnectionData& connData);
         string sendRequest_Rident(const ParsedInputJson& inputReq, ConnectionData& connData);
 
+        string sendRequest_AttrClient(const ParsedInputJson& inputReq, ConnectionData& connData);
+
+        string forCommandRequest(const ParsedInputJson &inputReq, ConnectionData &connData, string &commandName, string device_name);
+
+        string checkDeviceNameKey(const ParsedInputJson& inputReq, std::string &errorMessage);
 
 
     private:
@@ -79,6 +88,7 @@ namespace WebSocketDS_ns
         bool _isInitDs{ false };
         bool _isGroup{ false };
         bool _isShortAttr{ true };
+        bool _istm100ms{ false };
         unsigned long _numOfConnections{0};
         string errorMessage;
         std::default_random_engine generator;

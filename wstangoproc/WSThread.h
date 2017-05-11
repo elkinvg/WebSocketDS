@@ -86,6 +86,14 @@ namespace WebSocketDS_ns
     private:
         void timerProc(const ParsedInputJson &parsedJson, websocketpp::connection_hdl hdl);
 
+        void timerStartMeth(const ParsedInputJson &parsedJson, websocketpp::connection_hdl hdl, dev_attr_pipe_map& devAttrPipeMap);
+        void timerStopMeth(const ParsedInputJson &parsedJson, websocketpp::connection_hdl hdl);
+        void timerChangeMeth(const ParsedInputJson &parsedJson, websocketpp::connection_hdl hdl);
+        void timerAddDevsMeth(const ParsedInputJson &parsedJson, websocketpp::connection_hdl hdl, dev_attr_pipe_map& devAttrPipeMap);
+        void timerRemDevsMeth(const ParsedInputJson &parsedJson, websocketpp::connection_hdl hdl);
+        void timerUpdDevsAddMeth(const ParsedInputJson &parsedJson, websocketpp::connection_hdl hdl, dev_attr_pipe_map& devAttrPipeMap);
+        void timerUpdDevsRemMeth(const ParsedInputJson &parsedJson, websocketpp::connection_hdl hdl, dev_attr_pipe_map& devAttrPipeMap);
+
         vector<string> &split(const string &s, char delim, vector<string> &elems);
         vector<string> split(const string &s, char delim);
 

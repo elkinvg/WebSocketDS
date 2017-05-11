@@ -92,13 +92,7 @@ namespace WebSocketDS_ns
             if (_wsds->get_status() != "The listening server is running")
                 _wsds->set_status("The listening server is running");
         }
-        if (
-            ws_mode == MODE::SERVER
-            || ws_mode == MODE::SERVNCLIENT_ALL_RO
-            || ws_mode == MODE::SERVNCLIENT_ALL
-            || ws_mode == MODE::SERVNCLIENT_ALIAS_RO
-            || ws_mode == MODE::SERVNCLIENT_ALIAS
-            )
+        if (isServerMode())
             // Только если используется серверный режим
             wsThread->send_all(jsonStrOut);
         return jsonStrOut;
@@ -114,6 +108,9 @@ namespace WebSocketDS_ns
         }
 
         if (typeWsReq == TYPE_WS_REQ::COMMAND) {
+            if (!isServerMode()) {
+                return StringProc::exceptionStringOut(inputReq.id, NONE, "This mode does not support commands of this type", inputReq.type_req);
+            }
             return sendRequest_Command(inputReq, connData, isBinary);
         }
 
@@ -128,9 +125,27 @@ namespace WebSocketDS_ns
         if (typeWsReq == TYPE_WS_REQ::RIDENT_ANS) {
             return sendRequest_RidentAns(inputReq, connData);
         }
+        
         if (typeWsReq == TYPE_WS_REQ::RIDENT) {
             return sendRequest_Rident(inputReq, connData);
         }
+
+        if (typeWsReq == TYPE_WS_REQ::COMMAND_DEV_CLIENT) {
+            if (ws_mode == MODE::SERVER
+                || ws_mode == MODE::CLIENT_ALIAS_RO
+                || ws_mode == MODE::CLIENT_ALL_RO
+                || ws_mode == MODE::SERVNCLIENT_ALIAS_RO
+                || ws_mode == MODE::SERVNCLIENT_ALL_RO)
+                return StringProc::exceptionStringOut(inputReq.id, NONE, "This request type is not supported in the current mode", inputReq.type_req);
+            return sendRequest_Command_DevClient(inputReq, connData, isBinary);
+        }
+
+        if (typeWsReq == TYPE_WS_REQ::ATTR_DEV_CLIENT) {
+            if (ws_mode == MODE::SERVER)
+                return StringProc::exceptionStringOut(inputReq.id, NONE, "This request type is not supported in the current mode", inputReq.type_req);
+            return sendRequest_AttrClient(inputReq, connData);
+        }
+
         // В обычном случае не возвращается никогда
         return "{\"error\": \"Unknown Request\"}";
     }
@@ -208,6 +223,9 @@ namespace WebSocketDS_ns
                         if (gettedIdentOpt[1] == "cli_ali_ro")
                             ws_mode = MODE::CLIENT_ALIAS_RO;
                     }
+                }
+                if (opt == "tm100ms") {
+                    _istm100ms = true;
                 }
             }
         }
@@ -293,6 +311,11 @@ namespace WebSocketDS_ns
             return TYPE_WS_REQ::RIDENT_ANS;
         if (req == "rident")
             return TYPE_WS_REQ::RIDENT;
+        if (req == "command_device_cl")
+            return TYPE_WS_REQ::COMMAND_DEV_CLIENT;
+        if (req == "attr_device_cl")
+            return TYPE_WS_REQ::ATTR_DEV_CLIENT;
+
         return TYPE_WS_REQ::UNKNOWN;
     }
 
@@ -310,44 +333,24 @@ namespace WebSocketDS_ns
             return false;
     }
 
+
     string WSTangoConn::sendRequest_Command(const ParsedInputJson &inputReq, ConnectionData &connData, bool &isBinary)
     {
         string resp_json;
-        if (inputReq.check_key("command_name") != TYPE_OF_VAL::VALUE)
-            return StringProc::exceptionStringOut(inputReq.id, NONE, "Not found key command_name or command_name is not value", inputReq.type_req);
-        string commandName = inputReq.otherInpStr.at("command_name");
-        string mess;
+        string commandName;
 
-        // Пока логин пароль (и прочие аут-данные) вводятся при запросе
-        // В дальнейшем, когда будет режим проверки во время сессии
-        // дописать дополнительно проверку режима проверки.
-        if (!connData.userCheckStatus.first && typeOfIdent != TYPE_OF_IDENT::RANDIDENT2 && typeOfIdent != TYPE_OF_IDENT::RANDIDENT3) {
-            mess = connData.userCheckStatus.second;
-            INFO_STREAM << mess << endl;
-            return StringProc::exceptionStringOut(inputReq.id, commandName, mess, inputReq.type_req);
+        string errorMessage = forCommandRequest(inputReq, connData, commandName, _wsds->deviceServer);
+
+        if (errorMessage.size())
+            return errorMessage;
+
+        if (_isGroup) {
+            if (inputReq.type_req != "command_device" && inputReq.type_req != "command_group")
+                return StringProc::exceptionStringOut(inputReq.id, inputReq.otherInpStr.at("command_name"), "type_req must be command_device or command_group", "command");
         }
-        else if (typeOfIdent == TYPE_OF_IDENT::RANDIDENT2 || typeOfIdent == TYPE_OF_IDENT::RANDIDENT3) {
-            if (!connData.forRandIdent2.identState) {
-                if (connData.forRandIdent2.isRandSended)
-                    connData.forRandIdent2.isRandSended = false;
-                if (connData.forRandIdent2.rand_ident)
-                    connData.forRandIdent2.rand_ident = 0;
-                connData.forRandIdent2.login = "";
-                return StringProc::exceptionStringOut(inputReq.id, commandName, "Send request for rand_identification. For details read the manual.", inputReq.type_req);
-            }
-        }
-
-        bool permission = uc->check_permission(inputReq, connData.remoteConf, _wsds->deviceServer, _isGroup, mess);
-
-        if (mess.size())
-            INFO_STREAM << mess << endl;
-
-        if (!permission)
-        {
-            if (mess.size())
-                return StringProc::exceptionStringOut(inputReq.id, commandName, mess, inputReq.type_req);
-            else
-                return StringProc::exceptionStringOut(inputReq.id, commandName, "Permission denied", inputReq.type_req);
+        else {
+            if (inputReq.type_req != "command")
+                return StringProc::exceptionStringOut(inputReq.id, inputReq.otherInpStr.at("command_name"), "type_req must be command", "command");
         }
 
         bool statusComm;
@@ -361,6 +364,40 @@ namespace WebSocketDS_ns
         bool isSent = uc->sendLogCommand(inputReq, connData.remoteConf, _wsds->deviceServer, _isGroup, statusComm);
         if (isSent)
             INFO_STREAM << "Information was sent to the log" << endl;
+        return resp_json;
+    }
+
+    string WSTangoConn::sendRequest_Command_DevClient(const ParsedInputJson& inputReq, ConnectionData& connData, bool& isBinary)
+    {
+        string errorMessage;
+        string device_name = checkDeviceNameKey(inputReq, errorMessage);
+
+        if (errorMessage.size())
+            return errorMessage;
+
+        string commandName;
+        errorMessage = forCommandRequest(inputReq, connData, commandName, device_name);
+
+        if (errorMessage.size())
+            return errorMessage;
+
+        string resp_json;
+
+        vector<string> commands{ commandName };
+        DeviceForWs deviceForWs(device_name, commands);
+        bool statusComm;
+        OUTPUT_DATA_TYPE odt = deviceForWs.checkDataType(commands[0]);
+        if (odt == OUTPUT_DATA_TYPE::JSON)
+            resp_json = deviceForWs.sendCommand(inputReq, statusComm);
+        if (odt == OUTPUT_DATA_TYPE::BINARY) {
+            resp_json = deviceForWs.sendCommandBin(inputReq, statusComm);
+            if (statusComm)
+                isBinary = true;
+        }
+        bool isSent = uc->sendLogCommand(inputReq, connData.remoteConf, device_name, _isGroup, statusComm);
+        if (isSent)
+            INFO_STREAM << "Information was sent to the log" << endl;
+        
         return resp_json;
     }
 
@@ -502,4 +539,141 @@ namespace WebSocketDS_ns
         json << "\"success\": true }";
         return json.str();
     }
+
+    string WSTangoConn::sendRequest_AttrClient(const ParsedInputJson& inputReq, ConnectionData& connData)
+    {
+        string errorMessage;
+        string device_name = checkDeviceNameKey(inputReq, errorMessage);
+
+        if (errorMessage.size())
+            return errorMessage;
+
+        bool isAttrNotFound = false;
+        bool isPipeNotFound = false;
+        
+        if (inputReq.check_key("attributes") != TYPE_OF_VAL::VALUE && inputReq.check_key("attributes") != TYPE_OF_VAL::ARRAY)
+            isAttrNotFound = true;
+
+        if (inputReq.check_key("pipes") != TYPE_OF_VAL::VALUE && inputReq.check_key("pipes") != TYPE_OF_VAL::ARRAY)
+            isPipeNotFound = true;
+
+        if (isAttrNotFound && isPipeNotFound)
+            return StringProc::exceptionStringOut(inputReq.id, NONE, "Not found keys attributes / pipes or attributes / pipes is not value or array", inputReq.type_req);
+
+        vector<string> attributes;
+        vector<string> pipes;
+
+        if (inputReq.check_key("attributes") == TYPE_OF_VAL::ARRAY)
+            attributes = inputReq.otherInpVec.at("attributes");
+        if (inputReq.check_key("attributes") == TYPE_OF_VAL::VALUE)
+            attributes.push_back(inputReq.otherInpStr.at("attributes"));
+
+        if (inputReq.check_key("pipes") == TYPE_OF_VAL::ARRAY)
+            pipes = inputReq.otherInpVec.at("pipes");
+        if (inputReq.check_key("pipes") == TYPE_OF_VAL::VALUE)
+            pipes.push_back(inputReq.otherInpStr.at("pipes"));
+
+        std::pair<vector<string>, vector<string>> attr_pipes;
+        attr_pipes.first = attributes;
+        attr_pipes.second  = pipes;
+
+        DeviceForWs deviceForWs(device_name, attr_pipes);
+        return deviceForWs.generateJsonForAttrReadCl(inputReq);
+    }
+
+    string WSTangoConn::forCommandRequest(const ParsedInputJson &inputReq, ConnectionData &connData, string &commandName, string device_name)
+    {
+        if (inputReq.check_key("command_name") != TYPE_OF_VAL::VALUE)
+            return StringProc::exceptionStringOut(inputReq.id, NONE, "Not found key command_name or command_name is not value", inputReq.type_req);
+        commandName = inputReq.otherInpStr.at("command_name");
+        string mess;
+
+        // Пока логин пароль (и прочие аут-данные) вводятся при запросе
+        // В дальнейшем, когда будет режим проверки во время сессии
+        // дописать дополнительно проверку режима проверки.
+        if (!connData.userCheckStatus.first && typeOfIdent != TYPE_OF_IDENT::RANDIDENT2 && typeOfIdent != TYPE_OF_IDENT::RANDIDENT3) {
+            mess = connData.userCheckStatus.second;
+            INFO_STREAM << mess << endl;
+            return StringProc::exceptionStringOut(inputReq.id, commandName, mess, inputReq.type_req);
+        }
+        else if (typeOfIdent == TYPE_OF_IDENT::RANDIDENT2 || typeOfIdent == TYPE_OF_IDENT::RANDIDENT3) {
+            if (!connData.forRandIdent2.identState) {
+                if (connData.forRandIdent2.isRandSended)
+                    connData.forRandIdent2.isRandSended = false;
+                if (connData.forRandIdent2.rand_ident)
+                    connData.forRandIdent2.rand_ident = 0;
+                connData.forRandIdent2.login = "";
+                return StringProc::exceptionStringOut(inputReq.id, commandName, "Send request for rand_identification. For details read the manual.", inputReq.type_req);
+            }
+        }
+
+        bool permission = uc->check_permission(inputReq, connData.remoteConf, device_name, _isGroup, mess);
+
+        if (mess.size())
+            INFO_STREAM << mess << endl;
+
+        if (!permission)
+        {
+            if (mess.size())
+                return StringProc::exceptionStringOut(inputReq.id, commandName, mess, inputReq.type_req);
+            else
+                return StringProc::exceptionStringOut(inputReq.id, commandName, "Permission denied", inputReq.type_req);
+        }
+
+        return "";
+    }
+
+    string WSTangoConn::getDeviceNameFromAlias(string alias, string& errorMessage)
+    {
+        string device_name_from_alias;
+        errorMessage.clear();
+        try {
+            Tango::Database *db = Tango::Util::instance()->get_database();
+            db->get_device_alias(alias, device_name_from_alias);
+        }
+        catch (Tango::DevFailed& e) {
+            for (unsigned int i = 0; i < e.errors.length(); i++) {
+                if (i > 0)
+                    errorMessage += " ||| ";
+                errorMessage += (string)e.errors[i].desc;
+            }
+        }
+        return device_name_from_alias;
+    }
+
+    std::string WSTangoConn::checkDeviceNameKey(const ParsedInputJson &inputReq, string &errorMessage)
+    {
+        string device_name;
+
+        if (inputReq.check_key("device_name") != TYPE_OF_VAL::VALUE) {
+            errorMessage = StringProc::exceptionStringOut(inputReq.id, NONE, "Not found key device_name or device_name is not value", inputReq.type_req);
+            return device_name;
+        }
+
+        // Проверка, является ли имя девайс псевдонимом
+        device_name = getDeviceNameFromAlias(inputReq.otherInpStr.at("device_name"), errorMessage);
+
+        
+
+        // Если используется режим псевдонимов
+        if (
+            ws_mode == MODE::SERVNCLIENT_ALIAS
+            || ws_mode == MODE::CLIENT_ALIAS
+            || ws_mode == MODE::CLIENT_ALIAS_RO
+            || ws_mode == MODE::SERVNCLIENT_ALIAS_RO
+            )
+        {
+            if (errorMessage.size())
+                errorMessage = StringProc::exceptionStringOut(inputReq.id, NONE, errorMessage, inputReq.type_req);
+            return device_name;
+        }
+            
+        // В остальных режимах можно использовать и псевдоним, и имя девайса
+        if (!errorMessage.size())
+            return device_name;
+
+        errorMessage.clear();
+        return inputReq.otherInpStr.at("device_name");
+    }
+
 }
