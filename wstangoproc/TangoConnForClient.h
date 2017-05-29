@@ -3,8 +3,8 @@
 
 #include <string>
 
-#include "GroupOrDeviceForWs.h"
-
+//#include "GroupOrDeviceForWs.h"
+#include "DeviceForWs.h"
 using std::string;
 
 namespace WebSocketDS_ns
@@ -24,13 +24,13 @@ namespace WebSocketDS_ns
         string removeDevicesFromUpdateList(vector<string> devs);
         
         ~TangoConnForClient();
-        string getJsonForAttribute();
+        string getJsonForAttribute(bool &hasDevice);
         bool removeAllDevices();
         int numOfListeningDevices();
 
 
     private:
-        std::unordered_map<string, std::unique_ptr<GroupOrDeviceForWs>> devices;
+        std::unordered_map<string, std::unique_ptr<DeviceForWs>> devices;
     };
 
 }

@@ -18,8 +18,7 @@ namespace WebSocketDS_ns
     {
         groupOrDevice = nullptr;
         init_wstc(dev, dsAndOptions, attrCommPipe);
-        if (_isInitDs)
-            wsThread = new WSThread_plain(this, portNumber);
+        wsThread = new WSThread_plain(this, portNumber);
     }
 
     WSTangoConn::WSTangoConn(WebSocketDS *dev, pair<string, string> dsAndOptions, array<vector<string>, 3> attrCommPipe, int portNumber, string cert, string key)
@@ -27,22 +26,15 @@ namespace WebSocketDS_ns
     {
         groupOrDevice = nullptr;
         init_wstc(dev, dsAndOptions, attrCommPipe);
-        if (_isInitDs)
-            wsThread = new WSThread_tls(this, portNumber, cert, key);
+        wsThread = new WSThread_tls(this, portNumber, cert, key);
     }
 
     void WSTangoConn::init_wstc(WebSocketDS *dev, pair<string, string> &dsAndOptions, array<vector<string>, 3> &attrCommPipe)
     {
         initOptionsAndDeviceServer(dsAndOptions, attrCommPipe);
-        if (_isInitDs) {
-            _wsds = dev;
-            uc = unique_ptr<UserControl> (new UserControl(dev->authDS, typeOfIdent, _isLogActive));
-        }
-        else {
-            // Если _isInitDs FALSE данный танго модуль будет перезагружаться 
-            // каждые 60  секунд.
-            // _isInitDs будет FALSЕ если подключаемый к WebSocketDS не прописан
-        }
+
+        _wsds = dev;
+        uc = unique_ptr<UserControl> (new UserControl(dev->authDS, typeOfIdent, _isLogActive));
     }
 
     WSTangoConn::~WSTangoConn()
@@ -59,7 +51,13 @@ namespace WebSocketDS_ns
         string jsonStrOut;
         bool wasExc = false;
         try {
-            jsonStrOut = groupOrDevice->generateJsonForUpdate();
+            if (!_isInitDs)
+            {
+                jsonStrOut = _errorMessage;
+                wasExc = true;
+            }
+            else
+                jsonStrOut = groupOrDevice->generateJsonForUpdate();
         }
         catch (Tango::ConnectionFailed &e)
         {
@@ -83,7 +81,8 @@ namespace WebSocketDS_ns
         }
         if (wasExc) {
             // State остаётся ON, но в STATUS выводится сообщение
-            _wsds->set_status(jsonStrOut);
+            if (isServerMode())
+                _wsds->set_status(jsonStrOut);
 
             removeSymbolsForString(jsonStrOut);
             jsonStrOut = StringProc::exceptionStringOut(jsonStrOut);
@@ -111,10 +110,17 @@ namespace WebSocketDS_ns
             if (!isServerMode()) {
                 return StringProc::exceptionStringOut(inputReq.id, NONE, "This mode does not support commands of this type", inputReq.type_req);
             }
+            if (!_isInitDs)
+                return StringProc::exceptionStringOut(inputReq.id, NONE, _errorMessage, inputReq.type_req);
             return sendRequest_Command(inputReq, connData, isBinary);
         }
 
         if (typeWsReq == TYPE_WS_REQ::PIPE_COMM) {
+            if (!isServerMode()) {
+                return StringProc::exceptionStringOut(inputReq.id, NONE, "This mode does not support commands of this type", inputReq.type_req);
+            }
+            if (!_isInitDs)
+                return StringProc::exceptionStringOut(inputReq.id, NONE, _errorMessage, inputReq.type_req);
             return sendRequest_PipeComm(inputReq, connData);
         }
 
@@ -234,7 +240,7 @@ namespace WebSocketDS_ns
 
     bool WSTangoConn::initDeviceServer(array<vector<string>, 3> &attrCommPipe)
     {
-        errorMessage.clear();
+        _errorMessage.clear();
         bool isInit = false;
 
         try {
@@ -249,14 +255,15 @@ namespace WebSocketDS_ns
         }
         catch (Tango::DevFailed &e)
         {
-            errorMessage = fromException(e, "WSTangoConn::initDeviceServer()");
+            _errorMessage = fromException(e, "WSTangoConn::initDeviceServer()");
+            removeSymbolsForString(_errorMessage);
         }
         return isInit;
     }
 
     bool WSTangoConn::initDeviceServer()
     {
-        errorMessage.clear();
+        _errorMessage.clear();
         bool isInit = false;
 
         try {
@@ -271,7 +278,8 @@ namespace WebSocketDS_ns
         }
         catch (Tango::DevFailed &e)
         {
-            errorMessage = fromException(e, "WSTangoConn::initDeviceServer()");
+            _errorMessage = fromException(e, "WSTangoConn::initDeviceServer()");
+            removeSymbolsForString(_errorMessage);
         }
         return isInit;
     }

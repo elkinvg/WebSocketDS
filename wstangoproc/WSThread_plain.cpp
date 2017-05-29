@@ -184,10 +184,17 @@ namespace WebSocketDS_ns
         
         try {
             
-            string resp = m_connections[hdl].tangoConnForClient->getJsonForAttribute();
-            send(hdl, resp);
+            bool hasDevice;
+            string resp = m_connections[hdl].tangoConnForClient->getJsonForAttribute(hasDevice);
             if (hdl.expired())
                 return;
+            send(hdl, resp);
+            
+            if (!hasDevice) {
+                m_connections[hdl].timing.reset(nullptr);
+                return;
+            }
+            
             m_connections[hdl].timerInd++;
             m_connections[hdl].timing->m_timer = m_server.set_timer(m_connections[hdl].timing->msec, bind(&WSThread_plain::runTimer
                                                                                                           , this, placeholders::_1, hdl, m_connections[hdl].timerInd));

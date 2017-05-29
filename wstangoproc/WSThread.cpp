@@ -180,6 +180,9 @@ namespace WebSocketDS_ns
 
         if (parsedJson.type_req == "timer_upd_devs_rem")
             return timerUpdDevsRemMeth(parsedJson, hdl, devAttrPipeMap);
+
+        if (parsedJson.type_req == "timer_check") 
+            return timerCheckMeth(parsedJson, hdl);
         
         send(hdl, StringProc::exceptionStringOut(parsedJson.id, NONE, "This request type is not supported", parsedJson.type_req));
     }
@@ -226,6 +229,11 @@ namespace WebSocketDS_ns
             m_connections[hdl].tangoConnForClient->addDevicesToUpdateList(devAttrPipeMap);
 
         startTimer(hdl);
+
+        // Если таймер не запустился
+        if (m_connections[hdl].timing == nullptr)
+            return;
+
         m_connections[hdl].timing->isTimerOn = true;
         DEBUG_STREAM_F << "Started timer in session with id " << m_connections[hdl].sessionId;
     }
@@ -308,6 +316,34 @@ namespace WebSocketDS_ns
         send(hdl, StringProc::responseStringOut(parsedJson.id, outMessages, parsedJson.type_req));
     }
 
+    void WSThread::timerCheckMeth(const ParsedInputJson &parsedJson, websocketpp::connection_hdl hdl) {
+        bool timerStatus = false;
+        std::stringstream json;
+        json << "{\"event\": \"read\", \"type_req\": \"timer_check\", \"data\":{";
+        std::string id = parsedJson.id;
+        try {
+            auto idTmp = stoi(id);
+            json << "\"id_req\": " << idTmp << ", ";
+        }
+        catch (...) {
+            if (id == NONE)
+                json << "\"id_req\": " << id << ", ";
+            else
+                json << "\"id_req\": \"" << id << "\", ";
+        }
+        json << "\"timer_started\": ";
+        if (m_connections[hdl].timing == nullptr) {
+            json << boolalpha << false;
+            json << "}}";
+            send(hdl, json.str());
+            return;
+        }
+        json << boolalpha << true << ", ";
+        json << "\"timer_period\": " << m_connections[hdl].timing->msec;
+        json << "}}";
+        send(hdl, json.str());
+    }
+
     bool WSThread::forRunTimer(websocketpp::connection_hdl hdl, int timerInd)
     {
         DEBUG_STREAM_F << "timer. SessionId = " << m_connections[hdl].sessionId;
@@ -318,8 +354,14 @@ namespace WebSocketDS_ns
             return false;
         }
         timerInd = m_connections[hdl].timerInd;
-        string resp = m_connections[hdl].tangoConnForClient->getJsonForAttribute();
+        bool hasDevice;
+        string resp = m_connections[hdl].tangoConnForClient->getJsonForAttribute(hasDevice);
         send(hdl, resp);
+        // Этот метод не должен возвращать false в нормальной ситуации, так как
+        // наличие девайса проверяется при запуске таймера.
+
+        if (!hasDevice)
+            return false;
         if (hdl.expired())
             return true;
         else

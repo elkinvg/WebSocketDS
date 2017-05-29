@@ -45,15 +45,15 @@ namespace WebSocketDS_ns
     string GroupForWs::generateJsonForUpdate()
     {
         std::stringstream json;
-        std::vector<Tango::DeviceAttribute> *attrList = nullptr;
 
         json << "{\"event\": \"read\", \"type_req\": \"group_attribute\", \"data\": {";
         int it = 0;
         for (long i = 0; i < group_length; i++)
         {
+
             if (it != 0)
                 json << ", ";
-
+            std::vector<Tango::DeviceAttribute> *attrList = nullptr;
             attrList = getAttributeList(deviceList[i], _attributes);
             it++;
 
@@ -67,11 +67,12 @@ namespace WebSocketDS_ns
             json << "[";
             generateAttrJson(json, attrList);
             json << "]";
+            if (attrList != nullptr) {
+                delete attrList;
+            }
         }
         json << "}";
 
-        if (attrList != nullptr)
-            delete attrList;
         
         if (_pipeAttr.size()) {
             it = 0;

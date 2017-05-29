@@ -137,6 +137,27 @@ namespace WebSocketDS_ns
         return device->command_query(command_name);
     }
 
+    bool DeviceForWs::pingDevice(string& errorMess)
+    {
+        errorMess.clear();
+        try {
+            device->ping();
+            return true;
+        }
+        catch (Tango::DevFailed &e) {
+            stringstream json;
+            json << "[";
+            for (unsigned int i = 0; i < e.errors.length(); i++) {
+                if (i > 0)
+                    json << ", ";
+                json << "\"" << e.errors[i].desc << "\"";
+            }
+            json << "]";
+            errorMess = json.str();
+            return false;
+        }
+    }
+
     void DeviceForWs::forGenerateJsonForUpdate(stringstream &json)
     {
         std::vector<Tango::DeviceAttribute> *attrList = nullptr;

@@ -221,7 +221,7 @@ void WebSocketDS::init_device()
         return;
     }
 
-    string errorMessage;
+    /*string errorMessage;
     if (!wsTangoConn->isInitDs(errorMessage)) {
         set_state(Tango::FAULT);
 
@@ -230,7 +230,7 @@ void WebSocketDS::init_device()
         else
             set_status("unknown error");
         return;
-    }
+    }*/
 
     set_state(Tango::ON);
     set_status("The listening server is running");

@@ -43,7 +43,7 @@ namespace WebSocketDS_ns
         MODE getMode() {return ws_mode;}
         bool isServerMode();
         bool isLogActive() {return _isLogActive; }
-        bool isInitDs(string &errorMessage) {errorMessage = this->errorMessage; return _isInitDs; }
+        //bool isInitDs(string &errorMessage) {errorMessage = this->_errorMessage; return _isInitDs; }
         bool isTm100ms() { return _istm100ms; }
         unsigned int getMaxBuffSize();
         unsigned short getMaxNumberOfConnections();
@@ -90,7 +90,7 @@ namespace WebSocketDS_ns
         bool _isShortAttr{ true };
         bool _istm100ms{ false };
         unsigned long _numOfConnections{0};
-        string errorMessage;
+        string _errorMessage;
         std::default_random_engine generator;
     };
 }

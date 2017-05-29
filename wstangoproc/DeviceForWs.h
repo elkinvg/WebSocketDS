@@ -24,6 +24,8 @@ namespace WebSocketDS_ns
 
         virtual string sendCommandBin(const ParsedInputJson& parsedInput, bool& statusComm) override;
 
+        bool pingDevice(string& errorMess);
+
     private:
         virtual Tango::CommandInfo getCommandInfo(const string& command_name) override;
         virtual bool initAllAttrs() override;
