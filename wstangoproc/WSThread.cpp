@@ -117,8 +117,12 @@ namespace WebSocketDS_ns
         }
 
         if (parsedJson.type_req == "timer_stop"
-                || parsedJson.type_req == "timer_remove_devs"
-                || parsedJson.type_req == "timer_add_devs")
+            || parsedJson.type_req == "timer_remove_devs"
+            || parsedJson.type_req == "timer_add_devs"
+            || parsedJson.type_req == "timer_upd_devs_add"
+            || parsedJson.type_req == "timer_upd_devs_rem"
+            || parsedJson.type_req == "timer_check"
+            || parsedJson.type_req == "timer_change")
         {
             if (m_connections[hdl].timing == nullptr) {
                 send(hdl, StringProc::exceptionStringOut(parsedJson.id, NONE, "Timer not yet active", parsedJson.type_req));
