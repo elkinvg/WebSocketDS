@@ -392,21 +392,30 @@ namespace WebSocketDS_ns
         string resp_json;
 
         vector<string> commands{ commandName };
-        DeviceForWs deviceForWs(device_name, commands);
-        bool statusComm;
-        OUTPUT_DATA_TYPE odt = deviceForWs.checkDataType(commands[0]);
-        if (odt == OUTPUT_DATA_TYPE::JSON)
-            resp_json = deviceForWs.sendCommand(inputReq, statusComm);
-        if (odt == OUTPUT_DATA_TYPE::BINARY) {
-            resp_json = deviceForWs.sendCommandBin(inputReq, statusComm);
-            if (statusComm)
-                isBinary = true;
+        try {
+            DeviceForWs deviceForWs(device_name, commands);
+            bool statusComm;
+            OUTPUT_DATA_TYPE odt = deviceForWs.checkDataType(commands[0]);
+            if (odt == OUTPUT_DATA_TYPE::JSON)
+                resp_json = deviceForWs.sendCommand(inputReq, statusComm);
+            if (odt == OUTPUT_DATA_TYPE::BINARY) {
+                resp_json = deviceForWs.sendCommandBin(inputReq, statusComm);
+                if (statusComm)
+                    isBinary = true;
+            }
+            bool isSent = uc->sendLogCommand(inputReq, connData.remoteConf, device_name, _isGroup, statusComm);
+            if (isSent)
+                INFO_STREAM << "Information was sent to the log" << endl;
+
+            return resp_json;
         }
-        bool isSent = uc->sendLogCommand(inputReq, connData.remoteConf, device_name, _isGroup, statusComm);
-        if (isSent)
-            INFO_STREAM << "Information was sent to the log" << endl;
-        
-        return resp_json;
+        catch (Tango::DevFailed &e) {
+            vector<string> errors;
+            for (int i = 0; i < e.errors.length(); i++) {
+                errors.push_back((string)e.errors[i].desc);
+            }
+            return StringProc::exceptionStringOut(inputReq.id, NONE, errors, inputReq.type_req);
+        }
     }
 
     string WSTangoConn::sendRequest_PipeComm(const ParsedInputJson &inputReq, ConnectionData &connData)
@@ -584,9 +593,17 @@ namespace WebSocketDS_ns
         std::pair<vector<string>, vector<string>> attr_pipes;
         attr_pipes.first = attributes;
         attr_pipes.second  = pipes;
-
-        DeviceForWs deviceForWs(device_name, attr_pipes);
-        return deviceForWs.generateJsonForAttrReadCl(inputReq);
+        try {
+            DeviceForWs deviceForWs(device_name, attr_pipes);
+            return deviceForWs.generateJsonForAttrReadCl(inputReq);
+        }
+        catch (Tango::DevFailed &e) {
+            vector<string> errors;
+            for (int i = 0; i < e.errors.length(); i++) {
+                errors.push_back((string)e.errors[i].desc);
+            }
+            return StringProc::exceptionStringOut(inputReq.id, NONE, errors, inputReq.type_req);
+        }        
     }
 
     string WSTangoConn::forCommandRequest(const ParsedInputJson &inputReq, ConnectionData &connData, string &commandName, string device_name)
