@@ -653,7 +653,7 @@ AttrName;par1=val;par2
 	"device_name": "имя девайса или alias",
 	"id_req": "id запроса",
 	"data": [{
-		"attr_name": "имя атрибута",
+		"attr": "имя атрибута",
 		"data": "данные"
 	}, {
 		"attr": "AttrDevDoubleImage",
