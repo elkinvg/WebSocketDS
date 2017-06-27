@@ -367,9 +367,9 @@ namespace WebSocketDS_ns
         if (!hasDevice)
             return false;
         if (hdl.expired())
-            return true;
-        else
             return false;
+        else
+            return true;
     }
 
 

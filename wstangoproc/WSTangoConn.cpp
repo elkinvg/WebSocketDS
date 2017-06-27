@@ -13,28 +13,89 @@
 
 namespace WebSocketDS_ns
 {
-    WSTangoConn::WSTangoConn(WebSocketDS *dev, pair<string, string> dsAndOptions, array<vector<string>, 3> attrCommPipe, int portNumber)
-    :Tango::LogAdapter(dev)
+    WSTangoConn::WSTangoConn(WebSocketDS *dev, pair<string, vector<string>> dsAndOptions, array<vector<string>, 3> attrCommPipe, int portNumber)
+        :Tango::LogAdapter(dev)
     {
         groupOrDevice = nullptr;
-        init_wstc(dev, dsAndOptions, attrCommPipe);
-        wsThread = new WSThread_plain(this, portNumber);
-    }
-
-    WSTangoConn::WSTangoConn(WebSocketDS *dev, pair<string, string> dsAndOptions, array<vector<string>, 3> attrCommPipe, int portNumber, string cert, string key)
-    :Tango::LogAdapter(dev)
-    {
-        groupOrDevice = nullptr;
-        init_wstc(dev, dsAndOptions, attrCommPipe);
-        wsThread = new WSThread_tls(this, portNumber, cert, key);
-    }
-
-    void WSTangoConn::init_wstc(WebSocketDS *dev, pair<string, string> &dsAndOptions, array<vector<string>, 3> &attrCommPipe)
-    {
+        //init_wstc(dev, dsAndOptions, attrCommPipe);
         initOptionsAndDeviceServer(dsAndOptions, attrCommPipe);
 
         _wsds = dev;
-        uc = unique_ptr<UserControl> (new UserControl(dev->authDS, typeOfIdent, _isLogActive));
+        uc = unique_ptr<UserControl>(new UserControl(dev->authDS, typeOfIdent, _isLogActive));
+
+        wsThread = new WSThread_plain(this, portNumber);
+    }
+
+    WSTangoConn::WSTangoConn(WebSocketDS *dev, pair<string, vector<string>> dsAndOptions, array<vector<string>, 3> attrCommPipe, int portNumber, string cert, string key)
+        :Tango::LogAdapter(dev)
+    {
+        groupOrDevice = nullptr;
+        initOptionsAndDeviceServer(dsAndOptions, attrCommPipe);
+        
+        _wsds = dev;
+        uc = unique_ptr<UserControl>(new UserControl(dev->authDS, typeOfIdent, _isLogActive));
+        
+        wsThread = new WSThread_tls(this, portNumber, cert, key);
+    }
+
+    void WSTangoConn::initOptionsAndDeviceServer(pair<string, vector<string>>& dsAndOptions, array<vector<string>, 3> &attrCommPipe)
+    {
+        _deviceName = dsAndOptions.first;
+        vector<string> gettedOptions = dsAndOptions.second;
+
+        for (auto& opt : gettedOptions) {
+            if (opt == "group")
+                _isGroup = true;
+            if (opt == "uselog")
+                _isLogActive = true;
+            if (opt.find("tident") != string::npos) {
+                auto gettedIdentOpt = StringProc::parseInputString(opt, "=", true);
+                if (gettedIdentOpt.size() > 1) {
+                    if (gettedIdentOpt[1] == "rndid")
+                        typeOfIdent = TYPE_OF_IDENT::RANDIDENT;
+                    else if (gettedIdentOpt[1] == "smpl")
+                        typeOfIdent = TYPE_OF_IDENT::SIMPLE;
+                    else if (gettedIdentOpt[1] == "rndid2")
+                        typeOfIdent = TYPE_OF_IDENT::RANDIDENT2;
+                    else if (gettedIdentOpt[1] == "rndid3")
+                        typeOfIdent = TYPE_OF_IDENT::RANDIDENT3;
+                    else
+                        typeOfIdent = TYPE_OF_IDENT::SIMPLE;
+                }
+            }
+            if (opt == "notshrtatt") {
+                _isShortAttr = false;
+            }
+            if (opt.find("mode") != string::npos) {
+                auto gettedIdentOpt = StringProc::parseInputString(opt, "=", true);
+                if (gettedIdentOpt.size() > 1) {
+                    if (gettedIdentOpt[1] == "ser_cli_all")
+                        ws_mode = MODE::SERVNCLIENT_ALL;
+                    if (gettedIdentOpt[1] == "ser_cli_all_ro")
+                        ws_mode = MODE::SERVNCLIENT_ALL_RO;
+
+                    if (gettedIdentOpt[1] == "ser_cli_ali")
+                        ws_mode = MODE::SERVNCLIENT_ALIAS;
+                    if (gettedIdentOpt[1] == "ser_cli_ali_ro")
+                        ws_mode = MODE::SERVNCLIENT_ALIAS_RO;
+
+                    if (gettedIdentOpt[1] == "cli_all")
+                        ws_mode = MODE::CLIENT_ALL;
+                    if (gettedIdentOpt[1] == "cli_all_ro")
+                        ws_mode = MODE::CLIENT_ALL_RO;
+
+                    if (gettedIdentOpt[1] == "cli_ali")
+                        ws_mode = MODE::CLIENT_ALIAS;
+                    if (gettedIdentOpt[1] == "cli_ali_ro")
+                        ws_mode = MODE::CLIENT_ALIAS_RO;
+                }
+            }
+            if (opt == "tm100ms") {
+                _istm100ms = true;
+            }
+        }
+        _isInitDs = initDeviceServer(attrCommPipe);
+
     }
 
     WSTangoConn::~WSTangoConn()
@@ -174,68 +235,6 @@ namespace WebSocketDS_ns
     string WSTangoConn::getAuthDS()
     {
         return _wsds->authDS;
-    }
-
-    void WSTangoConn::initOptionsAndDeviceServer(pair<string, string>& dsAndOptions, array<vector<string>, 3> &attrCommPipe)
-    {
-        string options = dsAndOptions.second;
-        _deviceName = dsAndOptions.first;
-
-        if (options.size()) {
-            std::vector<std::string> gettedOptions = StringProc::parseInputString(options, ";", true);
-            for (auto& opt : gettedOptions) {
-                if (opt == "group")
-                    _isGroup = true;
-                if (opt == "uselog")
-                    _isLogActive = true;
-                if (opt.find("tident") != string::npos) {
-                    auto gettedIdentOpt = StringProc::parseInputString(opt, "=", true);
-                    if (gettedIdentOpt.size() > 1) {
-                        if (gettedIdentOpt[1] == "rndid")
-                            typeOfIdent = TYPE_OF_IDENT::RANDIDENT;
-                        else if (gettedIdentOpt[1] == "smpl")
-                            typeOfIdent = TYPE_OF_IDENT::SIMPLE;
-                        else if (gettedIdentOpt[1] == "rndid2")
-                            typeOfIdent = TYPE_OF_IDENT::RANDIDENT2;
-                        else if (gettedIdentOpt[1] == "rndid3")
-                            typeOfIdent = TYPE_OF_IDENT::RANDIDENT3;
-                        else
-                            typeOfIdent = TYPE_OF_IDENT::SIMPLE;
-                    }
-                }
-                if (opt == "notshrtatt") {
-                    _isShortAttr = false;
-                }
-                if (opt.find("mode") != string::npos) {
-                    auto gettedIdentOpt = StringProc::parseInputString(opt, "=", true);
-                    if (gettedIdentOpt.size() > 1) {
-                        if (gettedIdentOpt[1] == "ser_cli_all")
-                            ws_mode = MODE::SERVNCLIENT_ALL;
-                        if (gettedIdentOpt[1] == "ser_cli_all_ro")
-                            ws_mode = MODE::SERVNCLIENT_ALL_RO;
-
-                        if (gettedIdentOpt[1] == "ser_cli_ali")
-                            ws_mode = MODE::SERVNCLIENT_ALIAS;
-                        if (gettedIdentOpt[1] == "ser_cli_ali_ro")
-                            ws_mode = MODE::SERVNCLIENT_ALIAS_RO;
-
-                        if (gettedIdentOpt[1] == "cli_all")
-                            ws_mode = MODE::CLIENT_ALL;
-                        if (gettedIdentOpt[1] == "cli_all_ro")
-                            ws_mode = MODE::CLIENT_ALL_RO;
-
-                        if (gettedIdentOpt[1] == "cli_ali")
-                            ws_mode = MODE::CLIENT_ALIAS;
-                        if (gettedIdentOpt[1] == "cli_ali_ro")
-                            ws_mode = MODE::CLIENT_ALIAS_RO;
-                    }
-                }
-                if (opt == "tm100ms") {
-                    _istm100ms = true;
-                }
-            }
-        }
-        _isInitDs = initDeviceServer(attrCommPipe);
     }
 
     bool WSTangoConn::initDeviceServer(array<vector<string>, 3> &attrCommPipe)

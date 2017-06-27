@@ -62,12 +62,13 @@
  *    Secure - It will be used wss connection (websocket secure). (true if you want)
  *    Certificate - Certificate file name (crt) with full path (if Secure = true)
  *    Key - Private key file name (if Secure = true)
+ *    Options - Various options for the device server
  *    
  *    Then you should set polling to the UpdateData command. (1000 means that all connected clients would read attributes once per second).
  *    
  *    Data format: JSON string with array of attrubute objects {atrrtibute name, attribute value, quality, timestamp};
  *    
- *    if you want to record in the logs, define #USELOG in makefile.
+ *    if you want to record in the logs, define uselog in Property ``Options``.
  *    The database (defined in AuthDS) must contain a table `command_history` with columns:
  *        // id - autoincrement
  *        // argin[0] = timestamp_string UNIX_TIMESTAMP
@@ -77,6 +78,7 @@
  *        // argin[4] = commandName
  *        // argin[5] = commandJson
  *        // argin[6] = statusBool
+ *        // argin[7] = isGroup
  */
 
 namespace WebSocketDS_ns
@@ -102,42 +104,59 @@ private:
 
 //	Device property data members
 public:
-	//	DeviceServer:	Using DeviceServer name
-	string	deviceServer;
+	//	Mode:	Device operating mode
+	//  
+	//  ser - Server mode
+	//  ser_cli_all - Server mode. Client mode (You can use all devices)
+	//  ser_cli_all_ro - Server mode. Client mode (You can use all devices only for reading attributes and pipes)
+	//  ser_cli_ali - Server mode. Client mode. (You can use devices that have an alias.)
+	//  ser_cli_ali_ro - Server mode. Client mode. (You can use devices that have an alias only for reading attributes and pipes)
+	//  cli_all - Client mode (You can use all devices)
+	//  cli_all_ro - Client mode (You can use all devices only for reading attributes and pipes)
+	//  cli_ali -  Client mode. (You can use devices that have an alias.)
+	//  cli_ali_ro - Client mode. (You can use devices that have an alias only for reading attributes and pipes)
+	string	mode;
 	//	Port:	Using port of WebSocket
 	Tango::DevShort	port;
-	//	Attributes:	Attributes list
+	//	DeviceServer:	Using DeviceServer name 
+	//  or  a device name pattern (e.g. domain_* / family/ member_*) for communicate with a group of devices.
+	//  Used only if any server mode is selected.
+	string	deviceServer;
+	//	Attributes:	A list of device attributes you want to read, if reading all attributes is required, add __all_attrs__ (not operational in group mode); 
+	//  Used only if any server mode is selected.
 	vector<string>	attributes;
-	//	Commands:	Commandes list from using DS
+	//	Commands:	a list of device commands you want to execute through WS
+	//  Used only if any server mode is selected.
 	vector<string>	commands;
 	//	PipeName:	Name of DevicePipe for reading. [0]
 	//  When using GROUP, the DevicePipe name must be the same for all devices.
 	//  If you want to set properties for specific attributes, add them in the format ``NameAttr;property``
+	//  Used only if any server mode is selected.
 	vector<string>	pipeName;
 	//	Secure:	Shall we use SSL encryption?
-	//  It will be used wss connection (websocket secure)
+	//  set true, for secure wss connection, otherwise false;
 	Tango::DevBoolean	secure;
-	//	Certificate:	Certificate file name (crt) with path
+	//	Certificate:	full path to the certificate in use (if Secure = true)
 	//  example: /etc/ssl/certs/ssl-cert-snakeoil.pem
 	string	certificate;
-	//	Key:	Private key file name
+	//	Key:	full path to the file in use with Private key (if Secure = true)
 	//  Example: /etc/ssl/private/ssl-cert-snakeoil.key
 	string	key;
 	//	AuthDS:	Tango web authentication device server (TangoWebAuth ) name.
+	//  responsible for user authentication in case of commands execution
 	string	authDS;
-	//	MaxNumberOfConnections:	Maximum number of WebSocket connections (clients)
-	//  (If == 0) An unlimited number of connections
+	//	MaxNumberOfConnections:	maximum number of connections. If the limit is reached, further connections will be lost with 400 Bad Request error. If 0 is set, the number of connections will be unlimited.
 	Tango::DevUShort	maxNumberOfConnections;
-	//	MaximumBufferSize:	The maximum size of the buffer (in KiB) after which the socket is closed
-	//  Value must be from 1 to 10000
+	//	MaximumBufferSize:	maximum buffer size for each connection, KiB. The Default value is 1000. Possible values range from1 to 10000 (if setting a value outside the range, the default value will be set). If exceeding the set maximum buffer size, the connection will be lost by the server;
 	Tango::DevUShort	maximumBufferSize;
-	//	ResetTimestampDifference:	Timestamp difference after which reloads the server. (seconds)
+	//	ResetTimestampDifference:	The difference in timestamps (seconds) after which a WS server is reset. The difference is counted by CheckPoll method between update timestamp in UpdateData method and current timestamp. Minimum value is 60. 
 	//  Default and MinValue = 60
+	//  Used only if any server mode is selected
 	Tango::DevUShort	resetTimestampDifference;
 	//	Options:	Options for device.
 	//  Format of options:
-	//  	opt1;opt2=val
-	string	options;
+	//  	nameOfOption or nameOfOption=value
+	vector<string>	options;
 
 //	Attribute data members
 public:

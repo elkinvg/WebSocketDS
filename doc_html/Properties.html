@@ -19,11 +19,20 @@
 		<td> <center><b> Default Value </b></center> </td>
 	</tr>
 	<tr>
-		<td> DeviceServer </td>
-		<td> Using DeviceServer name <Br>
-			or  a device name pattern (e.g. domain_* / family/ member_*) for communicate with a group of devices </td>
+		<td> Mode </td>
+		<td> Device operating mode<Br>
+			<Br>
+			ser - Server mode<Br>
+			ser_cli_all - Server mode. Client mode (You can use all devices)<Br>
+			ser_cli_all_ro - Server mode. Client mode (You can use all devices only for reading attributes and pipes)<Br>
+			ser_cli_ali - Server mode. Client mode. (You can use devices that have an alias.)<Br>
+			ser_cli_ali_ro - Server mode. Client mode. (You can use devices that have an alias only for reading attributes and pipes)<Br>
+			cli_all - Client mode (You can use all devices)<Br>
+			cli_all_ro - Client mode (You can use all devices only for reading attributes and pipes)<Br>
+			cli_ali -  Client mode. (You can use devices that have an alias.)<Br>
+			cli_ali_ro - Client mode. (You can use devices that have an alias only for reading attributes and pipes) </td>
 		<td> String </td>
-		<td> none </td>
+		<td> ser <br> </td>
 	</tr>
 	<tr>
 		<td> Port </td>
@@ -32,14 +41,24 @@
 		<td> none </td>
 	</tr>
 	<tr>
+		<td> DeviceServer </td>
+		<td> Using DeviceServer name <Br>
+			or  a device name pattern (e.g. domain_* / family/ member_*) for communicate with a group of devices.<Br>
+			Used only if any server mode is selected. </td>
+		<td> String </td>
+		<td> none </td>
+	</tr>
+	<tr>
 		<td> Attributes </td>
-		<td> Attributes list </td>
+		<td> A list of device attributes you want to read, if reading all attributes is required, add __all_attrs__ (not operational in group mode); <Br>
+			Used only if any server mode is selected. </td>
 		<td> String[] </td>
 		<td> none </td>
 	</tr>
 	<tr>
 		<td> Commands </td>
-		<td> Commandes list from using DS </td>
+		<td> a list of device commands you want to execute through WS<Br>
+			Used only if any server mode is selected. </td>
 		<td> String[] </td>
 		<td> none </td>
 	</tr>
@@ -47,55 +66,56 @@
 		<td> PipeName </td>
 		<td> Name of DevicePipe for reading. [0]<Br>
 			When using GROUP, the DevicePipe name must be the same for all devices.<Br>
-			If you want to set properties for specific attributes, add them in the format ``NameAttr;property`` </td>
+			If you want to set properties for specific attributes, add them in the format ``NameAttr;property``<Br>
+			Used only if any server mode is selected. </td>
 		<td> String[] </td>
 		<td> none </td>
 	</tr>
 	<tr>
 		<td> Secure </td>
 		<td> Shall we use SSL encryption?<Br>
-			It will be used wss connection (websocket secure) </td>
+			set true, for secure wss connection, otherwise false; </td>
 		<td> boolean </td>
 		<td> false <br> </td>
 	</tr>
 	<tr>
 		<td> Certificate </td>
-		<td> Certificate file name (crt) with path<Br>
+		<td> full path to the certificate in use (if Secure = true)<Br>
 			example: /etc/ssl/certs/ssl-cert-snakeoil.pem </td>
 		<td> String </td>
 		<td> /etc/ssl/certs/server.crt <br> </td>
 	</tr>
 	<tr>
 		<td> Key </td>
-		<td> Private key file name<Br>
+		<td> full path to the file in use with Private key (if Secure = true)<Br>
 			Example: /etc/ssl/private/ssl-cert-snakeoil.key </td>
 		<td> String </td>
 		<td> /etc/ssl/private/server.key <br> </td>
 	</tr>
 	<tr>
 		<td> AuthDS </td>
-		<td> Tango web authentication device server (TangoWebAuth ) name. </td>
+		<td> Tango web authentication device server (TangoWebAuth ) name.<Br>
+			responsible for user authentication in case of commands execution </td>
 		<td> String </td>
 		<td> auth/web/1 <br> </td>
 	</tr>
 	<tr>
 		<td> MaxNumberOfConnections </td>
-		<td> Maximum number of WebSocket connections (clients)<Br>
-			(If == 0) An unlimited number of connections </td>
+		<td> maximum number of connections. If the limit is reached, further connections will be lost with 400 Bad Request error. If 0 is set, the number of connections will be unlimited. </td>
 		<td> short </td>
 		<td> 0 <br> </td>
 	</tr>
 	<tr>
 		<td> MaximumBufferSize </td>
-		<td> The maximum size of the buffer (in KiB) after which the socket is closed<Br>
-			Value must be from 1 to 10000 </td>
+		<td> maximum buffer size for each connection, KiB. The Default value is 1000. Possible values range from1 to 10000 (if setting a value outside the range, the default value will be set). If exceeding the set maximum buffer size, the connection will be lost by the server; </td>
 		<td> short </td>
 		<td> 1000 <br> </td>
 	</tr>
 	<tr>
 		<td> ResetTimestampDifference </td>
-		<td> Timestamp difference after which reloads the server. (seconds)<Br>
-			Default and MinValue = 60 </td>
+		<td> The difference in timestamps (seconds) after which a WS server is reset. The difference is counted by CheckPoll method between update timestamp in UpdateData method and current timestamp. Minimum value is 60. <Br>
+			Default and MinValue = 60<Br>
+			Used only if any server mode is selected </td>
 		<td> short </td>
 		<td> 60 <br> </td>
 	</tr>
@@ -103,8 +123,8 @@
 		<td> Options </td>
 		<td> Options for device.<Br>
 			Format of options:<Br>
-				opt1;opt2=val </td>
-		<td> String </td>
+				nameOfOption or nameOfOption=value </td>
+		<td> String[] </td>
 		<td> none </td>
 	</tr>
 </table>

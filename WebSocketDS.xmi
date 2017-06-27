@@ -1,67 +1,72 @@
 <?xml version="1.0" encoding="ASCII"?>
 <pogoDsl:PogoSystem xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:pogoDsl="http://www.esrf.fr/tango/pogo/PogoDsl">
   <classes name="WebSocketDS" pogoRevision="9.1">
-    <description description="WebSocket access to tango device-server attributes.&#xA;&#xA;Configuration should be done via properties:&#xA;&#xA;Port - port to listen incoming ws connections;&#xA;DeviceServer - tango id of a required device server;&#xA;Attributes - list of required DS attributes, you wish to read via WS;&#xA;Commands - list of required DS commandes, you wish to executed via WS;&#xA;AuthDS - Tango web authentication device server (TangoWebAuth ) name.&#xA;Secure - It will be used wss connection (websocket secure). (true if you want)&#xA;Certificate - Certificate file name (crt) with full path (if Secure = true)&#xA;Key - Private key file name (if Secure = true)&#xA;Options - Various options for the device server&#xA;&#xA;Then you should set polling to the UpdateData command. (1000 means that all connected clients would read attributes once per second).&#xA;&#xA;Data format: JSON string with array of attrubute objects {atrrtibute name, attribute value, quality, timestamp};&#xA;&#xA;if you want to record in the logs, define uselog in Property ``Options``.&#xA;The database (defined in AuthDS) must contain a table `command_history` with columns:&#xA;    // id - autoincrement&#xA;    // argin[0] = timestamp_string UNIX_TIMESTAMP&#xA;    // argin[1] = login&#xA;    // argin[2] = deviceName&#xA;    // argin[3] = IP&#xA;    // argin[4] = commandName&#xA;    // argin[5] = commandJson&#xA;    // argin[6] = statusBool&#xA;    // argin[7] = isGroup" title="WebSocket access to tango device-server attributes, pipes and commands" sourcePath="D:\progrdir\vs12_2013\fortango\WebSocketDS" language="Cpp" filestogenerate="XMI   file,Protected Regions,html Pages" license="GPL" copyright="" hasMandatoryProperty="false" hasConcreteProperty="true" hasAbstractCommand="false" hasAbstractAttribute="false" descriptionHtmlExists="false">
+    <description description="WebSocket access to tango device-server attributes.&#xA;&#xA;Configuration should be done via properties:&#xA;&#xA;Port - port to listen incoming ws connections;&#xA;DeviceServer - tango id of a required device server;&#xA;Attributes - list of required DS attributes, you wish to read via WS;&#xA;Commands - list of required DS commandes, you wish to executed via WS;&#xA;AuthDS - Tango web authentication device server (TangoWebAuth ) name.&#xA;Secure - It will be used wss connection (websocket secure). (true if you want)&#xA;Certificate - Certificate file name (crt) with full path (if Secure = true)&#xA;Key - Private key file name (if Secure = true)&#xA;Options - Various options for the device server&#xA;&#xA;Then you should set polling to the UpdateData command. (1000 means that all connected clients would read attributes once per second).&#xA;&#xA;Data format: JSON string with array of attrubute objects {atrrtibute name, attribute value, quality, timestamp};&#xA;&#xA;if you want to record in the logs, define uselog in Property ``Options``.&#xA;The database (defined in AuthDS) must contain a table `command_history` with columns:&#xA;    // id - autoincrement&#xA;    // argin[0] = timestamp_string UNIX_TIMESTAMP&#xA;    // argin[1] = login&#xA;    // argin[2] = deviceName&#xA;    // argin[3] = IP&#xA;    // argin[4] = commandName&#xA;    // argin[5] = commandJson&#xA;    // argin[6] = statusBool&#xA;    // argin[7] = isGroup" title="WebSocket access to tango device-server attributes, pipes and commands" sourcePath="D:\progrdir\vs12_2013\fortango\WebSocketDS" language="Cpp" filestogenerate="XMI   file,Code files,Protected Regions,html Pages" license="GPL" copyright="" hasMandatoryProperty="false" hasConcreteProperty="true" hasAbstractCommand="false" hasAbstractAttribute="false" descriptionHtmlExists="false">
       <inheritances classname="Device_Impl" sourcePath=""/>
       <identification contact="at jinr.ru - elkin" author="elkin" emailDomain="jinr.ru" classFamily="Communication" siteSpecific="" platform="All Platforms" bus="Not Applicable" manufacturer="none" reference=""/>
     </description>
-    <deviceProperties name="DeviceServer" description="Using DeviceServer name &#xA;or  a device name pattern (e.g. domain_* / family/ member_*) for communicate with a group of devices">
+    <deviceProperties name="Mode" description="Device operating mode&#xA;&#xA;ser - Server mode&#xA;ser_cli_all - Server mode. Client mode (You can use all devices)&#xA;ser_cli_all_ro - Server mode. Client mode (You can use all devices only for reading attributes and pipes)&#xA;ser_cli_ali - Server mode. Client mode. (You can use devices that have an alias.)&#xA;ser_cli_ali_ro - Server mode. Client mode. (You can use devices that have an alias only for reading attributes and pipes)&#xA;cli_all - Client mode (You can use all devices)&#xA;cli_all_ro - Client mode (You can use all devices only for reading attributes and pipes)&#xA;cli_ali -  Client mode. (You can use devices that have an alias.)&#xA;cli_ali_ro - Client mode. (You can use devices that have an alias only for reading attributes and pipes)">
       <type xsi:type="pogoDsl:StringType"/>
       <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+      <DefaultPropValue>ser</DefaultPropValue>
     </deviceProperties>
     <deviceProperties name="Port" description="Using port of WebSocket">
       <type xsi:type="pogoDsl:ShortType"/>
       <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
     </deviceProperties>
-    <deviceProperties name="Attributes" description="Attributes list">
+    <deviceProperties name="DeviceServer" description="Using DeviceServer name &#xA;or  a device name pattern (e.g. domain_* / family/ member_*) for communicate with a group of devices.&#xA;Used only if any server mode is selected.">
+      <type xsi:type="pogoDsl:StringType"/>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+    </deviceProperties>
+    <deviceProperties name="Attributes" description="A list of device attributes you want to read, if reading all attributes is required, add __all_attrs__ (not operational in group mode); &#xA;Used only if any server mode is selected.">
       <type xsi:type="pogoDsl:StringVectorType"/>
       <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
     </deviceProperties>
-    <deviceProperties name="Commands" description="Commandes list from using DS">
+    <deviceProperties name="Commands" description="a list of device commands you want to execute through WS&#xA;Used only if any server mode is selected.">
       <type xsi:type="pogoDsl:StringVectorType"/>
       <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
     </deviceProperties>
-    <deviceProperties name="PipeName" description="Name of DevicePipe for reading. [0]&#xA;When using GROUP, the DevicePipe name must be the same for all devices.&#xA;If you want to set properties for specific attributes, add them in the format ``NameAttr;property``">
+    <deviceProperties name="PipeName" description="Name of DevicePipe for reading. [0]&#xA;When using GROUP, the DevicePipe name must be the same for all devices.&#xA;If you want to set properties for specific attributes, add them in the format ``NameAttr;property``&#xA;Used only if any server mode is selected.">
       <type xsi:type="pogoDsl:StringVectorType"/>
       <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
     </deviceProperties>
-    <deviceProperties name="Secure" description="Shall we use SSL encryption?&#xA;It will be used wss connection (websocket secure)">
+    <deviceProperties name="Secure" description="Shall we use SSL encryption?&#xA;set true, for secure wss connection, otherwise false;">
       <type xsi:type="pogoDsl:BooleanType"/>
       <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
       <DefaultPropValue>false</DefaultPropValue>
     </deviceProperties>
-    <deviceProperties name="Certificate" description="Certificate file name (crt) with path&#xA;example: /etc/ssl/certs/ssl-cert-snakeoil.pem">
+    <deviceProperties name="Certificate" description="full path to the certificate in use (if Secure = true)&#xA;example: /etc/ssl/certs/ssl-cert-snakeoil.pem">
       <type xsi:type="pogoDsl:StringType"/>
       <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
       <DefaultPropValue>/etc/ssl/certs/server.crt</DefaultPropValue>
     </deviceProperties>
-    <deviceProperties name="Key" description="Private key file name&#xA;Example: /etc/ssl/private/ssl-cert-snakeoil.key">
+    <deviceProperties name="Key" description="full path to the file in use with Private key (if Secure = true)&#xA;Example: /etc/ssl/private/ssl-cert-snakeoil.key">
       <type xsi:type="pogoDsl:StringType"/>
       <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
       <DefaultPropValue>/etc/ssl/private/server.key</DefaultPropValue>
     </deviceProperties>
-    <deviceProperties name="AuthDS" description="Tango web authentication device server (TangoWebAuth ) name.">
+    <deviceProperties name="AuthDS" description="Tango web authentication device server (TangoWebAuth ) name.&#xA;responsible for user authentication in case of commands execution">
       <type xsi:type="pogoDsl:StringType"/>
       <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
       <DefaultPropValue>auth/web/1</DefaultPropValue>
     </deviceProperties>
-    <deviceProperties name="MaxNumberOfConnections" description="Maximum number of WebSocket connections (clients)&#xA;(If == 0) An unlimited number of connections">
+    <deviceProperties name="MaxNumberOfConnections" description="maximum number of connections. If the limit is reached, further connections will be lost with 400 Bad Request error. If 0 is set, the number of connections will be unlimited.">
       <type xsi:type="pogoDsl:UShortType"/>
       <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
       <DefaultPropValue>0</DefaultPropValue>
     </deviceProperties>
-    <deviceProperties name="MaximumBufferSize" description="The maximum size of the buffer (in KiB) after which the socket is closed&#xA;Value must be from 1 to 10000">
+    <deviceProperties name="MaximumBufferSize" description="maximum buffer size for each connection, KiB. The Default value is 1000. Possible values range from1 to 10000 (if setting a value outside the range, the default value will be set). If exceeding the set maximum buffer size, the connection will be lost by the server;">
       <type xsi:type="pogoDsl:UShortType"/>
       <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
       <DefaultPropValue>1000</DefaultPropValue>
     </deviceProperties>
-    <deviceProperties name="ResetTimestampDifference" description="Timestamp difference after which reloads the server. (seconds)&#xA;Default and MinValue = 60">
+    <deviceProperties name="ResetTimestampDifference" description="The difference in timestamps (seconds) after which a WS server is reset. The difference is counted by CheckPoll method between update timestamp in UpdateData method and current timestamp. Minimum value is 60. &#xA;Default and MinValue = 60&#xA;Used only if any server mode is selected">
       <type xsi:type="pogoDsl:UShortType"/>
       <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
       <DefaultPropValue>60</DefaultPropValue>
     </deviceProperties>
-    <deviceProperties name="Options" description="Options for device.&#xA;Format of options:&#xA;&#x9;opt1;opt2=val">
-      <type xsi:type="pogoDsl:StringType"/>
+    <deviceProperties name="Options" description="Options for device.&#xA;Format of options:&#xA;&#x9;nameOfOption or nameOfOption=value">
+      <type xsi:type="pogoDsl:StringVectorType"/>
       <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
     </deviceProperties>
     <commands name="State" description="This command gets the device state (stored in its device_state data member) and returns it to the caller." execMethod="dev_state" displayLevel="OPERATOR" polledPeriod="0">

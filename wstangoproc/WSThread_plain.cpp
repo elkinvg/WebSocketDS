@@ -221,7 +221,7 @@ namespace WebSocketDS_ns
         }
 
         try {
-            if (forRunTimer(hdl, timerInd))
+            if (!forRunTimer(hdl, timerInd))
                 return;
             
             m_connections[hdl].timing->m_timer = m_server.set_timer(m_connections[hdl].timing->msec, bind(&WSThread_plain::runTimer

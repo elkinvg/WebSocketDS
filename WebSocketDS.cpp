@@ -60,12 +60,13 @@ static const char *RcsId = "$Id:  $";
  *    Secure - It will be used wss connection (websocket secure). (true if you want)
  *    Certificate - Certificate file name (crt) with full path (if Secure = true)
  *    Key - Private key file name (if Secure = true)
+ *    Options - Various options for the device server
  *    
  *    Then you should set polling to the UpdateData command. (1000 means that all connected clients would read attributes once per second).
  *    
  *    Data format: JSON string with array of attrubute objects {atrrtibute name, attribute value, quality, timestamp};
  *    
- *    if you want to record in the logs, define #USELOG in makefile.
+ *    if you want to record in the logs, define uselog in Property ``Options``.
  *    The database (defined in AuthDS) must contain a table `command_history` with columns:
  *        // id - autoincrement
  *        // argin[0] = timestamp_string UNIX_TIMESTAMP
@@ -75,6 +76,7 @@ static const char *RcsId = "$Id:  $";
  *        // argin[4] = commandName
  *        // argin[5] = commandJson
  *        // argin[6] = statusBool
+ *        // argin[7] = isGroup
  */
 
 //================================================================
@@ -200,6 +202,9 @@ void WebSocketDS::init_device()
     set_status("Device is On");
 
     try {
+        // ??? !!! working mode of DS
+        options.push_back("mode="+mode);
+
         if (secure)
             wsTangoConn = unique_ptr<WSTangoConn>(new WSTangoConn(this, make_pair(deviceServer, options), { { attributes, commands, pipeName } }, port, certificate, key));
         else
@@ -257,8 +262,9 @@ void WebSocketDS::get_device_property()
 
 	//	Read device properties from database.
 	Tango::DbData	dev_prop;
-	dev_prop.push_back(Tango::DbDatum("DeviceServer"));
+	dev_prop.push_back(Tango::DbDatum("Mode"));
 	dev_prop.push_back(Tango::DbDatum("Port"));
+	dev_prop.push_back(Tango::DbDatum("DeviceServer"));
 	dev_prop.push_back(Tango::DbDatum("Attributes"));
 	dev_prop.push_back(Tango::DbDatum("Commands"));
 	dev_prop.push_back(Tango::DbDatum("PipeName"));
@@ -284,16 +290,16 @@ void WebSocketDS::get_device_property()
 			(static_cast<WebSocketDSClass *>(get_device_class()));
 		int	i = -1;
 
-		//	Try to initialize DeviceServer from class property
+		//	Try to initialize Mode from class property
 		cl_prop = ds_class->get_class_property(dev_prop[++i].name);
-		if (cl_prop.is_empty()==false)	cl_prop  >>  deviceServer;
+		if (cl_prop.is_empty()==false)	cl_prop  >>  mode;
 		else {
-			//	Try to initialize DeviceServer from default device value
+			//	Try to initialize Mode from default device value
 			def_prop = ds_class->get_default_device_property(dev_prop[i].name);
-			if (def_prop.is_empty()==false)	def_prop  >>  deviceServer;
+			if (def_prop.is_empty()==false)	def_prop  >>  mode;
 		}
-		//	And try to extract DeviceServer value from database
-		if (dev_prop[i].is_empty()==false)	dev_prop[i]  >>  deviceServer;
+		//	And try to extract Mode value from database
+		if (dev_prop[i].is_empty()==false)	dev_prop[i]  >>  mode;
 
 		//	Try to initialize Port from class property
 		cl_prop = ds_class->get_class_property(dev_prop[++i].name);
@@ -305,6 +311,17 @@ void WebSocketDS::get_device_property()
 		}
 		//	And try to extract Port value from database
 		if (dev_prop[i].is_empty()==false)	dev_prop[i]  >>  port;
+
+		//	Try to initialize DeviceServer from class property
+		cl_prop = ds_class->get_class_property(dev_prop[++i].name);
+		if (cl_prop.is_empty()==false)	cl_prop  >>  deviceServer;
+		else {
+			//	Try to initialize DeviceServer from default device value
+			def_prop = ds_class->get_default_device_property(dev_prop[i].name);
+			if (def_prop.is_empty()==false)	def_prop  >>  deviceServer;
+		}
+		//	And try to extract DeviceServer value from database
+		if (dev_prop[i].is_empty()==false)	dev_prop[i]  >>  deviceServer;
 
 		//	Try to initialize Attributes from class property
 		cl_prop = ds_class->get_class_property(dev_prop[++i].name);
@@ -444,7 +461,7 @@ void WebSocketDS::get_device_property()
 //--------------------------------------------------------
 void WebSocketDS::always_executed_hook()
 {
-//	DEBUG_STREAM << "WebSocketDS::always_executed_hook()  " << device_name << endl;
+	DEBUG_STREAM << "WebSocketDS::always_executed_hook()  " << device_name << endl;
 	/*----- PROTECTED REGION ID(WebSocketDS::always_executed_hook) ENABLED START -----*/
 
     //if (groupOrDevice == nullptr || wsThread == nullptr) {

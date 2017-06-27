@@ -317,10 +317,11 @@ void WebSocketDSClass::set_default_property()
 	//	Set Default Class Properties
 
 	//	Set Default device Properties
-	prop_name = "DeviceServer";
-	prop_desc = "Using DeviceServer name";
-	prop_def  = "";
+	prop_name = "Mode";
+	prop_desc = "Device operating mode\n\nser - Server mode\nser_cli_all - Server mode. Client mode (You can use all devices)\nser_cli_all_ro - Server mode. Client mode (You can use all devices only for reading attributes and pipes)\nser_cli_ali - Server mode. Client mode. (You can use devices that have an alias.)\nser_cli_ali_ro - Server mode. Client mode. (You can use devices that have an alias only for reading attributes and pipes)\ncli_all - Client mode (You can use all devices)\ncli_all_ro - Client mode (You can use all devices only for reading attributes and pipes)\ncli_ali -  Client mode. (You can use devices that have an alias.)\ncli_ali_ro - Client mode. (You can use devices that have an alias only for reading attributes and pipes)";
+	prop_def  = "ser";
 	vect_data.clear();
+	vect_data.push_back("ser");
 	if (prop_def.length()>0)
 	{
 		Tango::DbDatum	data(prop_name);
@@ -343,8 +344,21 @@ void WebSocketDSClass::set_default_property()
 	}
 	else
 		add_wiz_dev_prop(prop_name, prop_desc);
+	prop_name = "DeviceServer";
+	prop_desc = "Using DeviceServer name \nor  a device name pattern (e.g. domain_* / family/ member_*) for communicate with a group of devices.\nUsed only if any server mode is selected.";
+	prop_def  = "";
+	vect_data.clear();
+	if (prop_def.length()>0)
+	{
+		Tango::DbDatum	data(prop_name);
+		data << vect_data ;
+		dev_def_prop.push_back(data);
+		add_wiz_dev_prop(prop_name, prop_desc,  prop_def);
+	}
+	else
+		add_wiz_dev_prop(prop_name, prop_desc);
 	prop_name = "Attributes";
-	prop_desc = "Attributes list";
+	prop_desc = "A list of device attributes you want to read, if reading all attributes is required, add __all_attrs__ (not operational in group mode); \nUsed only if any server mode is selected.";
 	prop_def  = "";
 	vect_data.clear();
 	if (prop_def.length()>0)
@@ -357,7 +371,7 @@ void WebSocketDSClass::set_default_property()
 	else
 		add_wiz_dev_prop(prop_name, prop_desc);
 	prop_name = "Commands";
-	prop_desc = "Commandes list from using DS";
+	prop_desc = "a list of device commands you want to execute through WS\nUsed only if any server mode is selected.";
 	prop_def  = "";
 	vect_data.clear();
 	if (prop_def.length()>0)
@@ -370,7 +384,7 @@ void WebSocketDSClass::set_default_property()
 	else
 		add_wiz_dev_prop(prop_name, prop_desc);
 	prop_name = "PipeName";
-	prop_desc = "Name of DevicePipe for reading. [0]\nWhen using GROUP, the DevicePipe name must be the same for all devices.\nIf you want to set properties for specific attributes, add them in the format ``NameAttr;property``";
+	prop_desc = "Name of DevicePipe for reading. [0]\nWhen using GROUP, the DevicePipe name must be the same for all devices.\nIf you want to set properties for specific attributes, add them in the format ``NameAttr;property``\nUsed only if any server mode is selected.";
 	prop_def  = "";
 	vect_data.clear();
 	if (prop_def.length()>0)
@@ -383,7 +397,7 @@ void WebSocketDSClass::set_default_property()
 	else
 		add_wiz_dev_prop(prop_name, prop_desc);
 	prop_name = "Secure";
-	prop_desc = "Shall we use SSL encryption?\nIt will be used wss connection (websocket secure)";
+	prop_desc = "Shall we use SSL encryption?\nset true, for secure wss connection, otherwise false;";
 	prop_def  = "false";
 	vect_data.clear();
 	vect_data.push_back("false");
@@ -397,7 +411,7 @@ void WebSocketDSClass::set_default_property()
 	else
 		add_wiz_dev_prop(prop_name, prop_desc);
 	prop_name = "Certificate";
-	prop_desc = "Certificate file name (crt) with path\nexample: /etc/ssl/certs/ssl-cert-snakeoil.pem";
+	prop_desc = "full path to the certificate in use (if Secure = true)\nexample: /etc/ssl/certs/ssl-cert-snakeoil.pem";
 	prop_def  = "/etc/ssl/certs/server.crt";
 	vect_data.clear();
 	vect_data.push_back("/etc/ssl/certs/server.crt");
@@ -411,7 +425,7 @@ void WebSocketDSClass::set_default_property()
 	else
 		add_wiz_dev_prop(prop_name, prop_desc);
 	prop_name = "Key";
-	prop_desc = "Private key file name\nExample: /etc/ssl/private/ssl-cert-snakeoil.key";
+	prop_desc = "full path to the file in use with Private key (if Secure = true)\nExample: /etc/ssl/private/ssl-cert-snakeoil.key";
 	prop_def  = "/etc/ssl/private/server.key";
 	vect_data.clear();
 	vect_data.push_back("/etc/ssl/private/server.key");
@@ -425,7 +439,7 @@ void WebSocketDSClass::set_default_property()
 	else
 		add_wiz_dev_prop(prop_name, prop_desc);
 	prop_name = "AuthDS";
-	prop_desc = "Tango web authentication device server (TangoWebAuth ) name.";
+	prop_desc = "Tango web authentication device server (TangoWebAuth ) name.\nresponsible for user authentication in case of commands execution";
 	prop_def  = "auth/web/1";
 	vect_data.clear();
 	vect_data.push_back("auth/web/1");
@@ -439,7 +453,7 @@ void WebSocketDSClass::set_default_property()
 	else
 		add_wiz_dev_prop(prop_name, prop_desc);
 	prop_name = "MaxNumberOfConnections";
-	prop_desc = "Maximum number of WebSocket connections (clients)\n(If == 0) An unlimited number of connections";
+	prop_desc = "maximum number of connections. If the limit is reached, further connections will be lost with 400 Bad Request error. If 0 is set, the number of connections will be unlimited.";
 	prop_def  = "0";
 	vect_data.clear();
 	vect_data.push_back("0");
@@ -453,7 +467,7 @@ void WebSocketDSClass::set_default_property()
 	else
 		add_wiz_dev_prop(prop_name, prop_desc);
 	prop_name = "MaximumBufferSize";
-	prop_desc = "The maximum size of the buffer (in KiB) after which the socket is closed\nValue must be from 1 to 10000";
+	prop_desc = "maximum buffer size for each connection, KiB. The Default value is 1000. Possible values range from1 to 10000 (if setting a value outside the range, the default value will be set). If exceeding the set maximum buffer size, the connection will be lost by the server;";
 	prop_def  = "1000";
 	vect_data.clear();
 	vect_data.push_back("1000");
@@ -467,7 +481,7 @@ void WebSocketDSClass::set_default_property()
 	else
 		add_wiz_dev_prop(prop_name, prop_desc);
 	prop_name = "ResetTimestampDifference";
-	prop_desc = "Timestamp difference after which reloads the server. (seconds)\nDefault and MinValue = 60";
+	prop_desc = "The difference in timestamps (seconds) after which a WS server is reset. The difference is counted by CheckPoll method between update timestamp in UpdateData method and current timestamp. Minimum value is 60. \nDefault and MinValue = 60\nUsed only if any server mode is selected";
 	prop_def  = "60";
 	vect_data.clear();
 	vect_data.push_back("60");
@@ -481,7 +495,7 @@ void WebSocketDSClass::set_default_property()
 	else
 		add_wiz_dev_prop(prop_name, prop_desc);
 	prop_name = "Options";
-	prop_desc = "Options for device.\nFormat of options:\n	opt1;opt2=val";
+	prop_desc = "Options for device.\nFormat of options:\n	nameOfOption or nameOfOption=value";
 	prop_def  = "";
 	vect_data.clear();
 	if (prop_def.length()>0)
@@ -514,7 +528,7 @@ void WebSocketDSClass::write_class_property()
 
 	//	Put title
 	Tango::DbDatum	title("ProjectTitle");
-	string	str_title("WebSocket access to tango device-server attributes");
+	string	str_title("WebSocket access to tango device-server attributes, pipes and commands");
 	title << str_title;
 	data.push_back(title);
 
@@ -533,12 +547,13 @@ void WebSocketDSClass::write_class_property()
 	str_desc.push_back("Secure - It will be used wss connection (websocket secure). (true if you want)");
 	str_desc.push_back("Certificate - Certificate file name (crt) with full path (if Secure = true)");
 	str_desc.push_back("Key - Private key file name (if Secure = true)");
+	str_desc.push_back("Options - Various options for the device server");
 	str_desc.push_back("");
 	str_desc.push_back("Then you should set polling to the UpdateData command. (1000 means that all connected clients would read attributes once per second).");
 	str_desc.push_back("");
 	str_desc.push_back("Data format: JSON string with array of attrubute objects {atrrtibute name, attribute value, quality, timestamp};");
 	str_desc.push_back("");
-	str_desc.push_back("if you want to record in the logs, define #USELOG in makefile.");
+	str_desc.push_back("if you want to record in the logs, define uselog in Property ``Options``.");
 	str_desc.push_back("The database (defined in AuthDS) must contain a table `command_history` with columns:");
 	str_desc.push_back("    // id - autoincrement");
 	str_desc.push_back("    // argin[0] = timestamp_string UNIX_TIMESTAMP");
@@ -548,6 +563,7 @@ void WebSocketDSClass::write_class_property()
 	str_desc.push_back("    // argin[4] = commandName");
 	str_desc.push_back("    // argin[5] = commandJson");
 	str_desc.push_back("    // argin[6] = statusBool");
+	str_desc.push_back("    // argin[7] = isGroup");
 	description << str_desc;
 	data.push_back(description);
 

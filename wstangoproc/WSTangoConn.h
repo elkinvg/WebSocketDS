@@ -26,9 +26,9 @@ namespace WebSocketDS_ns
     class WSTangoConn: public Tango::LogAdapter
     {
     public:
-        WSTangoConn(WebSocketDS *dev,pair<string, string> dsAndOptions, array<vector<string>, 3> attrCommPipe, int portNumber);
-        
-        WSTangoConn(WebSocketDS *dev,pair<string, string> dsAndOptions, array<vector<string>, 3> attrCommPipe, int portNumber, string cert, string key);
+        WSTangoConn(WebSocketDS *dev, pair<string, vector<string>> dsAndOptions, array<vector<string>, 3> attrCommPipe, int portNumber);
+
+        WSTangoConn(WebSocketDS *dev, pair<string, vector<string>> dsAndOptions, array<vector<string>, 3> attrCommPipe, int portNumber, string cert, string key);
 
         ~WSTangoConn();
 
@@ -43,7 +43,7 @@ namespace WebSocketDS_ns
         MODE getMode() {return ws_mode;}
         bool isServerMode();
         bool isLogActive() {return _isLogActive; }
-        //bool isInitDs(string &errorMessage) {errorMessage = this->_errorMessage; return _isInitDs; }
+
         bool isTm100ms() { return _istm100ms; }
         unsigned int getMaxBuffSize();
         unsigned short getMaxNumberOfConnections();
@@ -52,8 +52,8 @@ namespace WebSocketDS_ns
         string getDeviceNameFromAlias(string alias, string& errorMessage);
 
     private:
-        void init_wstc(WebSocketDS *dev, pair<string, string> &dsAndOptions, array<vector<string>, 3> &attrCommPipe);
-        void initOptionsAndDeviceServer(pair<string, string>& dsAndOptions, array<vector<string>, 3> &attrCommPipe);
+        void initOptionsAndDeviceServer(pair<string, vector<string>>& dsAndOptions, array<vector<string>, 3> &attrCommPipe);
+
         bool initDeviceServer();
         bool initDeviceServer(array<vector<string>, 3> &attrCommPipe);
 
