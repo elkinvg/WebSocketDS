@@ -43,11 +43,11 @@ namespace WebSocketDS_ns
         pair<bool, string> checkOption(string nameOfAttrOrComm, string option, TYPE_WS_REQ type_req);
         void initOptionsForAttrOrComm(string nameAttrOrComm, const std::vector<string> &options, TYPE_WS_REQ type_req);
 
+        std::string devAttrToStr(Tango::DeviceAttribute *attr); 
 
     private:
         void initQualityNState();
         stringmap getOpts(string nameOfAttrOrComm, TYPE_WS_REQ type_req);
-        std::string devAttrToStr(Tango::DeviceAttribute *attr);
 
         // argout
         void generateArgoutForJson(Tango::DeviceData& devData, std::stringstream& json,const string& command_name);

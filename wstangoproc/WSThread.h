@@ -7,13 +7,19 @@
 
 #include "common.h"
 #include <tango.h>
-#include <omnithread.h>
+//#include <omnithread.h>
+//#include <unordered_map>
 
 #include <websocketpp/config/asio.hpp>
 #include <websocketpp/server.hpp>
 #include <websocketpp/common/thread.hpp>
 
-#include "ConnectionData.h"
+//#include "ConnectionData.h"
+//#include "common.h"
+//#include <tango.h>
+#include "ParsingInputJson.h"
+#include <omnithread.h>
+#include <unordered_map>
 
 #define INFO_STREAM_F logger->info_stream()
 #define DEBUG_STREAM_F logger->debug_stream()
@@ -27,6 +33,8 @@ typedef websocketpp::server<websocketpp::config::asio_tls> server_tls;
 namespace WebSocketDS_ns
 {
     class WSTangoConn;
+    class ConnectionData;
+    class DeviceProxy;
     
     class WSThread : public omni_thread
     {
@@ -40,6 +48,7 @@ namespace WebSocketDS_ns
         virtual void send_all(std::string msg) = 0;
         virtual void send(websocketpp::connection_hdl hdl, std::string msg) = 0;
         virtual void send(websocketpp::connection_hdl hdl, const void *data, size_t len) = 0;
+        bool isAliasMode();
 
     protected:
         std::string cache;
@@ -64,7 +73,7 @@ namespace WebSocketDS_ns
 
         virtual std::unordered_map<string, string> getRemoteConf(websocketpp::connection_hdl hdl) = 0;
 
-        void removeSymbolsForString(string &str);
+        //void removeSymbolsForString(string &str);
 
         bool forValidate(map<string, string> remoteConf);
         int port;
@@ -81,7 +90,7 @@ namespace WebSocketDS_ns
         WSTangoConn* _tc;
 
         unsigned long m_next_sessionid;
-        ParsingInputJson parsing;
+        ParsingInputJson* parsing = nullptr;
 
     private:
         void timerProc(const ParsedInputJson &parsedJson, websocketpp::connection_hdl hdl);

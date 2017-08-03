@@ -1,14 +1,17 @@
 #include "StringProc.h"
 #include <sstream>
 //#include <boost/property_tree/json_parser.hpp>
+#include "common.h"
+#include <algorithm>
 
 using std::stringstream;
 
 namespace WebSocketDS_ns
 {
-    string StringProc::responseStringOut(string id, string message, string type_req_str)
+    string StringProc::responseStringOut(string id, string message, string type_req_str, bool isString)
     {
-        message = ("\"" + message + "\"");
+        if (isString)
+            message = ("\"" + message + "\"");
         return generateRespMess(id,message,type_req_str);
     }
 
@@ -57,6 +60,54 @@ namespace WebSocketDS_ns
         return generateExceptionMess(id, commandOrPipeName, errMess, type_req_str);
     }
 
+    string StringProc::exceptionStringOutForEvent(string id, vector<pair<string, vector<string>>>& devNamesAndExc, string type_req_str, string errorType)
+    {
+        stringstream ss;
+        ss << "\"type_err\": \"" << errorType << "\", ";
+        ss << "\"err_mess\": {";
+        bool nfstdev = false;
+        for (auto& devNExc : devNamesAndExc) {
+            if (nfstdev)
+                ss << ", ";
+            else
+                nfstdev = true;
+            ss << "\"" << devNExc.first << "\": [";
+            bool nfstExc = false;
+            for (auto& exc : devNExc.second) {
+                if (nfstExc)
+                    ss << ", ";
+                else
+                    nfstExc = true;
+                ss << "\"" << exc << "\"";
+            }
+            ss << "]";
+        }
+        ss << "}";
+        return generateExceptionMess(id, NONE, ss.str(), type_req_str);
+    }
+
+    string StringProc::exceptionStringOutForEvent(string id, vector<string> devices, string type_req_str, string errorType)
+    {
+        stringstream ss;
+        ss << "\"type_err\": \"" << errorType << "\", ";
+        if (errorType == "not_aliases")
+            ss << "\"err_mess\": \"In the current mode only aliases are used.\", ";
+        if (errorType == "already_pushed")
+            ss << "\"err_mess\": \"The following attributes are already included in the list.\", ";
+        ss << "\"devices\": [";
+        bool nfst = false;
+        for (auto& dev : devices) {
+            if (nfst)
+                ss << ", ";
+            else
+                nfst = true;
+            ss << "\"" << dev << "\"";
+        }
+        ss << "]";
+
+        return generateExceptionMess(id, NONE, ss.str(), type_req_str);
+    }
+
     string StringProc::exceptionStringOut(string errorMessage) {
         stringstream ss;
         ss << "{\"event\": \"error\", ";
@@ -77,6 +128,25 @@ namespace WebSocketDS_ns
         return ss.str();
     }
 
+    string StringProc::exceptionStringOut(vector<string> errorMessages, string type_attr_resp) {
+        stringstream ss;
+        ss << "{\"event\": \"error\", ";
+        ss << "\"type_req\": \"" << type_attr_resp << "\", ";
+        ss << "\"err_mess\": [";
+        bool nfst = false;
+        for (auto& err : errorMessages) {
+            if (nfst)
+                ss << ", ";
+            else
+                nfst = true;
+            ss << "\"" << err << "\"";
+        }
+        ss << "]";
+        ss << "}";
+
+        return ss.str();
+    }
+
     bool StringProc::isNameAlias(const string& deviceName)
     {
         bool isAlias = false;
@@ -85,9 +155,20 @@ namespace WebSocketDS_ns
             if (chr == '/')
                 slashNum++;
         }
-        if (slashNum != 2)
+        // for tango://host:10000/device/name/1
+        // or device/name/1
+        if (slashNum != 2 && slashNum != 5)
             isAlias = true;
         return isAlias;
+    }
+
+    void StringProc::removeSymbolsForString(string &str) {
+        //if (str.find('\0') != string::npos)
+        //    str.erase(remove(str.begin(), str.end(), '\0'), str.end());
+        if (str.find('\r') != string::npos)
+            str.erase(remove(str.begin(), str.end(), '\r'), str.end());
+        if (str.find('\n') != string::npos)
+            std::replace(str.begin(), str.end(), '\n', ' ');
     }
 
     std::vector<std::string> StringProc::parseInputString(string &inp, string delimiter, bool isAllParts) {
@@ -161,6 +242,7 @@ namespace WebSocketDS_ns
     {
         stringstream ss;
         ss << "{";
+        ss << "\"event\":\"read\", ";
         ss << "\"type_req\": \"" << type_req_str << "\", ";
         try {
             auto idTmp = stoi(id);

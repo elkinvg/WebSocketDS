@@ -11,8 +11,9 @@
 #include <websocketpp/config/asio.hpp>
 #include <websocketpp/server.hpp>
 //#include <websocketpp/common/thread.hpp>
-
+#include "EventProc.h"
 #include "TangoConnForClient.h"
+
 
 namespace WebSocketDS_ns
 {
@@ -56,6 +57,8 @@ namespace WebSocketDS_ns
         std::string name;
         unique_ptr<TangoConnForClient> tangoConnForClient = nullptr;
         unique_ptr<TimingStruct> timing = nullptr;
+        unique_ptr<EventProc> eventProc = nullptr;
+
         unsigned long timerInd{ 0 };
     };
 }

@@ -11,9 +11,14 @@
 #include <boost/asio.hpp>
 
 
+
+
+
+#include "ConnectionData.h"
+#include "EventProc.h"
+
 #include "StringProc.h"
 #include "ParsingInputJson.h"
-
 namespace WebSocketDS_ns
 {
     WSThread::WSThread(WSTangoConn *tc, int portNumber) 
@@ -22,13 +27,28 @@ namespace WebSocketDS_ns
         port = portNumber;
         _tc = tc;
         logger = _tc->get_logger();
+        parsing = new ParsingInputJson();
+    }
+
+    bool WSThread::isAliasMode()
+    {
+        auto ws_mode = _tc->getMode();
+        if (
+            ws_mode == MODE::SERVNCLIENT_ALIAS
+            || ws_mode == MODE::CLIENT_ALIAS
+            || ws_mode == MODE::CLIENT_ALIAS_RO
+            || ws_mode == MODE::SERVNCLIENT_ALIAS_RO
+            )
+            return true;
+        else
+            return false;
     }
 
     void WSThread::on_message(websocketpp::connection_hdl hdl, server::message_ptr msg) {
         string data_from_client = msg->get_payload();
         INFO_STREAM_F << " Input message: " << data_from_client << endl;
 
-        ParsedInputJson parsedInputJson = parsing.parseInputJson(data_from_client);
+        ParsedInputJson parsedInputJson = parsing->parseInputJson(data_from_client);
 
         if (!parsedInputJson.isOk) {
             string errorMess;
@@ -60,6 +80,21 @@ namespace WebSocketDS_ns
             }
             else
                 timerProc(parsedInputJson, hdl);
+            return;
+        }
+        
+        // Действия с событиями
+        // eventreq_add_dev - добавление девайсов в подписки
+        if (parsedInputJson.type_req.find("eventreq") != string::npos ) {
+            if (_tc->getMode() == MODE::SERVER) {
+                string errorMess = StringProc::exceptionStringOut(parsedInputJson.id, NONE, "Subscribing to events is not supported in the current mode", parsedInputJson.type_req);
+                send(hdl,errorMess);
+            }
+            else {
+                if (m_connections[hdl].eventProc == nullptr)
+                    m_connections[hdl].eventProc = unique_ptr<EventProc>(new EventProc(hdl, this));
+                m_connections[hdl].eventProc->sendRequest(parsedInputJson);
+            }
             return;
         }
 
@@ -143,12 +178,7 @@ namespace WebSocketDS_ns
                 }
             
             auto ws_mode = _tc->getMode();
-            if (
-                ws_mode == MODE::SERVNCLIENT_ALIAS
-                || ws_mode == MODE::CLIENT_ALIAS
-                || ws_mode == MODE::CLIENT_ALIAS_RO
-                || ws_mode == MODE::SERVNCLIENT_ALIAS_RO
-                )
+            if (isAliasMode())
             {
                 for (const auto &devs : parsedJson.otherInpObj.at("devices")) {
                     if (!StringProc::isNameAlias(devs.first)) {
@@ -157,7 +187,7 @@ namespace WebSocketDS_ns
                     }
                 }
             }
-            devAttrPipeMap = parsing.getListDevicesAttrPipe(parsedJson.otherInpObj.at("devices"));
+            devAttrPipeMap = parsing->getListDevicesAttrPipe(parsedJson.otherInpObj.at("devices"));
         }
 
         // В режимах    MODE::SERVNCLIENT_ALIAS MODE::CLIENT_ALIAS 
@@ -447,16 +477,10 @@ namespace WebSocketDS_ns
         return elems;
     }
 
-    void WSThread::removeSymbolsForString(string &str) {
-        //if (str.find('\0') != string::npos)
-        //    str.erase(remove(str.begin(), str.end(), '\0'), str.end());
-        if (str.find('\r') != string::npos)
-            str.erase(remove(str.begin(), str.end(), '\r'), str.end());
-        if (str.find('\n') != string::npos)
-            std::replace(str.begin(), str.end(), '\n', ' ');
+    WSThread::~WSThread() {
+        if (parsing != nullptr)
+            delete parsing;
     }
-
-    WSThread::~WSThread() {}
 
 }
 

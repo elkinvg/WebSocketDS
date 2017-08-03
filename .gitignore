@@ -20,3 +20,4 @@ vc12_proj/.vs/*
 vc12_proj/*.suo
 vc12_proj/*.opensdf
 .idea/*
+*.autosave

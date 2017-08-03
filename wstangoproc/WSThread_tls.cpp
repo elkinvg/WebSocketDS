@@ -10,6 +10,8 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/asio.hpp>
 
+#include "StringProc.h"
+
 
 
 namespace WebSocketDS_ns
@@ -80,7 +82,7 @@ namespace WebSocketDS_ns
     void WSThread_tls::send_all(std::string msg) {
         cache.clear();
         cache = msg;
-        removeSymbolsForString(msg);
+        StringProc::removeSymbolsForString(msg);
         //msg.clear();
         con_list::iterator it;
 
@@ -119,7 +121,7 @@ namespace WebSocketDS_ns
     }
 
     void WSThread_tls::send(websocketpp::connection_hdl hdl, std::string msg) {
-        removeSymbolsForString(msg);
+        StringProc::removeSymbolsForString(msg);
         try {
             size_t buffered_amount = get_buffered_amount(hdl);
 

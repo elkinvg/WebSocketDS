@@ -13,16 +13,18 @@ using std::stringstream;
 using std::vector;
 using std::unordered_map;
 using std::pair;
-
-typedef boost::property_tree::ptree ptree;
-typedef unordered_map<string, vector<string>> json_arr_map;
-typedef unordered_map<string, string> json_val_map;
-typedef unordered_map<string, ptree> json_obj_map;
-typedef unordered_map< string, pair<vector<string>, vector<string>>> dev_attr_pipe_map;
+using std::tuple;
 
 
 namespace WebSocketDS_ns
 {
+    typedef boost::property_tree::ptree ptree;
+    typedef unordered_map<string, vector<string>> json_arr_map;
+    typedef unordered_map<string, string> json_val_map;
+    typedef unordered_map<string, ptree> json_obj_map;
+    typedef unordered_map< string, pair<vector<string>, vector<string>>> dev_attr_pipe_map;
+    typedef vector<tuple<string, string, string>> vec_event_inf;
+
     struct ParsedInputJson {
         TYPE_OF_VAL check_key(string key) const {
             if (otherInpStr.find(key) != otherInpStr.end())
@@ -72,6 +74,7 @@ namespace WebSocketDS_ns
         dev_attr_pipe_map getListDevicesAttrPipe(const json_obj_map& objMap, string& errorMessage, bool isAlias);
         dev_attr_pipe_map getListDevicesAttrPipe(const ptree &devices);
         vector<string> getArrayOfStr(string key, const ptree& inPtree);
+        void getEventDevInp(const ptree &devices, vec_event_inf& vecEventInf, string event_type);
     };
 }
 

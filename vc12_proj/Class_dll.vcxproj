@@ -56,7 +56,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>..;$(TANGO_ROOT)\win64\include\vc12;$(TANGO_ROOT)\classes\win64\include\vc12;TemplateAbstractPath;$(BOOST_INCLUDES);$(OPENSSL_ROOT_64)\include64;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>_DEBUG;LOG4TANGO_HAS_DLL;TANGO_HAS_DLL;WIN32;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;LOG4TANGO_HAS_DLL;TANGO_HAS_DLL;WIN32;_CONSOLE;CINTERFACE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>false</StringPooling>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -130,6 +130,8 @@
     <ClCompile Include="..\WebSocketDSClass.cpp" />
     <ClCompile Include="..\WebSocketDSStateMachine.cpp" />
     <ClCompile Include="..\wstangoproc\DeviceForWs.cpp" />
+    <ClCompile Include="..\wstangoproc\EventProc.cpp" />
+    <ClCompile Include="..\wstangoproc\EventSubscr.cpp" />
     <ClCompile Include="..\wstangoproc\GroupForWs.cpp" />
     <ClCompile Include="..\wstangoproc\GroupOrDeviceForWs.cpp" />
     <ClCompile Include="..\wstangoproc\ParsingInputJson.cpp" />
@@ -137,6 +139,7 @@
     <ClCompile Include="..\wstangoproc\TangoConnForClient.cpp" />
     <ClCompile Include="..\wstangoproc\TangoProcessor.cpp" />
     <ClCompile Include="..\wstangoproc\UserControl.cpp" />
+    <ClCompile Include="..\wstangoproc\WsEvCallBack.cpp" />
     <ClCompile Include="..\wstangoproc\WSTangoConn.cpp" />
     <ClCompile Include="..\wstangoproc\WSThread.cpp" />
     <ClCompile Include="..\wstangoproc\WSThread_plain.cpp" />
@@ -150,6 +153,8 @@
     <ClInclude Include="..\wstangoproc\common.h" />
     <ClInclude Include="..\wstangoproc\ConnectionData.h" />
     <ClInclude Include="..\wstangoproc\DeviceForWs.h" />
+    <ClInclude Include="..\wstangoproc\EventProc.h" />
+    <ClInclude Include="..\wstangoproc\EventSubscr.h" />
     <ClInclude Include="..\wstangoproc\GroupForWs.h" />
     <ClInclude Include="..\wstangoproc\GroupOrDeviceForWs.h" />
     <ClInclude Include="..\wstangoproc\ParsingInputJson.h" />
@@ -157,6 +162,7 @@
     <ClInclude Include="..\wstangoproc\TangoConnForClient.h" />
     <ClInclude Include="..\wstangoproc\TangoProcessor.h" />
     <ClInclude Include="..\wstangoproc\UserControl.h" />
+    <ClInclude Include="..\wstangoproc\WsEvCallBack.h" />
     <ClInclude Include="..\wstangoproc\WSTangoConn.h" />
     <ClInclude Include="..\wstangoproc\WSThread.h" />
     <ClInclude Include="..\wstangoproc\WSThread_plain.h" />

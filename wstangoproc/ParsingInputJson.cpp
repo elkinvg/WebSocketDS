@@ -1,6 +1,7 @@
 #include "ParsingInputJson.h"
 
 #include <boost/property_tree/json_parser.hpp>
+#include <tuple>
 
 //using std::move;
 
@@ -178,6 +179,30 @@ namespace WebSocketDS_ns
         }
         catch (...){}
         return out;
+    }
+
+    void ParsingInputJson::getEventDevInp(const ptree &devices, vec_event_inf& vecEventInf, string event_type)
+    {
+        try {
+            for (const auto& elem : devices) {
+                if (!elem.first.size())
+                    continue;
+                string devName = elem.first;
+                
+                // if array
+                if (elem.second.size()) {
+                    vector<string> attrs = getArrayOfStr(devName, devices);
+                    for (auto& _attr : attrs) {
+                        vecEventInf.push_back(std::make_tuple(devName, _attr, event_type));
+                    }
+                }
+                // if value
+                if (elem.second.data().size()) {
+                    vecEventInf.push_back(std::make_tuple(devName, elem.second.data(), event_type));
+                }
+            }
+        }
+        catch (...) {}
     }
 
 }

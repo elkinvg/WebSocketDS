@@ -22,6 +22,7 @@ namespace WebSocketDS_ns
     enum class TYPE_OF_IDENT { SIMPLE, RANDIDENT, RANDIDENT2, RANDIDENT3 };
     enum class TYPE_OF_VAL { VALUE, ARRAY, OBJECT, NONE };
 
+
     enum class MODE
     {
         // только серверное управление выводом информации

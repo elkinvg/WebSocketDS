@@ -11,6 +11,7 @@ namespace WebSocketDS_ns
             getDeviceNameFromAlias(deviceName);
 
         device = new Tango::DeviceProxy(deviceName);
+        // ??? !!!
         device->set_timeout_millis(3000);
     }
 
