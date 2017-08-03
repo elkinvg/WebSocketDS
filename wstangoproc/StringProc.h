@@ -36,7 +36,7 @@ namespace WebSocketDS_ns
         //static map<std::string, std::string> parseJsonFromCommand(const string& jsonInput, bool isGroup);
         //static ParsedInputJson parseInputJson(const string& json);
     private:
-        static string generateExceptionMess(string id, string commandOrPipeName, string& inMessage, string type_req_str);
+        static string generateExceptionMess(const std::string &id, const std::string &commandOrPipeName, const string& inMessage, const string& type_req_str);
         static string generateRespMess(string id, string& inMessage, string type_req_str);
     };
 }

@@ -214,7 +214,7 @@ namespace WebSocketDS_ns
         return parsed;
     }
 
-    string StringProc::generateExceptionMess(string id, string commandOrPipeName, string& inMessage, string type_req_str) {
+    string StringProc::generateExceptionMess(const string& id,const string &commandOrPipeName,const string& inMessage, const string& type_req_str) {
         stringstream ss;
         ss << "{\"event\": \"error\", ";
         ss << "\"type_req\": \"" << type_req_str << "\", ";
