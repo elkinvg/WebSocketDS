@@ -35,6 +35,8 @@ namespace WebSocketDS_ns
         virtual string sendCommand(const ParsedInputJson& parsedInput, bool& statusComm) = 0;
         virtual string sendCommandBin(const ParsedInputJson& parsedInput, bool& statusComm) = 0;
 
+        virtual string sendAttrWr(const ParsedInputJson& parsedInput, bool& statusComm) = 0;
+
         string insertAttrToList(vector<string> &attrNames);
         string eraseAttrFromList(vector<string> &attrNames);
 

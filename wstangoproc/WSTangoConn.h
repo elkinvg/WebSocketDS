@@ -71,7 +71,7 @@ namespace WebSocketDS_ns
 
         string sendRequest_AttrClient(const ParsedInputJson& inputReq, ConnectionData& connData);
 
-        string forCommandRequest(const ParsedInputJson &inputReq, ConnectionData &connData, string &commandName, string device_name);
+        string checkPermissionForRequest(const ParsedInputJson &inputReq, ConnectionData &connData, string &commandName, string device_name, TYPE_WS_REQ typeWsReq);
 
         string checkDeviceNameKey(const ParsedInputJson& inputReq, std::string &errorMessage);
 

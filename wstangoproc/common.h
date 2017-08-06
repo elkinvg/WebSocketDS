@@ -8,7 +8,8 @@ namespace WebSocketDS_ns
     // тип запроса. 
     enum class TYPE_WS_REQ 
     { 
-        ATTRIBUTE, 
+        ATTRIBUTE,
+        ATTRIBUTE_WRITE,
         COMMAND, PIPE, PIPE_COMM, 
         RIDENT_REQ, RIDENT_ANS, RIDENT,
         COMMAND_DEV_CLIENT, // команда любому устройству command_device_cl

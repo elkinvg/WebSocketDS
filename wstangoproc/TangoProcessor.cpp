@@ -671,6 +671,153 @@ namespace WebSocketDS_ns
         return deviceData;
     }
 
+    Tango::DeviceAttribute TangoProcessor::getDeviceAttributeDataFromJson(const ParsedInputJson& dataFromJson, const Tango::AttributeInfoEx& attr_info, vector<string>& errors)
+    {
+        Tango::DeviceAttribute outDevAttr; outDevAttr.dim_x = 1; outDevAttr.dim_y = 2;
+        outDevAttr.set_name(attr_info.name.c_str());
+
+        string argin;
+        vector<string> arginArray;
+
+        TYPE_OF_VAL typeOfVaArgin = dataFromJson.check_key("argin");
+        if (typeOfVaArgin == TYPE_OF_VAL::VALUE)
+            argin = dataFromJson.otherInpStr.at("argin");
+        if (typeOfVaArgin == TYPE_OF_VAL::ARRAY)
+            arginArray = dataFromJson.otherInpVec.at("argin");
+
+        int data_type = attr_info.data_type;
+        Tango::AttrDataFormat data_format = attr_info.data_format;
+
+        // By Default. dimX - size of arginArray
+        int dimX = arginArray.size();
+        int dimY = 0;
+        
+        if (data_format == Tango::AttrDataFormat::IMAGE)
+            dimY = 1;
+
+        if (dataFromJson.check_key("dimX") == TYPE_OF_VAL::VALUE) {
+            dimX = stoi(dataFromJson.otherInpStr.at("dimX"));
+        }
+        if (dataFromJson.check_key("dimY") == TYPE_OF_VAL::VALUE) {
+            dimY = stoi(dataFromJson.otherInpStr.at("dimY"));
+        }       
+
+        try {
+            switch (data_type)
+            {
+            case Tango::DEV_VOID:
+                break;
+            case Tango::DEV_BOOLEAN:
+            {
+                if (data_format == Tango::AttrDataFormat::SCALAR)
+                    getDeviceAttribute<bool>(argin, outDevAttr);
+                if (data_format == Tango::AttrDataFormat::IMAGE || data_format == Tango::AttrDataFormat::SPECTRUM)
+                    getDeviceAttributeImageOrSpectr<bool>(arginArray, outDevAttr,dimX,dimY);
+            }
+            break;
+            case Tango::DEV_SHORT:
+            {
+                if (data_format == Tango::AttrDataFormat::SCALAR)
+                    getDeviceAttribute<short>(argin, outDevAttr);
+                if (data_format == Tango::AttrDataFormat::IMAGE || data_format == Tango::AttrDataFormat::SPECTRUM)
+                    getDeviceAttributeImageOrSpectr<short>(arginArray, outDevAttr, dimX, dimY);
+            }
+            break;
+            case Tango::DEV_LONG:
+            {
+                if (data_format == Tango::AttrDataFormat::SCALAR)
+                    getDeviceAttribute<long>(argin, outDevAttr);
+                if (data_format == Tango::AttrDataFormat::IMAGE || data_format == Tango::AttrDataFormat::SPECTRUM)
+                    getDeviceAttributeImageOrSpectr<long>(arginArray, outDevAttr, dimX, dimY);
+            }
+            break;
+            case Tango::DEV_FLOAT:
+            {
+                if (data_format == Tango::AttrDataFormat::SCALAR)
+                    getDeviceAttribute<float>(argin, outDevAttr);
+                if (data_format == Tango::AttrDataFormat::IMAGE || data_format == Tango::AttrDataFormat::SPECTRUM)
+                    getDeviceAttributeImageOrSpectr<float>(arginArray, outDevAttr, dimX, dimY);
+            }
+            break;
+            case Tango::DEV_DOUBLE:
+            {
+                if (data_format == Tango::AttrDataFormat::SCALAR)
+                    getDeviceAttribute<double>(argin, outDevAttr);
+                if (data_format == Tango::AttrDataFormat::IMAGE || data_format == Tango::AttrDataFormat::SPECTRUM)
+                    getDeviceAttributeImageOrSpectr<double>(arginArray, outDevAttr, dimX, dimY);
+            }
+            break;
+            case Tango::DEV_USHORT:
+            {
+                if (data_format == Tango::AttrDataFormat::SCALAR)
+                    getDeviceAttribute<unsigned short>(argin, outDevAttr);
+                if (data_format == Tango::AttrDataFormat::IMAGE || data_format == Tango::AttrDataFormat::SPECTRUM)
+                    getDeviceAttributeImageOrSpectr<unsigned short>(arginArray, outDevAttr, dimX, dimY);
+            }
+            break;
+            case Tango::DEV_ULONG:
+            {
+                if (data_format == Tango::AttrDataFormat::SCALAR)
+                    getDeviceAttribute<unsigned long>(argin, outDevAttr);
+                if (data_format == Tango::AttrDataFormat::IMAGE || data_format == Tango::AttrDataFormat::SPECTRUM)
+                    getDeviceAttributeImageOrSpectr<unsigned long>(arginArray, outDevAttr, dimX, dimY);
+            }
+            break;
+            case Tango::DEV_STRING:
+            {
+                if (data_format == Tango::AttrDataFormat::SCALAR)
+                    outDevAttr << argin;
+                if (data_format == Tango::AttrDataFormat::IMAGE || data_format == Tango::AttrDataFormat::SPECTRUM)
+                    outDevAttr.insert(arginArray, dimX, dimY);
+                
+            }
+            break;           
+            case Tango::DEV_STATE:
+            {
+                // // ??? !!! NO
+                throw std::runtime_error("DEV_STATE This format is not supported");
+            }
+            break;
+            case Tango::DEV_UCHAR:
+            {
+                if (data_format == Tango::AttrDataFormat::SCALAR) {
+                    if (argin.size() != 1)
+                        throw std::runtime_error("DEV_UCHAR Must be 1 char");
+                    getDeviceAttribute<unsigned char>(argin, outDevAttr);
+                }
+                if (data_format == Tango::AttrDataFormat::IMAGE || data_format == Tango::AttrDataFormat::SPECTRUM)
+                    getDeviceAttributeImageOrSpectr<unsigned char>(arginArray, outDevAttr, dimX, dimY);
+            }
+            break;
+            case Tango::DEV_LONG64:
+            {
+                if (data_format == Tango::AttrDataFormat::SCALAR)
+                    getDeviceAttribute<Tango::DevLong64>(argin, outDevAttr);
+                if (data_format == Tango::AttrDataFormat::IMAGE || data_format == Tango::AttrDataFormat::SPECTRUM)
+                    getDeviceAttributeImageOrSpectr<Tango::DevLong64>(arginArray, outDevAttr, dimX, dimY);
+            }
+            break;
+            case Tango::DEV_ULONG64:
+            {
+                if (data_format == Tango::AttrDataFormat::SCALAR)
+                    getDeviceAttribute<Tango::DevULong64>(argin, outDevAttr);
+                if (data_format == Tango::AttrDataFormat::IMAGE || data_format == Tango::AttrDataFormat::SPECTRUM)
+                    getDeviceAttributeImageOrSpectr<Tango::DevULong64>(arginArray, outDevAttr, dimX, dimY);
+            }
+            break;
+            default:
+            {
+            }
+            break;
+            }
+        }
+        catch (const boost::bad_lexical_cast &lc) {
+            throw std::runtime_error(lc.what());
+        }
+
+        return outDevAttr;
+    }
+
     void TangoProcessor::initQualityNState() {
         //init array for AttrQuality
         attrQuality[Tango::AttrQuality::ATTR_VALID] = "VALID";

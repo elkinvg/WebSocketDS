@@ -213,6 +213,31 @@ namespace WebSocketDS_ns
             return sendRequest_AttrClient(inputReq, connData);
         }
 
+        if (typeWsReq == TYPE_WS_REQ::ATTRIBUTE_WRITE) {
+            if (!isServerMode()) {
+                return StringProc::exceptionStringOut(inputReq.id, NONE, "This mode does not support commands of this type", inputReq.type_req);
+            }
+            if (!_isInitDs)
+                return StringProc::exceptionStringOut(inputReq.id, NONE, _errorMessage, inputReq.type_req);
+            {                
+                string resp_json;
+                string attrName;
+
+
+                TYPE_WS_REQ typeWsReq = getTypeWsReq(inputReq.type_req);
+
+                string errorMessage = checkPermissionForRequest(inputReq, connData, attrName, _wsds->deviceServer, typeWsReq);
+
+                if (errorMessage.size())
+                    return errorMessage;
+                
+                resp_json = "[12]";
+                bool statusAttr;
+                resp_json = groupOrDevice->sendAttrWr(inputReq, statusAttr);
+                return resp_json;
+            }
+        }
+
         // В обычном случае не возвращается никогда
         return "{\"error\": \"Unknown Request\"}";
     }
@@ -322,6 +347,8 @@ namespace WebSocketDS_ns
             return TYPE_WS_REQ::COMMAND_DEV_CLIENT;
         if (req == "attr_device_cl")
             return TYPE_WS_REQ::ATTR_DEV_CLIENT;
+        if (req == "write_attr" || req == "write_attr_dev" || req == "write_attr_gr")
+            return TYPE_WS_REQ::ATTRIBUTE_WRITE;
 
         return TYPE_WS_REQ::UNKNOWN;
     }
@@ -345,8 +372,9 @@ namespace WebSocketDS_ns
     {
         string resp_json;
         string commandName;
+        TYPE_WS_REQ typeWsReq = getTypeWsReq(inputReq.type_req);
 
-        string errorMessage = forCommandRequest(inputReq, connData, commandName, _wsds->deviceServer);
+        string errorMessage = checkPermissionForRequest(inputReq, connData, commandName, _wsds->deviceServer, typeWsReq);
 
         if (errorMessage.size())
             return errorMessage;
@@ -368,7 +396,7 @@ namespace WebSocketDS_ns
             resp_json = groupOrDevice->sendCommandBin(inputReq,statusComm);
             isBinary = true;
         }
-        bool isSent = uc->sendLogCommand(inputReq, connData.remoteConf, _wsds->deviceServer, _isGroup, statusComm);
+        bool isSent = uc->sendLogCommand(inputReq, connData.remoteConf, _wsds->deviceServer, _isGroup, statusComm, typeWsReq);
         if (isSent)
             INFO_STREAM << "Information was sent to the log" << endl;
         return resp_json;
@@ -383,7 +411,9 @@ namespace WebSocketDS_ns
             return errorMessage;
 
         string commandName;
-        errorMessage = forCommandRequest(inputReq, connData, commandName, device_name);
+        TYPE_WS_REQ typeWsReq = getTypeWsReq(inputReq.type_req);
+
+        errorMessage = checkPermissionForRequest(inputReq, connData, commandName, device_name, typeWsReq);
 
         if (errorMessage.size())
             return errorMessage;
@@ -402,7 +432,7 @@ namespace WebSocketDS_ns
                 if (statusComm)
                     isBinary = true;
             }
-            bool isSent = uc->sendLogCommand(inputReq, connData.remoteConf, device_name, _isGroup, statusComm);
+            bool isSent = uc->sendLogCommand(inputReq, connData.remoteConf, device_name, _isGroup, statusComm, typeWsReq);
             if (isSent)
                 INFO_STREAM << "Information was sent to the log" << endl;
 
@@ -605,11 +635,23 @@ namespace WebSocketDS_ns
         }        
     }
 
-    string WSTangoConn::forCommandRequest(const ParsedInputJson &inputReq, ConnectionData &connData, string &commandName, string device_name)
+    string WSTangoConn::checkPermissionForRequest(const ParsedInputJson &inputReq, ConnectionData &connData, string &commandName, string device_name, TYPE_WS_REQ typeWsReq)
     {
-        if (inputReq.check_key("command_name") != TYPE_OF_VAL::VALUE)
-            return StringProc::exceptionStringOut(inputReq.id, NONE, "Not found key command_name or command_name is not value", inputReq.type_req);
-        commandName = inputReq.otherInpStr.at("command_name");
+        if (typeWsReq == TYPE_WS_REQ::COMMAND || typeWsReq == TYPE_WS_REQ::COMMAND_DEV_CLIENT) {
+
+            if (inputReq.check_key("command_name") != TYPE_OF_VAL::VALUE)
+                return StringProc::exceptionStringOut(inputReq.id, NONE, "Not found key command_name or command_name is not value", inputReq.type_req);
+            commandName = inputReq.otherInpStr.at("command_name");
+        }
+        else if (typeWsReq == TYPE_WS_REQ::ATTRIBUTE_WRITE) {
+            if (inputReq.check_key("attr_name") != TYPE_OF_VAL::VALUE)
+                return StringProc::exceptionStringOut(inputReq.id, NONE, "Not found key attr_name or attr_name is not value", inputReq.type_req);
+            commandName = inputReq.otherInpStr.at("attr_name");
+        }
+        else {
+            // Этот ответ в нормальном случае не отправлется
+            return StringProc::exceptionStringOut(inputReq.id, NONE, "Unknown error. Check source", inputReq.type_req);
+        }
         string mess;
 
         // Пока логин пароль (и прочие аут-данные) вводятся при запросе
@@ -631,7 +673,7 @@ namespace WebSocketDS_ns
             }
         }
 
-        bool permission = uc->check_permission(inputReq, connData.remoteConf, device_name, _isGroup, mess);
+        bool permission = uc->check_permission(inputReq, connData.remoteConf, device_name, _isGroup, mess, typeWsReq);
 
         if (mess.size())
             INFO_STREAM << mess << endl;

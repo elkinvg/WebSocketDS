@@ -24,6 +24,8 @@ namespace WebSocketDS_ns
 
         virtual string sendCommandBin(const ParsedInputJson& parsedInput, bool& statusComm) override;
 
+        virtual string sendAttrWr(const ParsedInputJson& parsedInput, bool& statusComm) override;
+
         bool pingDevice(string& errorMess);
 
     private:

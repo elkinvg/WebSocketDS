@@ -43,7 +43,9 @@ namespace WebSocketDS_ns
         pair<bool, string> checkOption(string nameOfAttrOrComm, string option, TYPE_WS_REQ type_req);
         void initOptionsForAttrOrComm(string nameAttrOrComm, const std::vector<string> &options, TYPE_WS_REQ type_req);
 
-        std::string devAttrToStr(Tango::DeviceAttribute *attr); 
+        std::string devAttrToStr(Tango::DeviceAttribute *attr);
+
+        Tango::DeviceAttribute getDeviceAttributeDataFromJson(const ParsedInputJson& dataFromJson, const Tango::AttributeInfoEx& attr_info, vector<string>& errors);
 
     private:
         void initQualityNState();
@@ -206,7 +208,7 @@ namespace WebSocketDS_ns
         template <typename T>
         Tango::DeviceData getDeviceData(vector<string>& inputVecStr) {
             vector<T> inpVec;
-            inpVec.resize(inputVecStr.size());
+            inpVec.reserve(inputVecStr.size());
             for (auto &val : inputVecStr) {
                 if (std::is_same<T, bool>::value) {
                     // если не то и не другое будет кинуто исключение
@@ -226,6 +228,51 @@ namespace WebSocketDS_ns
                     inpVec.push_back(boost::lexical_cast<T>(val));
             }
             return generateDeviceDataFromArgin(inpVec);
+        }
+
+        template <typename T>
+        void getDeviceAttribute(string inputStr, Tango::DeviceAttribute& outDevAttr) {
+            T inp;
+            if (std::is_same<T, bool>::value) {
+                // если не то и не другое будет кинуто исключение
+                if (inputStr == "0" || inputStr == "false")
+                    inp = false;
+                else if (inputStr == "1" || inputStr == "true")
+                    inp = true;
+                else
+                    inp = boost::lexical_cast<T>(inputStr);
+            }
+            else
+                inp = boost::lexical_cast<T>(inputStr); 
+            outDevAttr << inp;
+        }
+
+        template <typename T>
+        void  getDeviceAttributeImageOrSpectr(vector<string>& inputVecStr, Tango::DeviceAttribute& outDevAttr, int dimX, int dimY) {
+            vector<T> inpVec;
+            inpVec.reserve(inputVecStr.size());
+            for (auto &val : inputVecStr) {
+                if (std::is_same<T, bool>::value) {
+                    // если не то и не другое будет кинуто исключение
+                    T inp;
+                    if (val == "0" || val == "false") {
+                        inp = false;
+                        inpVec.push_back(inp);
+                    }
+                    else if (val == "1" || val == "true") {
+                        inp = true;
+                        inpVec.push_back(inp);
+                    }
+                    else
+                        inpVec.push_back(boost::lexical_cast<T>(val));
+                }
+                else {
+                    auto test = boost::lexical_cast<T>(val);
+                    inpVec.push_back(boost::lexical_cast<T>(val));
+                }
+            }
+
+            outDevAttr.insert(inpVec,dimX,dimY);
         }
 
         template <typename T>

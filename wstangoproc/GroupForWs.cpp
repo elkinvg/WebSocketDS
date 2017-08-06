@@ -226,6 +226,11 @@ namespace WebSocketDS_ns
             return sendCommandBinForDevice(dp, parsedInput, statusComm);
     }
 
+    string GroupForWs::sendAttrWr(const ParsedInputJson& parsedInput, bool& statusComm)
+    {
+        return "temporary";
+    }
+
     Tango::CommandInfo GroupForWs::getCommandInfo(const string& command_name)
     {
         Tango::CommandInfo ci_out;

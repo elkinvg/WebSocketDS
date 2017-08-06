@@ -133,6 +133,35 @@ namespace WebSocketDS_ns
         return sendCommandBinForDevice(device, parsedInput, statusComm);
     }
 
+    string DeviceForWs::sendAttrWr(const ParsedInputJson& parsedInput, bool& statusComm)
+    {
+        statusComm = false;
+        try {
+            
+            string attr_name = parsedInput.otherInpStr.at("attr_name");
+            Tango::AttributeInfoEx attr_info =  device->attribute_query(attr_name);
+            vector<string> errors;
+            Tango::DeviceAttribute attr = processor->getDeviceAttributeDataFromJson(parsedInput, device->attribute_query(attr_name), errors);
+
+            if (errors.size())
+                return StringProc::exceptionStringOut(parsedInput.id, NONE, errors, parsedInput.type_req);
+            
+            device->write_attribute(attr);
+            statusComm = true;
+        }
+        catch (Tango::DevFailed& e) {
+            vector<string> errors;
+            for (int i = 0; i < e.errors.length(); i++) {
+                errors.push_back((string)e.errors[i].desc);
+            }
+            return StringProc::exceptionStringOut(parsedInput.id, NONE, errors, parsedInput.type_req);
+        }
+        catch (std::exception &exc) {
+            return StringProc::exceptionStringOut(parsedInput.id, NONE, exc.what(), parsedInput.type_req);
+        }
+        return StringProc::responseStringOut(parsedInput.id, "Was written to the attribute", parsedInput.type_req);
+    }
+
     Tango::CommandInfo DeviceForWs::getCommandInfo(const string &command_name)
     {
         return device->command_query(command_name);

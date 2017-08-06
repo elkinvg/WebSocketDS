@@ -8,10 +8,10 @@ WebSocketDS_ns::UserControl::UserControl(string authDS, TYPE_OF_IDENT toi, bool 
     _isLogActive = isLogActive;
 }
 
-bool WebSocketDS_ns::UserControl::check_permission(const ParsedInputJson& parsedInputJson, const unordered_map<string, string> &remoteConf, string deviceName, bool isGroup, string &mess) {
+bool WebSocketDS_ns::UserControl::check_permission(const ParsedInputJson& parsedInputJson, const unordered_map<string, string> &remoteConf, string deviceName, bool isGroup, string &mess, TYPE_WS_REQ typeWsReq) {
     bool isAuth = false;
 
-    vector <string> permission_data = getPermissionData(parsedInputJson, remoteConf, deviceName);
+    vector <string> permission_data = getPermissionData(parsedInputJson, remoteConf, deviceName, typeWsReq);
 
     Tango::DeviceData argin, argout;
     Tango::DeviceProxy *authProxy = nullptr;
@@ -22,7 +22,7 @@ bool WebSocketDS_ns::UserControl::check_permission(const ParsedInputJson& parsed
         argout = authProxy->command_inout("check_permissions", argin);
         argout >> isAuth;
         std::stringstream ss;
-        ss << "User " << permission_data[3] << " tried to run the command " << parsedInputJson.otherInpStr.at("command_name")  <<". Access status is " << std::boolalpha << isAuth;
+        ss << "User " << permission_data[3] << " tried to run the command " << permission_data[1] << ". Access status is " << std::boolalpha << isAuth;
         mess = ss.str();
 
         // Если включён режим отправления данных в журналы.
@@ -166,12 +166,12 @@ bool WebSocketDS_ns::UserControl::check_user_rident(string login, string rand_id
     return isAuth;
 }
 
-bool WebSocketDS_ns::UserControl::sendLogCommand(const WebSocketDS_ns::ParsedInputJson &parsedInputJson, const std::unordered_map<std::string, std::string> &remoteConf, string deviceName, bool isGroup, bool status)
+bool WebSocketDS_ns::UserControl::sendLogCommand(const WebSocketDS_ns::ParsedInputJson &parsedInputJson, const std::unordered_map<std::string, std::string> &remoteConf, string deviceName, bool isGroup, bool status, TYPE_WS_REQ typeWsReq)
 {
     if (!_isLogActive)
         return false;
 
-    vector <string> permission_data = getPermissionData(parsedInputJson,remoteConf, deviceName);
+    vector <string> permission_data = getPermissionData(parsedInputJson, remoteConf, deviceName, typeWsReq);
     Tango::DeviceProxy *authProxy = nullptr;
     try {
         authProxy = new Tango::DeviceProxy(_authDS);
@@ -229,7 +229,7 @@ bool WebSocketDS_ns::UserControl::sendLog(Tango::DeviceProxy *authProxy, const v
     return isSuccess;
 }
 
-vector<string> WebSocketDS_ns::UserControl::getPermissionData(const ParsedInputJson &parsedInputJson, const std::unordered_map<std::string, std::string> &remoteConf, const string &deviceName)
+vector<string> WebSocketDS_ns::UserControl::getPermissionData(const ParsedInputJson &parsedInputJson, const std::unordered_map<std::string, std::string> &remoteConf, const string &deviceName, TYPE_WS_REQ typeWsReq)
 {
     // Проверка ключей из remoteConf проводится checkKeysFromParsedGet
     vector <string> permission_data;
@@ -237,7 +237,12 @@ vector<string> WebSocketDS_ns::UserControl::getPermissionData(const ParsedInputJ
     permission_data.resize(4);
 
     permission_data[0] = deviceName; // device
-    permission_data[1] = parsedInputJson.otherInpStr.at("command_name"); // commandName
+    if (typeWsReq == TYPE_WS_REQ::COMMAND || typeWsReq == TYPE_WS_REQ::COMMAND_DEV_CLIENT)
+        permission_data[1] = parsedInputJson.otherInpStr.at("command_name"); // commandName
+    else if (typeWsReq == TYPE_WS_REQ::ATTRIBUTE_WRITE)
+        permission_data[1] = parsedInputJson.otherInpStr.at("attr_name"); // commandName
+    else
+        throw exception("check getPermissionData");
     permission_data[2] = remoteConf.at("ip");
     permission_data[3] = remoteConf.at("login");
     

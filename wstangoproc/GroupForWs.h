@@ -32,6 +32,8 @@ namespace WebSocketDS_ns
         virtual string sendCommand(const ParsedInputJson& parsedInput, bool& statusComm) override;
         virtual string sendCommandBin(const ParsedInputJson& parsedInput, bool& statusComm) override;
 
+        virtual string sendAttrWr(const ParsedInputJson& parsedInput, bool& statusComm) override;
+
     private:
         virtual Tango::CommandInfo getCommandInfo(const string& command_name) override;
         virtual bool initAllAttrs() override;
