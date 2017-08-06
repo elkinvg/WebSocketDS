@@ -242,7 +242,7 @@ vector<string> WebSocketDS_ns::UserControl::getPermissionData(const ParsedInputJ
     else if (typeWsReq == TYPE_WS_REQ::ATTRIBUTE_WRITE)
         permission_data[1] = parsedInputJson.otherInpStr.at("attr_name"); // commandName
     else
-        throw exception("check getPermissionData");
+        throw std::runtime_error("check getPermissionData");
     permission_data[2] = remoteConf.at("ip");
     permission_data[3] = remoteConf.at("login");
     
