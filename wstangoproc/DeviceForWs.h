@@ -11,7 +11,7 @@ namespace WebSocketDS_ns
         DeviceForWs(string deviceName);
         DeviceForWs(string deviceName, std::pair<vector<string>, vector<string>>& attr_pipes);
         DeviceForWs(string deviceName, array<vector<string>, 3>& attrCommPipe);
-        DeviceForWs(string deviceName, vector<string> &commands);
+        DeviceForWs(string deviceName, const string& commandOrAttrName, TYPE_WS_REQ type_req);
         ~DeviceForWs();
 
         virtual string generateJsonForUpdate() override;
@@ -30,6 +30,8 @@ namespace WebSocketDS_ns
 
     private:
         virtual Tango::CommandInfo getCommandInfo(const string& command_name) override;
+        virtual bool checkIsAttributeWriteble(const string& attr_name) override;
+
         virtual bool initAllAttrs() override;
         void forGenerateJsonForUpdate(stringstream &json);
         void getDeviceNameFromAlias(string& alias);

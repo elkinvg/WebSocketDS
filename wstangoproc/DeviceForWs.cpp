@@ -8,7 +8,7 @@ namespace WebSocketDS_ns
     DeviceForWs::DeviceForWs(string deviceName)
     {
         StringProc::isNameAlias(deviceName);
-            getDeviceNameFromAlias(deviceName);
+        getDeviceNameFromAlias(deviceName);
 
         device = new Tango::DeviceProxy(deviceName);
         // ??? !!!
@@ -30,10 +30,14 @@ namespace WebSocketDS_ns
         initPipe(attrCommPipe[2]);
     }
 
-    DeviceForWs::DeviceForWs(string deviceName, vector<string> &commands)
+    DeviceForWs::DeviceForWs(string deviceName, const string& commandOrAttrName, TYPE_WS_REQ type_req)
         :DeviceForWs(deviceName)
     {
-        initComm(commands);
+        vector<string> inpVec = { commandOrAttrName + ";wrt" };
+        if (type_req == TYPE_WS_REQ::COMMAND_DEV_CLIENT)
+            initComm(inpVec);
+        if (type_req == TYPE_WS_REQ::ATTR_DEV_CLIENT_WR)
+            initAttr(inpVec);
     }
 
     DeviceForWs::~DeviceForWs() 
@@ -139,9 +143,13 @@ namespace WebSocketDS_ns
         try {
             
             string attr_name = parsedInput.otherInpStr.at("attr_name");
+
+            if (isWrtAttribute.find(attr_name) == isWrtAttribute.end())
+                return StringProc::exceptionStringOut(parsedInput.id, NONE, "Attribute " + attr_name + " is not included in the list of writable attributes, Or it is not writable. Read README.md for information", parsedInput.type_req);
+
             Tango::AttributeInfoEx attr_info =  device->attribute_query(attr_name);
             vector<string> errors;
-            Tango::DeviceAttribute attr = processor->getDeviceAttributeDataFromJson(parsedInput, device->attribute_query(attr_name), errors);
+            Tango::DeviceAttribute attr = processor->getDeviceAttributeDataFromJson(parsedInput, attr_info, errors);
 
             if (errors.size())
                 return StringProc::exceptionStringOut(parsedInput.id, NONE, errors, parsedInput.type_req);
@@ -159,12 +167,29 @@ namespace WebSocketDS_ns
         catch (std::exception &exc) {
             return StringProc::exceptionStringOut(parsedInput.id, NONE, exc.what(), parsedInput.type_req);
         }
+
         return StringProc::responseStringOut(parsedInput.id, "Was written to the attribute", parsedInput.type_req);
     }
 
     Tango::CommandInfo DeviceForWs::getCommandInfo(const string &command_name)
     {
         return device->command_query(command_name);
+    }
+
+    bool DeviceForWs::checkIsAttributeWriteble(const string& attr_name)
+    {
+        try {
+            Tango::AttributeInfoEx attr_info = device->get_attribute_config(attr_name);
+        
+            // ??? !!! if Tango::AttrWriteType::READ_WITH_WRITE
+        
+            if (attr_info.writable == Tango::AttrWriteType::READ_WRITE ||
+                attr_info.writable == Tango::AttrWriteType::WRITE)
+                return true;
+        }
+        catch (...){}
+        
+        return false;
     }
 
     bool DeviceForWs::pingDevice(string& errorMess)

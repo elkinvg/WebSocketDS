@@ -43,6 +43,8 @@ namespace WebSocketDS_ns
     protected:
         virtual Tango::CommandInfo getCommandInfo(const string& command_name) = 0;
 
+        virtual bool checkIsAttributeWriteble(const string& attr_name) = 0;
+
         void generateAttrJson(std::stringstream& json, std::vector<Tango::DeviceAttribute> *attrList);
 
         Tango::DeviceData tangoCommandInoutForDevice(Tango::DeviceProxy *deviceProxy, const ParsedInputJson& dataFromJson, string& errorMessInJson);
@@ -77,6 +79,7 @@ namespace WebSocketDS_ns
         std::unordered_map<std::string, Tango::CommandInfo> accessibleCommandInfo;
         std::unique_ptr<TangoProcessor> processor;
         //const string ERR_PRED = "err"; // .insert(0, ERR_PRED)
+        std::unordered_set<std::string> isWrtAttribute;
     
     private:
         bool _isShortAttr{ true };

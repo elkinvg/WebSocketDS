@@ -228,7 +228,95 @@ namespace WebSocketDS_ns
 
     string GroupForWs::sendAttrWr(const ParsedInputJson& parsedInput, bool& statusComm)
     {
-        return "temporary";
+        statusComm = false;
+
+        try {
+            string attr_name = parsedInput.otherInpStr.at("attr_name");
+
+            if (isWrtAttribute.find(attr_name) == isWrtAttribute.end())
+                return StringProc::exceptionStringOut(parsedInput.id, NONE, "Attribute " + attr_name + " is not included in the list of writable attributes, Or it is not writable. Read README.md for information", parsedInput.type_req);
+
+            if (parsedInput.type_req == "write_attr_gr") {
+                auto devices_names = group->get_device_list();
+
+                if (!devices_names.size()) {
+                    return StringProc::exceptionStringOut(parsedInput.id, attr_name, "Group does not contain any devices", parsedInput.type_req);
+                }
+
+                Tango::DeviceAttribute attr;
+
+                // Getting information about attribute
+                for (auto& dev : devices_names) {
+                    try {
+                        Tango::AttributeInfoEx attr_info = group->get_device(dev)->attribute_query(attr_name);
+                        vector<string> errors;
+                        attr = processor->getDeviceAttributeDataFromJson(parsedInput, attr_info, errors);
+                        break;
+                    }
+                    catch (...) {}
+                } 
+
+                Tango::GroupReplyList replyList = group->write_attribute(attr, true);
+
+                bool hasFailed = false;
+                vector<string> devices_failed;
+
+                for (auto& reply : replyList) {
+                    if (reply.has_failed()) {
+                        hasFailed = true;
+                        devices_failed.push_back("Device: " + reply.dev_name() + " is not available");
+                    }
+                }
+
+                if (hasFailed) {
+                    if (devices_failed.size() == devices_names.size())
+                        return StringProc::exceptionStringOut(parsedInput.id, NONE, "All devices from group are not available", parsedInput.type_req);
+                    else 
+                        return StringProc::responseStringOut(parsedInput.id, devices_failed, parsedInput.type_req);
+                }
+            }
+
+            if (parsedInput.type_req == "write_attr_dev") {
+                if (parsedInput.check_key("device_name") != TYPE_OF_VAL::VALUE)
+                    return StringProc::exceptionStringOut(parsedInput.id, NONE, "Not found key device_name or device_name is not value", parsedInput.type_req);
+
+                string device_name = parsedInput.otherInpStr.at("device_name");
+
+                Tango::DeviceProxy *dp;
+                try {
+                    dp = group->get_device(device_name);
+                    if (dp == 0) {
+                        return StringProc::exceptionStringOut(parsedInput.id, attr_name, device_name + " does not belongs to the group", parsedInput.type_req);
+                    }
+                }
+                catch (const Tango::DevFailed &df) {
+                    return StringProc::exceptionStringOut(parsedInput.id, attr_name, device_name + "  belongs to the group but can’t be reached", parsedInput.type_req);
+                }
+
+                Tango::AttributeInfoEx attr_info = dp->attribute_query(attr_name);
+                vector<string> errors;
+                Tango::DeviceAttribute attr = processor->getDeviceAttributeDataFromJson(parsedInput, attr_info, errors);
+
+                if (errors.size())
+                    return StringProc::exceptionStringOut(parsedInput.id, NONE, errors, parsedInput.type_req);
+
+                dp->write_attribute(attr);
+                
+            }
+            statusComm = true;
+        }
+        catch (Tango::DevFailed& e) {
+            vector<string> errors;
+            for (int i = 0; i < e.errors.length(); i++) {
+                errors.push_back((string)e.errors[i].desc);
+            }
+            return StringProc::exceptionStringOut(parsedInput.id, NONE, errors, parsedInput.type_req);
+        }
+        catch (std::exception &exc) {
+            return StringProc::exceptionStringOut(parsedInput.id, NONE, exc.what(), parsedInput.type_req);
+        }
+
+        return StringProc::responseStringOut(parsedInput.id, "Was written to the attribute", parsedInput.type_req);
     }
 
     Tango::CommandInfo GroupForWs::getCommandInfo(const string& command_name)
@@ -259,6 +347,39 @@ namespace WebSocketDS_ns
             }
         }
         return ci_out;
+    }
+
+    bool GroupForWs::checkIsAttributeWriteble(const string& attr_name)
+    {
+        vector<string> device_list = group->get_device_list(true);
+
+        if (!device_list.size())
+            return false;
+
+        // Здесь проверяется writable 
+        // Должны совпадать  для всех атрибутов
+
+        for (auto& device : device_list) {
+            Tango::DeviceProxy *dp;
+            dp = group->get_device(device);
+
+            if (dp == 0)
+                return false;
+
+            try {
+                Tango::AttributeInfoEx attr_info = dp->get_attribute_config(attr_name);
+                
+                if (attr_info.writable != Tango::AttrWriteType::READ_WRITE &&
+                    attr_info.writable != Tango::AttrWriteType::WRITE)
+                    return false;
+            }
+            catch (Tango::DevFailed)
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     Tango::GroupCmdReplyList GroupForWs::tangoCommandInoutForGroup(const ParsedInputJson& dataFromJson, string& errorMessInJson)
@@ -297,12 +418,10 @@ namespace WebSocketDS_ns
             }
         }
         catch (Tango::DevFailed &e) {
-            string tangoErrors;
+            vector<string> tangoErrors;
 
             for (unsigned int i = 0; i < e.errors.length(); i++) {
-                if (i > 0)
-                    tangoErrors += " ||| ";
-                tangoErrors += (string)e.errors[i].desc;
+                tangoErrors.push_back((string)e.errors[i].desc);
             }
 
             errorMessInJson = StringProc::exceptionStringOut(dataFromJson.id, commandName, tangoErrors, dataFromJson.type_req);
@@ -325,8 +444,7 @@ namespace WebSocketDS_ns
             if (dp != 0) 
                 devAttrList = dp->read_attributes(attributes);
         }
-        catch (Tango::DevFailed &e) {
-        }
+        catch (Tango::DevFailed &e) {}
 
         return devAttrList;
     }

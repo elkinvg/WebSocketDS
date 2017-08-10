@@ -256,6 +256,8 @@ namespace WebSocketDS_ns
             std::stringstream ss;
             Tango::AttrDataFormat format = attr->get_data_format();
             string nameAttr = attr->get_name();
+            int dim_x = attr->dim_x;
+            int dim_y = attr->dim_y;
             if (format == Tango::AttrDataFormat::SPECTRUM || format == Tango::AttrDataFormat::IMAGE)
                 ss << "\"dimX\": " << attr->dim_x << ", ";
             if (format == Tango::AttrDataFormat::IMAGE)
@@ -273,9 +275,19 @@ namespace WebSocketDS_ns
             }
             else
                 if (format == Tango::AttrDataFormat::SPECTRUM || format == Tango::AttrDataFormat::IMAGE) {
+                    if (!dim_y)
+                        dim_y = 1;
                     (*attr) >> dataVector;
+
+                    int iter = 0;
                     for (auto& i : dataVector) {
+                        // for writable attribute
+                        // Read only Read_data (without Write_data)
+                        if (iter >= dim_x*dim_y)
+                            break;
+
                         tmpVec.push_back((unsigned short)i);
+                        iter++;
                     }
                     ss << "[";
                     dataArrayFromAttrOrCommToJson(tmpVec, ss,TYPE_WS_REQ::ATTRIBUTE,nameAttr);

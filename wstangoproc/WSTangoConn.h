@@ -70,6 +70,8 @@ namespace WebSocketDS_ns
         string sendRequest_Rident(const ParsedInputJson& inputReq, ConnectionData& connData);
 
         string sendRequest_AttrClient(const ParsedInputJson& inputReq, ConnectionData& connData);
+        string sendRequest_AttrWrite(const ParsedInputJson& inputReq, ConnectionData& connData);
+        string sendRequest_AttrWrite_DevClient(const ParsedInputJson& inputReq, ConnectionData& connData);
 
         string checkPermissionForRequest(const ParsedInputJson &inputReq, ConnectionData &connData, string &commandName, string device_name, TYPE_WS_REQ typeWsReq);
 

@@ -6,11 +6,13 @@ WebSocketDS
     - **[Data from group of devices](#data-from-group-of-devices)**
     - **[Reading data from pipe](#reading-data-from-pipe)**
     - **[Running commands](#running-commands)**
+    - **[Write attribute](#write-attribute)**
     
 - **[Client mode](#client-mode)**
     - **[Timer control](#timer-control)**
     - **[Reading data from attributes and pipe](#reading-data-from-attributes-and-pipe)**
     - **[Client running of commands](#client-running-of-commands)**
+    - **[Client attribute writing](#client-attribute-writing)**
 
 - **[Work with events](#work-with-events)**
     - **[Subscribing to events](#subscribing-to-events)**
@@ -42,6 +44,10 @@ Server mode is `ser` or `ser_cli_all_ro` or `ser_cli_all` or `ser_cli_ali` or  `
 
 The listening device must be written in the property `DeviceServer`
 
+The list of readable attributes must be listed in the property `Attributes`
+
+If you want to listen to a group of devices, the "Options" property must contain a string `group`. `DeviceServer` must contain name pattern for group (e.g., domain_*/family/member_*)
+
 #### Data from device
 
 If the device (output):
@@ -70,6 +76,8 @@ If the device (output):
 
 
 #### Data from group of devices
+
+If you want to listen to a group of devices, the "Options" property must contain a string `group`.
 
 If a group of devices (output):
 
@@ -170,6 +178,8 @@ For `"read_pipe_dev"` in mode `group`:
   
 #### Running commands
 
+The list of available commands must be listed in the property `Commands`
+
 ```json
 {
 	"type_req": "command or command_device or command_group",
@@ -234,6 +244,48 @@ For `"read_pipe_dev"` in mode `group`:
   }
   ```
 
+#### Write attribute
+
+The list of writable attributes must be listed in the property `Attributes` with postfix `;wrt` or `;onlywrt` (if only for writing)
+
+```text
+AttributeName;wrt
+or
+AttributeName;onlywrt
+```
+
+Input JSON:
+
+```json
+{
+	"type_req": "write_attr or write_attr_gr or write_attr_dev",
+	"attr_name": "Attribute name",
+	"device_name": "Device name if write_attr_dev",
+	"id": "Request id",
+	"argin": "value or [array]",
+	"dimX": "only for Image type",
+	"dimY": "only for Image type"
+}
+```
+
+Request types:
+ 
+ - `"write_attr"` - Single device. If the property `DeviceServer` is device.
+ - `"write_attr_dev"` - Single device. If the property `DeviceServer` is group of devices.
+ - `"write_attr_gr"` - Group of devices. If the property `DeviceServer` is group of devices.
+ 
+ Output message (if succesfull):
+ 
+```json
+{
+	"event":"read", 
+	"type_req": "write_attr", 
+	"id_req": 0, 
+	"resp": "Was written to the attribute."
+}
+```
+ 
+ `"resp"` Can contain devices for which the write operation is not successful (If using the group mode)
   
 ## Client mode
 
@@ -357,6 +409,8 @@ Output message:
 
 #### Client running of commands
 
+If the mode is not "read-only"
+
 Input message:
 
 ```json
@@ -380,6 +434,35 @@ Output message:
 		"device_name": "name/of/device or alias",
 		"argout": "value or array"
 	}
+}
+```
+
+#### Client attribute writing
+
+If the mode is not "read-only"
+
+Input JSON:
+
+```json
+{
+	"type_req": "write_attr_dev_cl",
+	"attr_name": "Attribute name",
+	"device_name": "Device name",
+	"id": "Request id",
+	"argin": "value or [array]",
+	"dimX": "only for Image type",
+	"dimY": "only for Image type"
+}
+```
+
+Output message (if succesfull):
+
+```json
+{
+	"event": "read", 
+	"type_req": "write_attr_dev_cl", 
+	"id_req": 0, 
+	"resp": "Was written to the attribute."
 }
 ```
 
@@ -528,6 +611,8 @@ Device `AuthDS` must contain method `check_user_ident(const Tango::DevVarStringA
    * **\(\*argin)[2]** — rand_ident_hash. For example MD5(rand_ident+login)
    
 #### Method USERANDIDENT2
+
+__2-step verification__
 
 To activate this feature, you need to define `tident=rndid2` in Property "Options"
 

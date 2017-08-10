@@ -23,11 +23,11 @@ namespace WebSocketDS_ns
 
     //--------------------------------------------------------
     /**
-    *	Method      : checkDataType()
-    *	Description : Checking type of returned data for command
+    *    Method      : checkDataType()
+    *    Description : Checking type of returned data for command
     *
-    *	@param commandName Name of command
-    *	@returns Type of returned data. (JSON or binary)
+    *    @param commandName Name of command
+    *    @returns Type of returned data. (JSON or binary)
     *
     */
     //--------------------------------------------------------
@@ -136,9 +136,34 @@ namespace WebSocketDS_ns
             //DEBUG_STREAM << attr << endl;
 
             vector<string> gettedOptions = StringProc::parseInputString(attr, ";");
-            processor->initOptionsForAttrOrComm(attr, gettedOptions, TYPE_WS_REQ::ATTRIBUTE);
 
-            forNiterOpt(attr);            
+            // checking writable
+            {
+                // Search option "onlywrt" for attribuie. It is not included in the outgoing json for updating
+                auto it = find(gettedOptions.begin(), gettedOptions.end(), "onlywrt");
+
+                if (it != gettedOptions.end()) {
+                    
+                    if (checkIsAttributeWriteble(attr))
+                        isWrtAttribute.insert(attr);
+                    continue;
+                }
+
+                // Здесь для запросов ATTRIBUTE_WRITE поиск идёт TYPE_WS_REQ::ATTRIBUTE
+                processor->initOptionsForAttrOrComm(attr, gettedOptions, TYPE_WS_REQ::ATTRIBUTE);
+
+                // An attribute can be writable only if it has option  "wrt". 
+                if (processor->checkOption(attr, "wrt", TYPE_WS_REQ::ATTRIBUTE).first && checkIsAttributeWriteble(attr)) {
+                    isWrtAttribute.insert(attr);
+                }
+            }
+
+            forNiterOpt(attr);
+
+            if (!isAllAttrs) {
+                if (std::find(_attributes.begin(), _attributes.end(), attr) == _attributes.end())
+                    _attributes.push_back(attr);
+            }
         }
         if (isAllAttrs) {
             for (auto& attr : _attributes) {
@@ -148,8 +173,7 @@ namespace WebSocketDS_ns
                     isJsonAttribute.insert(attr);
             }
         }
-        else 
-            _attributes = attributes;
+
         nAttributes = _attributes.size();
     }
 
@@ -278,12 +302,10 @@ namespace WebSocketDS_ns
             _tangoCommandInoutForDevice(outDeviceData, deviceProxy, dataFromJson, commandName, errorMessInJson, type);
         }
         catch (Tango::DevFailed &e) {
-            string tangoErrors;
+            vector<string> tangoErrors;
 
             for (unsigned int i = 0; i < e.errors.length(); i++) {
-                if (i > 0)
-                    tangoErrors += " ||| ";
-                tangoErrors += (string)e.errors[i].desc;
+                tangoErrors.push_back( (string)e.errors[i].desc );
             }
 
             errorMessInJson = StringProc::exceptionStringOut(dataFromJson.id, commandName, tangoErrors, dataFromJson.type_req);
@@ -443,12 +465,10 @@ namespace WebSocketDS_ns
             }
         }
         catch (Tango::DevFailed &e) {
-            string tangoErrors;
+            vector<string> tangoErrors;
 
             for (unsigned int i = 0; i < e.errors.length(); i++) {
-                if (i > 0)
-                    tangoErrors += " ||| ";
-                tangoErrors += (string)e.errors[i].desc;
+                tangoErrors.push_back( (string)e.errors[i].desc );
             }
 
             errorMessInJson = StringProc::exceptionStringOut(dataFromJson.id, commandName, tangoErrors, dataFromJson.type_req);

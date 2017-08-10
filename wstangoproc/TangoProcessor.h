@@ -267,7 +267,6 @@ namespace WebSocketDS_ns
                         inpVec.push_back(boost::lexical_cast<T>(val));
                 }
                 else {
-                    auto test = boost::lexical_cast<T>(val);
                     inpVec.push_back(boost::lexical_cast<T>(val));
                 }
             }
@@ -322,6 +321,18 @@ namespace WebSocketDS_ns
             else
                 if (format == Tango::AttrDataFormat::SPECTRUM || format == Tango::AttrDataFormat::IMAGE) {
                     (*attr) >> dataVector;
+                    int dim_x = attr->dim_x;
+                    int dim_y = attr->dim_y;
+
+                    if (!dim_y)
+                        dim_y = 1;
+
+                    // for writable attribute
+                    // Read only Read_data (without Write_data)
+                    if (dataVector.size() > dim_x*dim_y) {
+                        dataVector.erase(dataVector.begin() + dim_x*dim_y, dataVector.end());
+                    }
+
                     ss << "[";
                     dataArrayFromAttrOrCommToJson(dataVector, ss, TYPE_WS_REQ::ATTRIBUTE, nameAttr);
                     ss << "]";

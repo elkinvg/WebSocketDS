@@ -239,7 +239,7 @@ vector<string> WebSocketDS_ns::UserControl::getPermissionData(const ParsedInputJ
     permission_data[0] = deviceName; // device
     if (typeWsReq == TYPE_WS_REQ::COMMAND || typeWsReq == TYPE_WS_REQ::COMMAND_DEV_CLIENT)
         permission_data[1] = parsedInputJson.otherInpStr.at("command_name"); // commandName
-    else if (typeWsReq == TYPE_WS_REQ::ATTRIBUTE_WRITE)
+    else if (typeWsReq == TYPE_WS_REQ::ATTRIBUTE_WRITE || typeWsReq == TYPE_WS_REQ::ATTR_DEV_CLIENT_WR)
         permission_data[1] = parsedInputJson.otherInpStr.at("attr_name"); // commandName
     else
         throw std::runtime_error("check getPermissionData");
