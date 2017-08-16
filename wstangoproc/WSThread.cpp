@@ -104,7 +104,8 @@ namespace WebSocketDS_ns
         // Если вводимый type_req не соответствует ни одному из перечисленных,
         // высылается сообщение об ошибке
         bool isBinary;
-        string resp = _tc->sendRequest(parsedInputJson, isBinary, m_connections[hdl]);
+        string resp;
+        _tc->sendRequest(parsedInputJson, isBinary, m_connections[hdl], resp);
         if (isBinary)
             send(hdl, resp.c_str(), resp.size());
         else

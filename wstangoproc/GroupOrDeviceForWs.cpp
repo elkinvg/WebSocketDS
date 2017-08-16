@@ -254,9 +254,9 @@ namespace WebSocketDS_ns
             it++;
             
             if (isJsonAttribute.find(att.get_name()) != isJsonAttribute.end())
-                json << processor->process_device_attribute_json(att);
+                processor->process_device_attribute_json(att, json);
             else
-                json << processor->process_attribute_t(att, _isShortAttr);
+                processor->process_attribute_t(att, json, _isShortAttr);
         }
     }
 

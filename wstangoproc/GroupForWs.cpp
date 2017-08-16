@@ -119,9 +119,9 @@ namespace WebSocketDS_ns
         // ??? !!! Пока только для девайсов, а не для групп
     }
 
-    string GroupForWs::generateJsonForAttrReadCl(const ParsedInputJson& parsedInput)
+    void GroupForWs::generateJsonForAttrReadCl(const ParsedInputJson& parsedInput, std::stringstream& json)
     {
-        return "??? !!!";
+        // ??? !!! Пока только для девайсов, а не для групп
     }
 
     string GroupForWs::sendPipeCommand(const ParsedInputJson& parsedInput)

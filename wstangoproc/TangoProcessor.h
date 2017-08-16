@@ -33,7 +33,7 @@ namespace WebSocketDS_ns
 
         string processPipe(DevicePipe& pipe, TYPE_WS_REQ pipeType);
 
-        std::string process_attribute_t(Tango::DeviceAttribute& att, bool isShortAttr);
+        void process_attribute_t(Tango::DeviceAttribute& att, stringstream& json, bool isShortAttr);
 
         Tango::DeviceData getDeviceDataFromParsedJson(const ParsedInputJson& dataFromJson, int typeForDeviceData);
 
@@ -43,7 +43,7 @@ namespace WebSocketDS_ns
         pair<bool, string> checkOption(string nameOfAttrOrComm, string option, TYPE_WS_REQ type_req);
         void initOptionsForAttrOrComm(string nameAttrOrComm, const std::vector<string> &options, TYPE_WS_REQ type_req);
 
-        std::string devAttrToStr(Tango::DeviceAttribute *attr);
+        void devAttrToStr(Tango::DeviceAttribute *attr, stringstream& ss);
 
         Tango::DeviceAttribute getDeviceAttributeDataFromJson(const ParsedInputJson& dataFromJson, const Tango::AttributeInfoEx& attr_info, vector<string>& errors);
 
@@ -60,8 +60,7 @@ namespace WebSocketDS_ns
 
         //EGOR
     public:
-        std::string process_device_attribute_json(Tango::DeviceAttribute& data);
-        std::string process_device_data_json(Tango::DeviceData& data);
+        void process_device_attribute_json(Tango::DeviceAttribute& data, stringstream& json);
         // Attributes
     private:
         enum class TYPE_OF_DEVICE_DATA { VOID_D = 0, DATA = 1, ARRAY = 2 };
@@ -95,7 +94,7 @@ namespace WebSocketDS_ns
         }
 
         template <typename T>
-        void generateStringJsonFromDevData(Tango::DeviceData &devData, std::stringstream& json, string command_name)
+        void generateStringJsonFromDevData(Tango::DeviceData &devData, std::stringstream& json, const string& command_name)
         {
             TYPE_OF_DEVICE_DATA type = typeOfData[devData.get_type()];
 
@@ -146,7 +145,7 @@ namespace WebSocketDS_ns
         }
 
         template <typename T>
-        void forExtractingFromPipe(DevicePipe &pipe, stringstream &json, std::pair<string, TYPE_WS_REQ> &nameOfAttrAndTypeWsReq, bool isArray)
+        void forExtractingFromPipe(DevicePipe &pipe, stringstream &json, const std::pair<string, TYPE_WS_REQ>& nameOfAttrAndTypeWsReq, bool isArray)
         {
             vector<T> dtArray;
             T dt;
@@ -189,7 +188,7 @@ namespace WebSocketDS_ns
         }
 
         template <typename T>
-        Tango::DeviceData getDeviceData(string inputStr) {
+        Tango::DeviceData getDeviceData(const string& inputStr) {
             T inp;
             if (std::is_same<T, bool>::value) {
                 // если не то и не другое будет кинуто исключение
@@ -231,7 +230,7 @@ namespace WebSocketDS_ns
         }
 
         template <typename T>
-        void getDeviceAttribute(string inputStr, Tango::DeviceAttribute& outDevAttr) {
+        void getDeviceAttribute(const string& inputStr, Tango::DeviceAttribute& outDevAttr) {
             T inp;
             if (std::is_same<T, bool>::value) {
                 // если не то и не другое будет кинуто исключение
@@ -289,7 +288,7 @@ namespace WebSocketDS_ns
         }
 
         template <typename T>
-        std::string attrsToString(Tango::DeviceAttribute *attr){
+        void attrsToString(Tango::DeviceAttribute *attr, stringstream& ss) {
             Tango::AttrDataFormat format = attr->get_data_format();
             int type = attr->get_type();
             std::vector<T> dataVector;
@@ -298,8 +297,6 @@ namespace WebSocketDS_ns
             string stateStr;
 
             string nameAttr = attr->get_name();
-
-            std::stringstream ss;
 
             if (format == Tango::AttrDataFormat::SPECTRUM || format == Tango::AttrDataFormat::IMAGE)
                 ss << "\"dimX\": " << attr->dim_x << ", ";
@@ -337,14 +334,13 @@ namespace WebSocketDS_ns
                     dataArrayFromAttrOrCommToJson(dataVector, ss, TYPE_WS_REQ::ATTRIBUTE, nameAttr);
                     ss << "]";
                 }
-            return ss.str();
         }
 
         template <typename T>
-        void dataArrayFromAttrOrCommToJson(std::vector<T>& vecFromData, std::stringstream& json, TYPE_WS_REQ type_req, string nameOfAttrOrComm){
+        void dataArrayFromAttrOrCommToJson(const std::vector<T>& vecFromData, std::stringstream& json, TYPE_WS_REQ type_req, string nameOfAttrOrComm){
             bool begin = true;
 
-            for (T fromData : vecFromData) {
+            for (const T& fromData : vecFromData) {
                 if (!begin) json << ", ";
                 else begin = false;
                 dataFromAttrsOrCommToJson(fromData, json, type_req, nameOfAttrOrComm);
@@ -352,7 +348,7 @@ namespace WebSocketDS_ns
         }
 
         template <typename T>
-        void dataFromAttrsOrCommToJson(T& data, std::stringstream& ss, TYPE_WS_REQ type_req, string nameOfAttrOrComm)
+        void dataFromAttrsOrCommToJson(const T& data, std::stringstream& ss, TYPE_WS_REQ type_req, string nameOfAttrOrComm)
         {
             auto gettedOpts = getOpts(nameOfAttrOrComm, type_req);
             if (is_floating_point<T>::value) {
@@ -414,7 +410,7 @@ namespace WebSocketDS_ns
 
         // getting ios options for floating type
         template <typename T>
-        void outForFloat(T &data, stringstream &ss, TYPE_IOS_OPT ios_opt, std::streamsize precIn = 0) {
+        void outForFloat(const T &data, stringstream &ss, TYPE_IOS_OPT ios_opt, std::streamsize precIn = 0) {
 
             if (precIn > 20 || precIn < 0)
                 precIn = 0;

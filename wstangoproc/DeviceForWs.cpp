@@ -65,10 +65,8 @@ namespace WebSocketDS_ns
         iterator++;
     }
 
-    string DeviceForWs::generateJsonForAttrReadCl(const ParsedInputJson& parsedInput)
+    void DeviceForWs::generateJsonForAttrReadCl(const ParsedInputJson& parsedInput, std::stringstream& json)
     {
-        std::stringstream json;
-
         json << "{\"event\": \"read\", \"type_req\": \"" << parsedInput.type_req << "\", ";
         if (parsedInput.check_key("device_name") == TYPE_OF_VAL::VALUE)
             json << "\"device_name\": \"" << parsedInput.otherInpStr.at("device_name") << "\", ";
@@ -89,8 +87,6 @@ namespace WebSocketDS_ns
 
         forGenerateJsonForUpdate(json);
         json << "}";
-
-        return json.str();
     }
 
     string DeviceForWs::sendPipeCommand(const ParsedInputJson& parsedInput)

@@ -26,7 +26,7 @@ namespace WebSocketDS_ns
         virtual string generateJsonForUpdate() override;
         virtual void generateJsonForUpdate(std::stringstream& json) override;
 
-        virtual string generateJsonForAttrReadCl(const ParsedInputJson& parsedInput) override;
+        virtual void generateJsonForAttrReadCl(const ParsedInputJson& parsedInput, std::stringstream& json) override;
 
         virtual string sendPipeCommand(const ParsedInputJson& parsedInput) override;
         virtual string sendCommand(const ParsedInputJson& parsedInput, bool& statusComm) override;

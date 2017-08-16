@@ -164,43 +164,55 @@ namespace WebSocketDS_ns
         return jsonStrOut;
     }
 
-    string WSTangoConn::sendRequest(const ParsedInputJson& inputReq, bool& isBinary, ConnectionData& connData)
+    void WSTangoConn::sendRequest(const ParsedInputJson& inputReq, bool& isBinary, ConnectionData& connData, string& out)
     {
         isBinary = false;
         TYPE_WS_REQ typeWsReq = getTypeWsReq(inputReq.type_req);
 
         if (typeWsReq == TYPE_WS_REQ::UNKNOWN) {
-            return StringProc::exceptionStringOut(inputReq.id, NONE, "This request type is not supported", inputReq.type_req);
+            out = StringProc::exceptionStringOut(inputReq.id, NONE, "This request type is not supported", inputReq.type_req);
+            return;
         }
 
         if (typeWsReq == TYPE_WS_REQ::COMMAND) {
             if (!isServerMode()) {
-                return StringProc::exceptionStringOut(inputReq.id, NONE, "This mode does not support commands of this type", inputReq.type_req);
+                out = StringProc::exceptionStringOut(inputReq.id, NONE, "This mode does not support commands of this type", inputReq.type_req);
+                return;
             }
-            if (!_isInitDs)
-                return StringProc::exceptionStringOut(inputReq.id, NONE, _errorMessage, inputReq.type_req);
-            return sendRequest_Command(inputReq, connData, isBinary);
+            if (!_isInitDs) {
+                out = StringProc::exceptionStringOut(inputReq.id, NONE, _errorMessage, inputReq.type_req);
+                return;            
+            }
+            sendRequest_Command(inputReq, connData, isBinary, out);
+            return;
         }
 
         if (typeWsReq == TYPE_WS_REQ::PIPE_COMM) {
             if (!isServerMode()) {
-                return StringProc::exceptionStringOut(inputReq.id, NONE, "This mode does not support commands of this type", inputReq.type_req);
+                out = StringProc::exceptionStringOut(inputReq.id, NONE, "This mode does not support commands of this type", inputReq.type_req);
+                return;
             }
-            if (!_isInitDs)
-                return StringProc::exceptionStringOut(inputReq.id, NONE, _errorMessage, inputReq.type_req);
-            return sendRequest_PipeComm(inputReq, connData);
+            if (!_isInitDs) {
+                out = StringProc::exceptionStringOut(inputReq.id, NONE, _errorMessage, inputReq.type_req);
+                return;
+            }
+            sendRequest_PipeComm(inputReq, connData, out);
+            return;
         }
 
         if (typeWsReq == TYPE_WS_REQ::RIDENT_REQ) {
-            return sendRequest_RidentReq(inputReq, connData);
+            out = sendRequest_RidentReq(inputReq, connData);
+            return;
         }
 
         if (typeWsReq == TYPE_WS_REQ::RIDENT_ANS) {
-            return sendRequest_RidentAns(inputReq, connData);
+            out = sendRequest_RidentAns(inputReq, connData);
+            return;
         }
         
         if (typeWsReq == TYPE_WS_REQ::RIDENT) {
-            return sendRequest_Rident(inputReq, connData);
+            out = sendRequest_Rident(inputReq, connData);
+            return;
         }
 
         if (typeWsReq == TYPE_WS_REQ::COMMAND_DEV_CLIENT) {
@@ -208,25 +220,35 @@ namespace WebSocketDS_ns
                 || ws_mode == MODE::CLIENT_ALIAS_RO
                 || ws_mode == MODE::CLIENT_ALL_RO
                 || ws_mode == MODE::SERVNCLIENT_ALIAS_RO
-                || ws_mode == MODE::SERVNCLIENT_ALL_RO)
-                return StringProc::exceptionStringOut(inputReq.id, NONE, "This request type is not supported in the current mode", inputReq.type_req);
-            return sendRequest_Command_DevClient(inputReq, connData, isBinary);
+                || ws_mode == MODE::SERVNCLIENT_ALL_RO) {
+                out = StringProc::exceptionStringOut(inputReq.id, NONE, "This request type is not supported in the current mode", inputReq.type_req);
+                return;
+            }
+            sendRequest_Command_DevClient(inputReq, connData, isBinary, out);
+            return;
         }
 
         if (typeWsReq == TYPE_WS_REQ::ATTR_DEV_CLIENT) {
-            if (ws_mode == MODE::SERVER)
-                return StringProc::exceptionStringOut(inputReq.id, NONE, "This request type is not supported in the current mode", inputReq.type_req);
-            return sendRequest_AttrClient(inputReq, connData);
+            if (ws_mode == MODE::SERVER) {
+                out = StringProc::exceptionStringOut(inputReq.id, NONE, "This request type is not supported in the current mode", inputReq.type_req);
+                return;
+            }
+            sendRequest_AttrClient(inputReq, connData, out);
+            return;
         }
 
         if (typeWsReq == TYPE_WS_REQ::ATTRIBUTE_WRITE) {
             if (!isServerMode()) {
-                return StringProc::exceptionStringOut(inputReq.id, NONE, "This mode does not support commands of this type", inputReq.type_req);
+                out = StringProc::exceptionStringOut(inputReq.id, NONE, "This mode does not support commands of this type", inputReq.type_req);
+                return;
             }
-            if (!_isInitDs)
-                return StringProc::exceptionStringOut(inputReq.id, NONE, _errorMessage, inputReq.type_req);
+            if (!_isInitDs) {
+                out = StringProc::exceptionStringOut(inputReq.id, NONE, _errorMessage, inputReq.type_req);
+                return;
+            }
             
-            return sendRequest_AttrWrite(inputReq, connData);
+            sendRequest_AttrWrite(inputReq, connData, out);
+            return;
         }
 
         if (typeWsReq == TYPE_WS_REQ::ATTR_DEV_CLIENT_WR) {
@@ -234,14 +256,17 @@ namespace WebSocketDS_ns
                 || ws_mode == MODE::CLIENT_ALIAS_RO
                 || ws_mode == MODE::CLIENT_ALL_RO
                 || ws_mode == MODE::SERVNCLIENT_ALIAS_RO
-                || ws_mode == MODE::SERVNCLIENT_ALL_RO)
-                return StringProc::exceptionStringOut(inputReq.id, NONE, "This request type is not supported in the current mode", inputReq.type_req);
+                || ws_mode == MODE::SERVNCLIENT_ALL_RO) {
+                out = StringProc::exceptionStringOut(inputReq.id, NONE, "This request type is not supported in the current mode", inputReq.type_req);
+                return;
+            }
 
-            return sendRequest_AttrWrite_DevClient(inputReq, connData);
+            sendRequest_AttrWrite_DevClient(inputReq, connData, out);
+            return;
         }
 
         // В обычном случае не возвращается никогда
-        return "{\"error\": \"Unknown Request\"}";
+        out = "{\"error\": \"Unknown Request\"}";
     }
 
     void WSTangoConn::checkUser(ConnectionData& connData)
@@ -372,24 +397,29 @@ namespace WebSocketDS_ns
     }
 
 
-    string WSTangoConn::sendRequest_Command(const ParsedInputJson &inputReq, ConnectionData &connData, bool &isBinary)
+    void WSTangoConn::sendRequest_Command(const ParsedInputJson &inputReq, ConnectionData &connData, bool &isBinary, string& resp_json)
     {
-        string resp_json;
         string commandName;
         TYPE_WS_REQ typeWsReq = getTypeWsReq(inputReq.type_req);
 
         string errorMessage = checkPermissionForRequest(inputReq, connData, commandName, _wsds->deviceServer, typeWsReq);
 
-        if (errorMessage.size())
-            return errorMessage;
+        if (errorMessage.size()) {
+            resp_json = errorMessage;
+            return;
+        }
 
         if (_isGroup) {
-            if (inputReq.type_req != "command_device" && inputReq.type_req != "command_group")
-                return StringProc::exceptionStringOut(inputReq.id, inputReq.otherInpStr.at("command_name"), "type_req must be command_device or command_group", "command");
+            if (inputReq.type_req != "command_device" && inputReq.type_req != "command_group") {
+                resp_json = StringProc::exceptionStringOut(inputReq.id, inputReq.otherInpStr.at("command_name"), "type_req must be command_device or command_group", "command");
+                return;
+            }
         }
         else {
-            if (inputReq.type_req != "command")
-                return StringProc::exceptionStringOut(inputReq.id, inputReq.otherInpStr.at("command_name"), "type_req must be command", "command");
+            if (inputReq.type_req != "command") {
+                resp_json = StringProc::exceptionStringOut(inputReq.id, inputReq.otherInpStr.at("command_name"), "type_req must be command", "command");
+                return;
+            }
         }
 
         bool statusComm;
@@ -403,26 +433,27 @@ namespace WebSocketDS_ns
         bool isSent = uc->sendLogCommand(inputReq, connData.remoteConf, _wsds->deviceServer, _isGroup, statusComm, typeWsReq);
         if (isSent)
             INFO_STREAM << "Command. Information was sent to the log" << endl;
-        return resp_json;
     }
 
-    string WSTangoConn::sendRequest_Command_DevClient(const ParsedInputJson& inputReq, ConnectionData& connData, bool& isBinary)
+    void WSTangoConn::sendRequest_Command_DevClient(const ParsedInputJson& inputReq, ConnectionData& connData, bool& isBinary, string& resp_json)
     {
         string errorMessage;
         string device_name = checkDeviceNameKey(inputReq, errorMessage);
 
-        if (errorMessage.size())
-            return errorMessage;
+        if (errorMessage.size()) {
+            resp_json = errorMessage;
+            return;
+        }
 
         string commandName;
         TYPE_WS_REQ typeWsReq = getTypeWsReq(inputReq.type_req);
 
         errorMessage = checkPermissionForRequest(inputReq, connData, commandName, device_name, typeWsReq);
 
-        if (errorMessage.size())
-            return errorMessage;
-
-        string resp_json;
+        if (errorMessage.size()) {
+            resp_json = errorMessage;
+            return;
+        }
 
         vector<string> commands{ commandName };
         try {
@@ -439,26 +470,24 @@ namespace WebSocketDS_ns
             bool isSent = uc->sendLogCommand(inputReq, connData.remoteConf, device_name, _isGroup, statusComm, typeWsReq);
             if (isSent)
                 INFO_STREAM << "Information was sent to the log" << endl;
-
-            return resp_json;
         }
         catch (Tango::DevFailed &e) {
             vector<string> errors;
             for (int i = 0; i < e.errors.length(); i++) {
                 errors.push_back((string)e.errors[i].desc);
             }
-            return StringProc::exceptionStringOut(inputReq.id, NONE, errors, inputReq.type_req);
+            resp_json = StringProc::exceptionStringOut(inputReq.id, NONE, errors, inputReq.type_req);
         }
     }
 
-    string WSTangoConn::sendRequest_PipeComm(const ParsedInputJson &inputReq, ConnectionData &connData)
+    void WSTangoConn::sendRequest_PipeComm(const ParsedInputJson &inputReq, ConnectionData &connData, string& resp_json)
     {
-        string resp_json;
-        if (inputReq.check_key("pipe_name") != TYPE_OF_VAL::VALUE)
-            return StringProc::exceptionStringOut(inputReq.id, NONE, "Not found key pipe_name or pipe_name is not value", inputReq.type_req);
+        if (inputReq.check_key("pipe_name") != TYPE_OF_VAL::VALUE) {
+            resp_json = StringProc::exceptionStringOut(inputReq.id, NONE, "Not found key pipe_name or pipe_name is not value", inputReq.type_req);
+            return;
+        }
         resp_json = groupOrDevice->sendPipeCommand(inputReq);
         removeSymbolsForString(resp_json);
-        return resp_json;
     }
 
     string WSTangoConn::sendRequest_RidentReq(const ParsedInputJson &inputReq, ConnectionData &connData)
@@ -590,13 +619,15 @@ namespace WebSocketDS_ns
         return json.str();
     }
 
-    string WSTangoConn::sendRequest_AttrClient(const ParsedInputJson& inputReq, ConnectionData& connData)
+    void WSTangoConn::sendRequest_AttrClient(const ParsedInputJson& inputReq, ConnectionData& connData, string& resp_json)
     {
         string errorMessage;
         string device_name = checkDeviceNameKey(inputReq, errorMessage);
 
-        if (errorMessage.size())
-            return errorMessage;
+        if (errorMessage.size()) {
+            resp_json = errorMessage;
+            return;
+        }
 
         bool isAttrNotFound = false;
         bool isPipeNotFound = false;
@@ -607,8 +638,10 @@ namespace WebSocketDS_ns
         if (inputReq.check_key("pipes") != TYPE_OF_VAL::VALUE && inputReq.check_key("pipes") != TYPE_OF_VAL::ARRAY)
             isPipeNotFound = true;
 
-        if (isAttrNotFound && isPipeNotFound)
-            return StringProc::exceptionStringOut(inputReq.id, NONE, "Not found keys attributes / pipes or attributes / pipes is not value or array", inputReq.type_req);
+        if (isAttrNotFound && isPipeNotFound) {
+            resp_json = StringProc::exceptionStringOut(inputReq.id, NONE, "Not found keys attributes / pipes or attributes / pipes is not value or array", inputReq.type_req);
+            return;
+        }
 
         vector<string> attributes;
         vector<string> pipes;
@@ -628,20 +661,22 @@ namespace WebSocketDS_ns
         attr_pipes.second  = pipes;
         try {
             DeviceForWs deviceForWs(device_name, attr_pipes);
-            return deviceForWs.generateJsonForAttrReadCl(inputReq);
+            stringstream ss;
+            deviceForWs.generateJsonForAttrReadCl(inputReq, ss);
+            resp_json = ss.str();
+            return;
         }
         catch (Tango::DevFailed &e) {
             vector<string> errors;
             for (int i = 0; i < e.errors.length(); i++) {
                 errors.push_back((string)e.errors[i].desc);
             }
-            return StringProc::exceptionStringOut(inputReq.id, NONE, errors, inputReq.type_req);
+            resp_json = StringProc::exceptionStringOut(inputReq.id, NONE, errors, inputReq.type_req);
         }        
     }
 
-    string WSTangoConn::sendRequest_AttrWrite(const ParsedInputJson& inputReq, ConnectionData& connData)
+    void WSTangoConn::sendRequest_AttrWrite(const ParsedInputJson& inputReq, ConnectionData& connData, string& resp_json)
     {
-        string resp_json;
         string attrName;
 
 
@@ -652,15 +687,21 @@ namespace WebSocketDS_ns
 
         bool statusAttr;
 
-        if (errorMessage.size())
-            return errorMessage;
+        if (errorMessage.size()) {
+            resp_json = errorMessage;
+            return;
+        }
         if (_isGroup) {
-            if (inputReq.type_req != "write_attr_dev" && inputReq.type_req != "write_attr_gr")
-                return StringProc::exceptionStringOut(inputReq.id, inputReq.otherInpStr.at("attr_name"), "type_req must be write_attr_dev or write_attr_gr", "command");
+            if (inputReq.type_req != "write_attr_dev" && inputReq.type_req != "write_attr_gr") {
+                resp_json = StringProc::exceptionStringOut(inputReq.id, inputReq.otherInpStr.at("attr_name"), "type_req must be write_attr_dev or write_attr_gr", "command");
+                return;
+            }
         }
         else {
-            if (inputReq.type_req != "write_attr")
-                return StringProc::exceptionStringOut(inputReq.id, inputReq.otherInpStr.at("attr_name"), "type_req must be write_attr", "command");
+            if (inputReq.type_req != "write_attr") {
+                resp_json = StringProc::exceptionStringOut(inputReq.id, inputReq.otherInpStr.at("attr_name"), "type_req must be write_attr", "command");
+                return;
+            }
         }
 
         resp_json = groupOrDevice->sendAttrWr(inputReq, statusAttr);
@@ -668,28 +709,29 @@ namespace WebSocketDS_ns
         bool isSent = uc->sendLogCommand(inputReq, connData.remoteConf, _wsds->deviceServer, _isGroup, statusAttr, typeWsReq);
         if (isSent)
             INFO_STREAM << "Write attribute. Information was sent to the log" << endl;
-
-        return resp_json;
     }
 
-    string WSTangoConn::sendRequest_AttrWrite_DevClient(const ParsedInputJson& inputReq, ConnectionData& connData)
+    void WSTangoConn::sendRequest_AttrWrite_DevClient(const ParsedInputJson& inputReq, ConnectionData& connData, string& resp_json)
     {
-        string resp_json;
         string attrName;
 
         string errorMessage;
         string device_name = checkDeviceNameKey(inputReq, errorMessage);
 
-        if (errorMessage.size())
-            return errorMessage;
+        if (errorMessage.size()) {
+            resp_json =  errorMessage;
+            return;
+        }
 
         // checking key attr_name in checkPermissionForRequest
         TYPE_WS_REQ typeWsReq = getTypeWsReq(inputReq.type_req);
 
         errorMessage = checkPermissionForRequest(inputReq, connData, attrName, device_name, typeWsReq);
 
-        if (errorMessage.size())
-            return errorMessage;
+        if (errorMessage.size()) {
+            resp_json = errorMessage;
+            return;
+        }
 
         try {
             DeviceForWs deviceForWs(device_name, attrName, TYPE_WS_REQ::ATTR_DEV_CLIENT_WR);
@@ -708,10 +750,8 @@ namespace WebSocketDS_ns
             for (int i = 0; i < e.errors.length(); i++) {
                 errors.push_back((string)e.errors[i].desc);
             }
-            return StringProc::exceptionStringOut(inputReq.id, NONE, errors, inputReq.type_req);
+            resp_json = StringProc::exceptionStringOut(inputReq.id, NONE, errors, inputReq.type_req);
         }
-
-        return resp_json;
     }
 
     string WSTangoConn::checkPermissionForRequest(const ParsedInputJson &inputReq, ConnectionData &connData, string &commandName, string device_name, TYPE_WS_REQ typeWsReq)

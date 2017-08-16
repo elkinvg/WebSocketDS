@@ -45,10 +45,8 @@ namespace WebSocketDS_ns
     }
 
 
-
-    std::string TangoProcessor::process_attribute_t(Tango::DeviceAttribute& att, bool isShortAttr) {
+    void TangoProcessor::process_attribute_t(Tango::DeviceAttribute& att, std::stringstream& json, bool isShortAttr) {
         // Генерация JSON из DeviceAttribute
-        std::stringstream json;
         json << "";
 
         std::string quality = attrQuality[att.get_quality()]; //SwitchAttrQuality(att.get_quality());
@@ -67,10 +65,9 @@ namespace WebSocketDS_ns
         if (quality == "INVALID")
             json << "\"data\": " << NONE;
         else
-            json << devAttrToStr(&att);
+            devAttrToStr(&att, json);
           
         json << "}";
-        return json.str();
     }
 
     string TangoProcessor::getJsonStrFromDevData(Tango::DeviceData &devData, const ParsedInputJson& inputArgs)
@@ -217,43 +214,43 @@ namespace WebSocketDS_ns
         }
     }
 
-    std::string TangoProcessor::devAttrToStr(Tango::DeviceAttribute *attr) {
+    void TangoProcessor::devAttrToStr(Tango::DeviceAttribute *attr, stringstream& ss) {
+        
         int type = attr->get_type();
         std::string out;
         switch (type) {
         case Tango::DEV_BOOLEAN:
         {
-            out = attrsToString<Tango::DevBoolean>(attr);
+            attrsToString<Tango::DevBoolean>(attr, ss);
         }
         break;
         case Tango::DEV_SHORT:
         {
-            out = attrsToString<Tango::DevShort>(attr);
+            attrsToString<Tango::DevShort>(attr, ss);
         }
         break;
         case Tango::DEV_LONG:
         {
-            out = attrsToString<Tango::DevLong>(attr);
+            attrsToString<Tango::DevLong>(attr, ss);
         }
         break;
         case Tango::DEV_LONG64:
         {
-            out = attrsToString<Tango::DevLong64>(attr);
+            attrsToString<Tango::DevLong64>(attr, ss);
         }
         break;
         case Tango::DEV_FLOAT:
         {
-            out = attrsToString<Tango::DevFloat>(attr);
+            attrsToString<Tango::DevFloat>(attr, ss);
         }
         break;
         case Tango::DEV_DOUBLE:
         {
-            out = attrsToString<Tango::DevDouble>(attr);
+            attrsToString<Tango::DevDouble>(attr, ss);
         }
         break;
         case Tango::DEV_UCHAR:
         {
-            std::stringstream ss;
             Tango::AttrDataFormat format = attr->get_data_format();
             string nameAttr = attr->get_name();
             int dim_x = attr->dim_x;
@@ -271,7 +268,7 @@ namespace WebSocketDS_ns
             if (format == Tango::AttrDataFormat::SCALAR) {
                 (*attr) >> data;
                 tmp = (unsigned short)data;                
-                dataFromAttrsOrCommToJson(tmp, ss,TYPE_WS_REQ::ATTRIBUTE,nameAttr);
+                dataFromAttrsOrCommToJson(tmp, ss, TYPE_WS_REQ::ATTRIBUTE,nameAttr);
             }
             else
                 if (format == Tango::AttrDataFormat::SPECTRUM || format == Tango::AttrDataFormat::IMAGE) {
@@ -293,32 +290,31 @@ namespace WebSocketDS_ns
                     dataArrayFromAttrOrCommToJson(tmpVec, ss,TYPE_WS_REQ::ATTRIBUTE,nameAttr);
                     ss << "]";
                 }
-            out = ss.str();
         }
         break;
         case Tango::DEV_USHORT:
         {
-            out = attrsToString<Tango::DevUShort>(attr);
+            attrsToString<Tango::DevUShort>(attr, ss);
         }
         break;
         case Tango::DEV_ULONG:
         {
-            out = attrsToString<Tango::DevULong>(attr);
+            attrsToString<Tango::DevULong>(attr, ss);
         }
         break;
         case Tango::DEV_ULONG64:
         {
-            out = attrsToString<Tango::DevULong64>(attr);
+            attrsToString<Tango::DevULong64>(attr, ss);
         }
         break;
         case Tango::DEV_STRING:
         {
-            out = attrsToString<std::string>(attr);
+            attrsToString<std::string>(attr, ss);
         }
         break;
         case Tango::DEV_STATE:
         {
-            out = attrsToString<Tango::DevState>(attr);
+            attrsToString<Tango::DevState>(attr, ss);
         }
         break;
         case Tango::DEV_ENCODED:
@@ -327,7 +323,6 @@ namespace WebSocketDS_ns
         default:
             break;
         }
-        return out;
     }
 
     void TangoProcessor::generateArgoutForJson(Tango::DeviceData &devData, stringstream &json, const string &command_name)
@@ -890,18 +885,11 @@ namespace WebSocketDS_ns
         //typeOfData[Tango::DEV_ENCODED] = TYPE_OF_DEVICE_DATA::DATA;
     }
 
-    std::string TangoProcessor::process_device_attribute_json(Tango::DeviceAttribute& data)
+    void TangoProcessor::process_device_attribute_json(Tango::DeviceAttribute& data, stringstream& json)
     {
         std::string argout;
         (data) >> argout;
-        return argout;
-    }
-
-    std::string TangoProcessor::process_device_data_json(Tango::DeviceData& data)
-    {
-        std::string argout;
-        (data) >> argout;
-        return argout;
+        json << argout;
     }
 
     pair<bool, string> TangoProcessor::checkOption(string nameOfAttrOrComm, string option, TYPE_WS_REQ type_req) {

@@ -33,7 +33,7 @@ namespace WebSocketDS_ns
         ~WSTangoConn();
 
         string for_update_data();
-        string sendRequest(const ParsedInputJson& inputReq, bool& isBinary, ConnectionData& connData);
+        void sendRequest(const ParsedInputJson& inputReq, bool& isBinary, ConnectionData& connData, string& out);
 
         void checkUser(ConnectionData& connData);
 
@@ -62,16 +62,20 @@ namespace WebSocketDS_ns
 
         TYPE_WS_REQ getTypeWsReq(const string& req);
 
-        string sendRequest_Command(const ParsedInputJson& inputReq, ConnectionData& connData, bool& isBinary);
-        string sendRequest_Command_DevClient(const ParsedInputJson& inputReq, ConnectionData& connData, bool& isBinary);
-        string sendRequest_PipeComm(const ParsedInputJson& inputReq, ConnectionData& connData);
+        // commands
+        void sendRequest_Command(const ParsedInputJson& inputReq, ConnectionData& connData, bool& isBinary, string& resp_json);
+        void sendRequest_Command_DevClient(const ParsedInputJson& inputReq, ConnectionData& connData, bool& isBinary, string& resp_json);
+        void sendRequest_PipeComm(const ParsedInputJson& inputReq, ConnectionData& connData, string& resp_json);
+
+        // for rident
         string sendRequest_RidentReq(const ParsedInputJson& inputReq, ConnectionData& connData);
         string sendRequest_RidentAns(const ParsedInputJson& inputReq, ConnectionData& connData);
         string sendRequest_Rident(const ParsedInputJson& inputReq, ConnectionData& connData);
 
-        string sendRequest_AttrClient(const ParsedInputJson& inputReq, ConnectionData& connData);
-        string sendRequest_AttrWrite(const ParsedInputJson& inputReq, ConnectionData& connData);
-        string sendRequest_AttrWrite_DevClient(const ParsedInputJson& inputReq, ConnectionData& connData);
+        // attribute write
+        void sendRequest_AttrClient(const ParsedInputJson& inputReq, ConnectionData& connData, string& resp_json);
+        void sendRequest_AttrWrite(const ParsedInputJson& inputReq, ConnectionData& connData, string& resp_json);
+        void sendRequest_AttrWrite_DevClient(const ParsedInputJson& inputReq, ConnectionData& connData, string& resp_json);
 
         string checkPermissionForRequest(const ParsedInputJson &inputReq, ConnectionData &connData, string &commandName, string device_name, TYPE_WS_REQ typeWsReq);
 

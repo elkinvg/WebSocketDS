@@ -35,7 +35,7 @@ namespace WebSocketDS_ns
             json << "\"type_event\": \"" << dt->event << "\", ";
             json << "\"timestamp\": " << dt->get_date().tv_sec << ", ";
             json << "\"attr\": \"" << dt->attr_name << "\", ";
-            json << tango_proc->devAttrToStr(dt->attr_value);
+            tango_proc->devAttrToStr(dt->attr_value, json);
             json << "}";
             _wsThread->send(_hdl, json.str());
         }
