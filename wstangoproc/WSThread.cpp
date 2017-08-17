@@ -266,8 +266,13 @@ namespace WebSocketDS_ns
         startTimer(hdl);
 
         // Если таймер не запустился
-        if (m_connections[hdl].timing == nullptr)
+        if (m_connections[hdl].timing == nullptr) {
+            send(hdl, StringProc::exceptionStringOut(parsedJson.id, NONE, "Timer does not start", parsedJson.type_req));
             return;
+        }
+
+        // Сообщение об успешном запуске таймера
+        send(hdl, StringProc::responseStringOut(parsedJson.id, "Started timer in session", parsedJson.type_req, true));
 
         m_connections[hdl].timing->isTimerOn = true;
         DEBUG_STREAM_F << "Started timer in session with id " << m_connections[hdl].sessionId;
@@ -277,14 +282,20 @@ namespace WebSocketDS_ns
     {
         m_connections[hdl].tangoConnForClient->removeAllDevices();
         m_connections[hdl].timing.reset(nullptr);
+
+        // Сообщение об успешной остановке таймера
+        send(hdl, StringProc::responseStringOut(parsedJson.id, "Stopped timer in session", parsedJson.type_req, true));
     }
 
     void WSThread::timerChangeMeth(const ParsedInputJson &parsedJson, websocketpp::connection_hdl hdl)
     {
         try {
             auto msec = stoi(parsedJson.otherInpStr.at("msec"));
-            if (msec > 1000)
+            if (msec > 1000) {
                 m_connections[hdl].timing->msec = msec;
+                // Сообщение об успешном обновлении периода таймера
+                send(hdl, StringProc::responseStringOut(parsedJson.id, "New timer period is " + to_string(msec) + " msec", parsedJson.type_req, true));
+            }
             else
                 send(hdl, StringProc::exceptionStringOut(parsedJson.id, NONE, "The timer period must be longer than 1000 milliseconds.", parsedJson.type_req));
         }

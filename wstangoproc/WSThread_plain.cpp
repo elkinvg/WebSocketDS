@@ -197,8 +197,7 @@ namespace WebSocketDS_ns
             }
             
             m_connections[hdl].timerInd++;
-            m_connections[hdl].timing->m_timer = m_server.set_timer(m_connections[hdl].timing->msec, bind(&WSThread_plain::runTimer
-                                                                                                          , this, placeholders::_1, hdl, m_connections[hdl].timerInd));
+            m_connections[hdl].timing->m_timer = m_server.set_timer(m_connections[hdl].timing->msec, bind(&WSThread_plain::runTimer, this, placeholders::_1, hdl, m_connections[hdl].timerInd));
         }
         catch (...) {
             // This exception is not thrown out in normal operation
