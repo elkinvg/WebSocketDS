@@ -67,7 +67,7 @@ namespace WebSocketDS_ns
             if (eventIt.find(key) != eventIt.end())
                 gettedEventIt = eventIt.at(key);
 
-            string resp = "{\"device\": \"" + deviceName + "\", \"attribute\": \"" + tmpAttrName + "\", \"event_type\": \"" + eventType + "\", \"event_id\": " + to_string(gettedEventIt) + "}";
+            string resp = "{\"device\": \"" + deviceName + "\", \"attribute\": \"" + tmpAttrName + "\", \"event_type\": \"" + eventType + "\", \"event_sub_id\": " + to_string(gettedEventIt) + "}";
 
             _wsThread->send(_hdl, StringProc::responseStringOut(parsedJson.id, resp, parsedJson.type_req, false));
         }
@@ -167,7 +167,7 @@ namespace WebSocketDS_ns
                 ss << "\"device\": \"" << std::get<0>(*listev.second) << "\", ";
                 ss << "\"attribute\": \"" << std::get<1>(*listev.second) << "\", ";
                 ss << "\"event_type\": \"" << std::get<2>(*listev.second) << "\", ";
-                ss << "\"event_id\": " << listev.first;
+                ss << "\"event_sub_id\": " << listev.first;
                 ss << "}";
             }
             ss << "]";
@@ -176,26 +176,26 @@ namespace WebSocketDS_ns
     }
 
     void EventProc::removeDevice(const ParsedInputJson & parsedJson) {
-        if (parsedJson.check_key("event_id") != TYPE_OF_VAL::VALUE) {
-            _wsThread->send(_hdl, StringProc::exceptionStringOut(parsedJson.id, NONE, "Key event_id not found or it isn't string|int", parsedJson.type_req));
+        if (parsedJson.check_key("event_sub_id") != TYPE_OF_VAL::VALUE) {
+            _wsThread->send(_hdl, StringProc::exceptionStringOut(parsedJson.id, NONE, "Key event_sub_id not found or it isn't string|int", parsedJson.type_req));
             return;
         }
-        int event_id;
+        int event_sub_id;
         try {
-            event_id = std::stoi(parsedJson.otherInpStr.at("event_id"));
+            event_sub_id = std::stoi(parsedJson.otherInpStr.at("event_sub_id"));
         }
         catch (...) {
-            _wsThread->send(_hdl, StringProc::exceptionStringOut(parsedJson.id, NONE, "The key event_id must be an integer type", parsedJson.type_req));
+            _wsThread->send(_hdl, StringProc::exceptionStringOut(parsedJson.id, NONE, "The key event_sub_id must be an integer type", parsedJson.type_req));
             return;
         }
-        if (eventNames.find(event_id) == eventNames.end()) {
-            _wsThread->send(_hdl, StringProc::exceptionStringOut(parsedJson.id, NONE, "Event subscriber with event_id " + to_string(event_id) + " not found", parsedJson.type_req));
+        if (eventNames.find(event_sub_id) == eventNames.end()) {
+            _wsThread->send(_hdl, StringProc::exceptionStringOut(parsedJson.id, NONE, "Event subscriber with event_sub_id " + to_string(event_sub_id) + " not found", parsedJson.type_req));
             return;
         }
-        eventSubscrs.erase(eventNames[event_id]);
-        _wsThread->send(_hdl, StringProc::responseStringOut(parsedJson.id, "Event subscriber with event_id " + to_string(event_id) + " deleted", parsedJson.type_req, true));
-        eventIt.erase(eventNames[event_id]);
-        eventNames.erase(event_id);
+        eventSubscrs.erase(eventNames[event_sub_id]);
+        _wsThread->send(_hdl, StringProc::responseStringOut(parsedJson.id, "Event subscriber with event_sub_id " + to_string(event_sub_id) + " deleted", parsedJson.type_req, true));
+        eventIt.erase(eventNames[event_sub_id]);
+        eventNames.erase(event_sub_id);
     }
 
     void EventProc::getDeviceNameFromAlias(string& alias) {

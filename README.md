@@ -522,13 +522,13 @@ The answer in case of success:
 			"device": "name/of/device", 
 			"attribute": "attribute name", 
 			"event_type": "Event type", 
-			"event_id": 2
+			"event_sub_id": 2
 		}
 	]
 }
 ```
 
-Here `"event_id"` is the event subscription id. It can be used to further unsubscribe from the event.
+Here `"event_sub_id"` is the event subscription id. It can be used to further unsubscribe from the event.
 
 #### Full unsubscription from events
 
@@ -549,11 +549,11 @@ To unsubscribe from individual events, you need to send:
 {
 	"type_req": "eventreq_rem_dev",
 	"id": "id",
-	"event_id": 12345
+	"event_sub_id": 12345
 }
 ```
 
-Here `"event_id"` is the event subscription id.
+Here `"event_sub_id"` is the event subscription id.
 
 #### Get the subscriber id
 
@@ -580,7 +580,7 @@ The answer in case of success:
 			"device": "name/of/device", 
 			"attribute": "attribute name", 
 			"event_type": "Event type", 
-			"event_id": -1
+			"event_sub_id": -1
 		}
 	]
 }
