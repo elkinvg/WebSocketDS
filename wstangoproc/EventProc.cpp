@@ -69,7 +69,24 @@ namespace WebSocketDS_ns
 
             string resp = "{\"device\": \"" + deviceName + "\", \"attribute\": \"" + tmpAttrName + "\", \"event_type\": \"" + eventType + "\", \"event_sub_id\": " + to_string(gettedEventIt) + "}";
 
-            _wsThread->send(_hdl, StringProc::responseStringOut(parsedJson.id, resp, parsedJson.type_req, false));
+            std::stringstream ss;
+            ss << "{";
+            ss << "\"event\":\"read\", ";
+            ss << "\"type_req\": \"" << parsedJson.type_req << "\", ";
+            try {
+                auto idTmp = stoi(parsedJson.id);
+                ss << "\"id_req\": " << idTmp << ", ";
+            }
+            catch (...) {
+                if (parsedJson.id == NONE)
+                    ss << "\"id_req\": " << parsedJson.id << ", ";
+                else
+                    ss << "\"id_req\": \"" << parsedJson.id << "\", ";
+            }
+            ss << "\"data\": " << resp;
+            ss << "}";
+
+            _wsThread->send(_hdl, ss.str());
         }
     }
 
