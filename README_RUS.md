@@ -718,18 +718,24 @@ AttrName;par1=val;par2
 	"type_req": "attr_device_cl",
 	"device_name": "имя девайса или alias",
 	"id_req": "id запроса",
-	"data": [{
-		"attr": "имя атрибута",
-		"data": "данные"
-	}, {
-		"attr": "AttrDevDoubleImage",
-		"dimX": "значение dimX для атрибута",
-		"dimY": "значение dimY для атрибута",
-		"data": ["массив", "данных"]
-	}],
-	"pipe": {
-		"attr_name": "данные",
-		"attr_name_2": ["массив", "данных"]
+	"data": {
+		"attrs":
+			[
+				{
+					"attr": "имя атрибута",
+					"data": "данные"
+				}, 
+				{
+					"attr": "AttrDevDoubleImage",
+					"dimX": "значение dimX для атрибута",
+					"dimY": "значение dimY для атрибута",
+					"data": ["массив", "данных"]
+				}
+			],
+		"pipe": {
+			"attr_name": "данные",
+			"attr_name_2": ["массив", "данных"]
+		}
 	}
 }
 ```

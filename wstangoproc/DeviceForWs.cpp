@@ -83,9 +83,11 @@ namespace WebSocketDS_ns
                 json << "\"id_req\": \"" << parsedInput.id << "\", ";
         }
 
-        json << "\"data\": [";
+        json << "\"data\": {";
+        json << "\"attrs\": [";
 
         forGenerateJsonForUpdate(json);
+        json << "}";
         json << "}";
     }
 

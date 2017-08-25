@@ -405,15 +405,22 @@ Output message:
 {
 	"event": "read",
 	"type_req": "attr_device_cl",
-	"device_name": "имя девайса или alias",
-	"id_req": "id запроса",
-	"data": [{
-		"attr": "Attribute name",
-		"data": "value or array"
-	}],
-	"pipe": {
-		"attr_name": "value or array",
-		"attr_name_2": "value or array"
+	"device_name": "device_name or alias",
+	"id_req": "Request id",
+	"data": {
+		"attrs":
+			[
+				{
+					"attr": "Attribute name",
+					"data": "value or array",
+					"dimX": "for spectrum or image",
+					"dimY": "for image"
+				}
+			],
+		"pipe": {
+			"attr_name": "value or array",
+			"attr_name_2": "value or array"
+		}
 	}
 }
 ```
