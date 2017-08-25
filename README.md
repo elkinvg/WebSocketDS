@@ -530,6 +530,20 @@ The answer in case of success:
 
 Here `"event_sub_id"` is the event subscription id. It can be used to further unsubscribe from the event.
 
+
+Event data comes in the following format:
+
+```json
+{
+	"event": "read",
+	"type_req": "from_event",
+	"type_event": "Event type",
+	"timestamp": 1501324867,
+	"attr": "attribute name",
+	"data": "value or array"
+}
+```
+
 #### Full unsubscription from events
 
 To unsubscribe from all events subscribed to, you need to send a message:
