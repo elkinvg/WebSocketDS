@@ -358,7 +358,7 @@ Output message:
 ```json
 {
 	"event": "read",
-	"type_req": "attribute_client",
+	"type_req": "from_timer",
 	"data": {
 		"name/of/tangodevice": {
 			"attrs": [{

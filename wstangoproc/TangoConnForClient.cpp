@@ -139,10 +139,10 @@ string WebSocketDS_ns::TangoConnForClient::getJsonForAttribute(bool &hasDevice)
 {
     hasDevice = false;
     if (!devices.size())
-        return StringProc::exceptionStringOut("Valid devices from list not found","attribute_client");
+        return StringProc::exceptionStringOut("Valid devices from list not found","from_timer");
     hasDevice = true;
     std::stringstream json;
-    json << "{\"event\": \"read\", \"type_req\": \"attribute_client\", \"data\":{";
+    json << "{\"event\": \"read\", \"type_req\": \"from_timer\", \"data\":{";
     bool nfrst = false;
     for (auto& dev : devices) {
         //dev.second->

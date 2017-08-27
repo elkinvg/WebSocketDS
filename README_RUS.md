@@ -661,7 +661,7 @@ AttrName;pipecomm;par1=val;par2
 ```json
 {
 	"event": "read",
-	"type_req": "attribute_client",
+	"type_req": "from_timer",
 	"data": {
 		"name/of/tangodevice": {
 			"attrs": [{
