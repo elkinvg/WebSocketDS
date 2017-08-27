@@ -635,32 +635,32 @@ namespace WebSocketDS_ns
         if (inputReq.check_key("attributes") != TYPE_OF_VAL::VALUE && inputReq.check_key("attributes") != TYPE_OF_VAL::ARRAY)
             isAttrNotFound = true;
 
-        if (inputReq.check_key("pipes") != TYPE_OF_VAL::VALUE && inputReq.check_key("pipes") != TYPE_OF_VAL::ARRAY)
+        if (inputReq.check_key("pipe") != TYPE_OF_VAL::VALUE && inputReq.check_key("pipe") != TYPE_OF_VAL::ARRAY)
             isPipeNotFound = true;
 
         if (isAttrNotFound && isPipeNotFound) {
-            resp_json = StringProc::exceptionStringOut(inputReq.id, NONE, "Not found keys attributes / pipes or attributes / pipes is not value or array", inputReq.type_req);
+            resp_json = StringProc::exceptionStringOut(inputReq.id, NONE, "Not found keys attributes / pipe or attributes / pipe is not value or array", inputReq.type_req);
             return;
         }
 
         vector<string> attributes;
-        vector<string> pipes;
+        vector<string> pipe;
 
         if (inputReq.check_key("attributes") == TYPE_OF_VAL::ARRAY)
             attributes = inputReq.otherInpVec.at("attributes");
         if (inputReq.check_key("attributes") == TYPE_OF_VAL::VALUE)
             attributes.push_back(inputReq.otherInpStr.at("attributes"));
 
-        if (inputReq.check_key("pipes") == TYPE_OF_VAL::ARRAY)
-            pipes = inputReq.otherInpVec.at("pipes");
-        if (inputReq.check_key("pipes") == TYPE_OF_VAL::VALUE)
-            pipes.push_back(inputReq.otherInpStr.at("pipes"));
+        if (inputReq.check_key("pipe") == TYPE_OF_VAL::ARRAY)
+            pipe = inputReq.otherInpVec.at("pipe");
+        if (inputReq.check_key("pipe") == TYPE_OF_VAL::VALUE)
+            pipe.push_back(inputReq.otherInpStr.at("pipe"));
 
-        std::pair<vector<string>, vector<string>> attr_pipes;
-        attr_pipes.first = attributes;
-        attr_pipes.second  = pipes;
+        std::pair<vector<string>, vector<string>> attr_pipe;
+        attr_pipe.first = attributes;
+        attr_pipe.second  = pipe;
         try {
-            DeviceForWs deviceForWs(device_name, attr_pipes);
+            DeviceForWs deviceForWs(device_name, attr_pipe);
             stringstream ss;
             deviceForWs.generateJsonForAttrReadCl(inputReq, ss);
             resp_json = ss.str();

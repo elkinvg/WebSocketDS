@@ -389,7 +389,7 @@ Input message:
 	"id": "Request id",
 	"device_name": "Name of the device or alias",
 	"attributes": "attribute name or array of names",
-	"pipes": ["pipe_name","attr_name;param"]
+	"pipe": ["pipe_name","attr_name;param"]
 }
 ```
 
