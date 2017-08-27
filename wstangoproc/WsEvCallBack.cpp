@@ -32,7 +32,7 @@ namespace WebSocketDS_ns
             stringstream json;
             json << "{\"event\": \"read\", ";
             json << "\"type_req\" : \"from_event\", ";
-            json << "\"type_event\": \"" << dt->event << "\", ";
+            json << "\"event_type\": \"" << dt->event << "\", ";
             json << "\"timestamp\": " << dt->get_date().tv_sec << ", ";
             json << "\"attr\": \"" << dt->attr_name << "\", ";
             tango_proc->devAttrToStr(dt->attr_value, json);

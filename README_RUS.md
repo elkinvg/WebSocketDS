@@ -863,7 +863,7 @@ CommandName;par1=val;
 {
 	"event": "read",
 	"type_req": "from_event",
-	"type_event": "Event type",
+	"event_type": "Event type",
 	"timestamp": 1501324867,
 	"attr": "attribute name",
 	"data": "value or array"
