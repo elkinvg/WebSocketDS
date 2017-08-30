@@ -74,11 +74,14 @@ namespace WebSocketDS_ns
         return out;
     }
 
-    string GroupOrDeviceForWs::eraseAttrFromList(vector<string> &attrNames)
+    string GroupOrDeviceForWs::eraseAttrFromList(vector<string> &attrNames, const string& pipeName)
     {
         string nfndat;
         string remat;
         string out;
+
+        if (pipeName == _pipeAttr)
+            _pipeAttr.clear();
 
         for (auto& attr: attrNames) {
             auto iterator = std::find(_attributes.begin(),_attributes.end(),attr);

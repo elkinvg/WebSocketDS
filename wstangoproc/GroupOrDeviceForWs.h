@@ -38,7 +38,7 @@ namespace WebSocketDS_ns
         virtual string sendAttrWr(const ParsedInputJson& parsedInput, bool& statusComm) = 0;
 
         string insertAttrToList(vector<string> &attrNames);
-        string eraseAttrFromList(vector<string> &attrNames);
+        string eraseAttrFromList(vector<string> &attrNames, const string& pipeName);
 
     protected:
         virtual Tango::CommandInfo getCommandInfo(const string& command_name) = 0;

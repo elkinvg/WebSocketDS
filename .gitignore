@@ -21,3 +21,5 @@ vc12_proj/*.suo
 vc12_proj/*.opensdf
 .idea/*
 *.autosave
+
+scripts_for_test/js/my_sett.js

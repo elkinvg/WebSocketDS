@@ -1,0 +1,74 @@
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+    <script type='text/javascript' src="./js/jquery/jquery-2.2.0.min.js"></script>
+    <script type='text/javascript' src="./js/jquery.md5.js"></script>
+    <script type='text/javascript' src='./js/my_sett.js'></script>
+    <script type='text/javascript' src='./js/main.js'></script>
+</head>
+<body>
+
+<button id="close_conn">close connection</button>
+<br>
+----------------------------------------------------------<br>
+For rand_ident USERANDIDENT2: &nbsp; &nbsp;
+<button id="rident_req">rident_req</button>
+<button id="rident_ans">rident_ans</button>
+<br>
+----------------------------------------------------------<br>
+<b>Server Mode</b>
+<br>
+<b>Single device</b><br>
+<button id="send_command_dev">command</button>
+<button id="pipe_comm">read_pipe</button>
+<button id="attr_write_ser">write_attr</button>
+<br><br>
+<b>Group</b><br>
+<button id="attr_write_dev">write_attr_dev</button>
+<button id="attr_write_gr">write_attr_gr</button>
+<button id="send_com_gr">command_group</button>
+<button id="send_com_dev_from_gr">command_device</button>
+<button id="pipe_comm_dev">read_pipe_dev</button>
+<button id="pipe_comm_gr">read_pipe_gr</button>
+<br><br>
+----------------------------------------------------------<br>
+<b>Client Mode</b><br>
+<b>Timer:</b> <br>
+<button id="timer_start">Start timer</button>
+<button id="timer_add_devs">Add device</button>
+<button id="timer_remove_devs">Del device</button>
+<button id="timer_upd_devs_add">Add attr</button>
+<button id="timer_upd_devs_rem">Del attr</button>
+<button id="timer_check">Check timer</button>
+<button id="timer_change">Change period</button>
+<button id="timer_stop">Stop timer</button>
+<br><br>
+<!--<button id="timer_gr_start">Start Timer with group</button>-->
+<!--<button id="timer_gr_add">Add group in timer</button>-->
+<!--<br><br>-->
+<b>commands and attr:</b> <br>
+<button id="command_dev_cl">Command_to_device</button>
+<button id="attr_read_cl">Attr_read</button>
+<button id="attr_write_cl">Attr_write</button>
+<br><br>
+<b>Event:</b> <br>
+<button id="event_sub">event subscription</button>
+<button id="event_unsub_all">complete unsubscription</button>
+<button id="event_unsub_one">unsubscribe from one</button>
+<button id="event_get_id">Gei id</button>
+<br><br>
+
+----------------------------------------------------------<br>
+<b>"Error message: "</b> <div id="error_mess"></div>
+----------------------------------------------------------<br>
+<b>"Info message: "</b> <div id="info_mess"></div>
+----------------------------------------------------------<br>
+<b>"Output. If Server mode is enabled or from timer or from from events: "</b>
+<br>
+<div id="out_from_server"></div>
+<br>
+<b>"Output: "</b><br>
+<div id="output"></div>
+</body>
+</html>
+

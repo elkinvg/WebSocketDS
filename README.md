@@ -48,6 +48,8 @@ As a default, compilation runs in OPTIMIZED (-O2) mode. For compilation in DEBUG
 
 Read [Property list for defining Tango device](#property-list-for-defining-tango-device). 
 
+For testing, you can use scripts from the [directory "scripts_for_test"](./scripts_for_test)
+
 ## Server mode
 
 Server mode is `ser` or `ser_cli_all_ro` or `ser_cli_all` or `ser_cli_ali` or  `ser_cli_ali_ro`.
@@ -591,21 +593,22 @@ If you want to get the subscriber id, send
 ```
 
 The answer in case of success:
+
 ```json
 {
 	"event":"read",
 	"type_req": "eventreq_check_dev", 
 	"id_req": 2, 
-	"data": [
-		{
-			"device": "name/of/device", 
-			"attribute": "attribute name", 
-			"event_type": "Event type", 
-			"event_sub_id": 1234
-		}
-	]
+	"data":
+	{
+		"device": "name/of/device", 
+		"attribute": "attribute name", 
+		"event_type": "Event type", 
+		"event_sub_id": 1234
+	}
 }
 ```
+
 
 If the subscription is not found, the value for `"event_sub_id"` will be `-1`
 

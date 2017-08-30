@@ -916,14 +916,13 @@ CommandName;par1=val;
 	"event":"read",
 	"type_req": "eventreq_check_dev", 
 	"id_req": 2, 
-	"data": [
-		{
-			"device": "name/of/device", 
-			"attribute": "attribute name", 
-			"event_type": "Event type", 
-			"event_sub_id": 1234
-		}
-	]
+	"data":
+	{
+		"device": "name/of/device", 
+		"attribute": "attribute name", 
+		"event_type": "Event type", 
+		"event_sub_id": 1234
+	}
 }
 ```
 

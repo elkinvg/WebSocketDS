@@ -98,7 +98,12 @@ vector<string> WebSocketDS_ns::TangoConnForClient::remAttrToDevicesFromUpdatelis
             // devices is std::unordered_map<string, std::unique_ptr<GroupOrDeviceForWs>>
             // eraseAttrFromList is method of GroupOrDeviceForWs for removing attributes from list
             // This method returns a message
-            messages.push_back(devices.at(deviceAndAttrList.first)->eraseAttrFromList(deviceAndAttrList.second.first));
+            // deviceAndAttrList second - pair<vector<string>, vector<string>> attr&pipe
+            // deviceAndAttrList first - string - device_name
+            string inpPipeName = "";
+            if (deviceAndAttrList.second.second.size())
+                inpPipeName = deviceAndAttrList.second.second.at(0);
+            messages.push_back(devices.at(deviceAndAttrList.first)->eraseAttrFromList(deviceAndAttrList.second.first, inpPipeName));
         }
         else
             messages.push_back("Device " + deviceAndAttrList.first + " was not found in the update list");

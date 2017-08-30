@@ -173,7 +173,10 @@ namespace WebSocketDS_ns
                 || parsedJson.type_req == "timer_upd_devs_add"
                 || parsedJson.type_req == "timer_upd_devs_rem")
         {
-            if (parsedJson.check_key("devices") != TYPE_OF_VAL::OBJECT) {
+            if (
+                parsedJson.check_key("devices") != TYPE_OF_VAL::OBJECT
+                // ??? !!! TMP && parsedJson.check_key("groups") != TYPE_OF_VAL::OBJECT
+                ) {
                 send(hdl, StringProc::exceptionStringOut(parsedJson.id, NONE, "Check keys for Timer (devices) ", parsedJson.type_req));
                 return;
                 }
@@ -189,6 +192,14 @@ namespace WebSocketDS_ns
                 }
             }
             devAttrPipeMap = parsing->getListDevicesAttrPipe(parsedJson.otherInpObj.at("devices"));
+            
+            /* 
+            ??? !!! TMP 
+            auto group_map = parsing->getListDevicesAttrPipe(parsedJson.otherInpObj.at("groups"));
+            
+            if (group_map.size())
+                devAttrPipeMap.insert(group_map.begin(), group_map.end());
+                */
         }
 
         // В режимах    MODE::SERVNCLIENT_ALIAS MODE::CLIENT_ALIAS 
