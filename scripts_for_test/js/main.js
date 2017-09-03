@@ -32,7 +32,7 @@ $(document).ready(function () {
     if (window.myPassword === undefined)
         var myPassword = "unknown";
     else
-        var myPassword = window.myPassword;
+        var myPassword = myPassword;
 
     // Server mode___________________________________________________
 

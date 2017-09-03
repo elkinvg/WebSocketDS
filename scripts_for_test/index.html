@@ -47,28 +47,32 @@ For rand_ident USERANDIDENT2: &nbsp; &nbsp;
 <!--<button id="timer_gr_add">Add group in timer</button>-->
 <!--<br><br>-->
 <b>commands and attr:</b> <br>
-<button id="command_dev_cl">Command_to_device</button>
-<button id="attr_read_cl">Attr_read</button>
-<button id="attr_write_cl">Attr_write</button>
+<button id="command_dev_cl">Command to device</button>
+<button id="attr_read_cl">read attribute</button>
+<button id="attr_write_cl">write attribute</button>
 <br><br>
 <b>Event:</b> <br>
-<button id="event_sub">event subscription</button>
+<button id="event_sub">event subscription (periodic)</button>
 <button id="event_unsub_all">complete unsubscription</button>
 <button id="event_unsub_one">unsubscribe from one</button>
 <button id="event_get_id">Gei id</button>
 <br><br>
 
 ----------------------------------------------------------<br>
-<b>"Error message: "</b> <div id="error_mess"></div>
+<b>"Error message: "</b>
+<font color="red"><div id="error_mess"></div></font>
 ----------------------------------------------------------<br>
-<b>"Info message: "</b> <div id="info_mess"></div>
-----------------------------------------------------------<br>
-<b>"Output. If Server mode is enabled or from timer or from from events: "</b>
-<br>
+<b>"Output. If Server mode is enabled or from timer or from events: "</b>
 <div id="out_from_server"></div>
-<br>
+<font color="#0404B4"><div id="out_from_timer"></div></font>
+<font color="#0B615E"><div id="out_from_event"></div></font>
+----------------------------------------------------------<br>
 <b>"Output: "</b><br>
-<div id="output"></div>
+<font color="#0101DF"><div id="output"></div></font>
+----------------------------------------------------------<br>
+<b>"Info message: "</b>
+<font color="#38610B"><div id="info_mess"></div></font>
+----------------------------------------------------------<br>
 </body>
 </html>
 
