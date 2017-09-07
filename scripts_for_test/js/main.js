@@ -264,8 +264,52 @@ $(document).ready(function () {
         send_message_to_ws(argin);
     });
 
+    /**
+     * Start timer with group of device
+     */
+    $("#timer_gr_start").click(function(){
+        argin = {};
+        argin.type_req = "timer_start";
+        argin.msec = 1000;
+        argin.group = {};
 
+        argin.group[test_group_device] =
+            {
+                "attr": ["float_scalar", "long_scalar", "double_scalar;prec=2"],
+                "pipe": test_pipe_name
+            };
+        send_message_to_ws(argin);
+    });
+
+    /**
+     * Add group of devices in timer
+     */
+    $("#timer_gr_add").click(function(){
+        argin = {};
+        argin.type_req = "timer_add_devs";
+        argin.group = {};
+
+        argin.group[test_group_device] =
+            {
+                "attr": ["float_scalar", "long_scalar", "double_scalar;prec=2"],
+                "pipe": test_pipe_name
+            };
+        send_message_to_ws(argin);
+    });
+
+    /**
+     * Remove group from timer
+     */
+    $("#timer_gr_rem").click(function () {
+        argin = {};
+        argin.type_req = "timer_remove_devs";
+        argin.group = test_group_device;
+        send_message_to_ws(argin);
+    });
+
+    ////////////////////////////////////////
     // Command, write and read of attributes
+    ////////////////////////////////////////
 
     /**
      * Command to the device from the client

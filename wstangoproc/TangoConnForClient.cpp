@@ -103,10 +103,15 @@ vector<string> WebSocketDS_ns::TangoConnForClient::remAttrToDevicesFromUpdatelis
             string inpPipeName = "";
             if (deviceAndAttrList.second.second.size())
                 inpPipeName = deviceAndAttrList.second.second.at(0);
-            messages.push_back(devices.at(deviceAndAttrList.first)->eraseAttrFromList(deviceAndAttrList.second.first, inpPipeName));
+
+            auto messfromerasing = devices.at(deviceAndAttrList.first)->eraseAttrFromList(deviceAndAttrList.second.first, inpPipeName, deviceAndAttrList.first);
+            messages.insert(messages.begin(), messfromerasing.begin(), messfromerasing.end());
         }
-        else
-            messages.push_back("Device " + deviceAndAttrList.first + " was not found in the update list");
+        else {
+            messages.push_back(deviceAndAttrList.first);
+            messages.push_back("Device was not found in the update list");
+        }
+            
     }
     return messages;
 }

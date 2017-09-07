@@ -42,6 +42,44 @@ namespace WebSocketDS_ns
             delete group;
     }
 
+    dev_attr_pipe_map GroupForWs::getListDevicesFromGroupForAttrAndPipeProc(const dev_attr_pipe_map &group_of_devs, string& errorMessage)
+    {
+        dev_attr_pipe_map outMap;
+
+        if (group_of_devs.size() > 1) {
+            errorMessage = "The group object must contain only one key with pattern";
+            return outMap;
+        }
+
+        vector<string> deviceList = getArrayOfDevicesFromGroup(group_of_devs.begin()->first, errorMessage);
+
+        if (errorMessage.size())
+            return outMap;
+
+        pair<vector<string>, vector<string>> attrNPipes = group_of_devs.begin()->second;
+
+        for (const auto& device : deviceList) {
+            outMap[device] = attrNPipes;
+        }
+        
+        return outMap;
+    }
+
+    vector<string> GroupForWs::getArrayOfDevicesFromGroup(const string pattern, string& errorMessage)
+    {
+        vector<string> deviceList;
+
+        Tango::Group tmpGroup("tmpGr");
+        tmpGroup.add(pattern);
+
+        if (tmpGroup.get_size(true) == 0) {
+            errorMessage = "Devices from group not found. Check pattern for group";
+            return deviceList;
+        }
+        deviceList = tmpGroup.get_device_list(true);
+        return deviceList;
+    }
+
     string GroupForWs::generateJsonForUpdate()
     {
         std::stringstream json;

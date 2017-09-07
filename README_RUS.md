@@ -621,13 +621,14 @@ AttrName;pipecomm;par1=val;par2
 
 ```json
 {
-  "type_req" : "один из перечисленных",
-  "msec": "значения для таймера в милисекундах (int). минимум 1000",
-  "devices" : "либо объект, либо значение либо массив значений"
+    "type_req" : "один из перечисленных",
+    "msec": "значения для таймера в милисекундах (int). минимум 1000",
+    "devices" : "либо объект, либо значение либо массив значений",
+    "group": "либо объект, либо значение"
 }
 ```
 
-Для `devices` объектного типа передаётся
+Для `devices` и `group` объектного типа передаётся
 
 ```json
 {
@@ -636,6 +637,12 @@ AttrName;pipecomm;par1=val;par2
 		"name/of/device": {
 			"attr": "либо имя атрибута, либо перечень атрибутов в массиве",
 			"pipe": "либо имя pipe, либо имя и перечень свойств для отдельных атрибутов из pipe в массиве"
+		}
+	},
+	"group": {
+		"pattern/for/group*": {
+			"attr": "attribute name or array of names",
+			"pipe": "PipeName and (If it is needed) Properties for attributes"
 		}
 	}
 }
@@ -649,8 +656,9 @@ AttrName;pipecomm;par1=val;par2
 
 ```json
 {
-  ...
-  "devices" : "либо имя девайса, либо массив имён"
+	...
+	"devices" : "name/of/device or Array of names",
+	"group": "pattern/for/group*"
 }
 ```
 

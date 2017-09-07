@@ -23,6 +23,9 @@ namespace WebSocketDS_ns
         GroupForWs(string pattern, vector<string> &commands);
         ~GroupForWs();
 
+        static dev_attr_pipe_map getListDevicesFromGroupForAttrAndPipeProc(const dev_attr_pipe_map &group_of_devs, string& errorMessage);
+        static vector<string> getArrayOfDevicesFromGroup(const string pattern, string& errorMessage);
+
         virtual string generateJsonForUpdate() override;
         virtual void generateJsonForUpdate(std::stringstream& json) override;
 

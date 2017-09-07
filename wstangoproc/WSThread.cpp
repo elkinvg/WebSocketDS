@@ -19,6 +19,9 @@
 
 #include "StringProc.h"
 #include "ParsingInputJson.h"
+
+#include "GroupForWs.h"
+
 namespace WebSocketDS_ns
 {
     WSThread::WSThread(WSTangoConn *tc, int portNumber) 
@@ -168,22 +171,32 @@ namespace WebSocketDS_ns
 
         dev_attr_pipe_map devAttrPipeMap;
 
+        bool hasDevices = (parsedJson.check_key("devices") == TYPE_OF_VAL::OBJECT);
+        bool hasGroups = (parsedJson.check_key("group") == TYPE_OF_VAL::OBJECT);
+
         if (parsedJson.type_req == "timer_start"
                 || parsedJson.type_req == "timer_add_devs"
                 || parsedJson.type_req == "timer_upd_devs_add"
                 || parsedJson.type_req == "timer_upd_devs_rem")
         {
             if (
-                parsedJson.check_key("devices") != TYPE_OF_VAL::OBJECT
-                // ??? !!! TMP && parsedJson.check_key("groups") != TYPE_OF_VAL::OBJECT
-                ) {
-                send(hdl, StringProc::exceptionStringOut(parsedJson.id, NONE, "Check keys for Timer (devices) ", parsedJson.type_req));
+                !hasDevices
+                && !hasGroups
+                ) 
+            {
+                send(hdl, StringProc::exceptionStringOut(parsedJson.id, NONE, "Check keys for Timer (devices or group) ", parsedJson.type_req));
                 return;
-                }
+            }
             
             auto ws_mode = _tc->getMode();
             if (isAliasMode())
             {
+                if (parsedJson.check_key("group") == TYPE_OF_VAL::OBJECT)
+                {
+                    send(hdl, StringProc::exceptionStringOut(parsedJson.id, NONE, "In the current mode only aliases are used", parsedJson.type_req));
+                    return;
+                }
+
                 for (const auto &devs : parsedJson.otherInpObj.at("devices")) {
                     if (!StringProc::isNameAlias(devs.first)) {
                         send(hdl, StringProc::exceptionStringOut(parsedJson.id, NONE, "In the current mode only aliases are used", parsedJson.type_req));
@@ -191,15 +204,24 @@ namespace WebSocketDS_ns
                     }
                 }
             }
-            devAttrPipeMap = parsing->getListDevicesAttrPipe(parsedJson.otherInpObj.at("devices"));
-            
-            /* 
-            ??? !!! TMP 
-            auto group_map = parsing->getListDevicesAttrPipe(parsedJson.otherInpObj.at("groups"));
-            
-            if (group_map.size())
+
+            if (hasDevices)
+                devAttrPipeMap = parsing->getListDevicesAttrPipe(parsedJson.otherInpObj.at("devices"));
+
+            dev_attr_pipe_map group_map;
+
+            if (hasGroups) {
+                string errorMessage;
+                group_map = GroupForWs::getListDevicesFromGroupForAttrAndPipeProc(parsing->getListDevicesAttrPipe(parsedJson.otherInpObj.at("group")), errorMessage);
+
+                if (errorMessage.size())
+                    send(hdl, StringProc::exceptionStringOut(parsedJson.id, NONE, errorMessage, parsedJson.type_req));
+                
+                if (!hasDevices && !group_map.size())
+                    return;
+                
                 devAttrPipeMap.insert(group_map.begin(), group_map.end());
-                */
+            }
         }
 
         // В режимах    MODE::SERVNCLIENT_ALIAS MODE::CLIENT_ALIAS 
@@ -336,29 +358,55 @@ namespace WebSocketDS_ns
 
     void WSThread::timerRemDevsMeth(const ParsedInputJson &parsedJson, websocketpp::connection_hdl hdl)
     {
+        bool hasDev = false;
+        bool hasGr = false;
         string keyDev = "devices";
-        TYPE_OF_VAL typeOfVal = parsedJson.check_key(keyDev);
-        if (typeOfVal != TYPE_OF_VAL::ARRAY &&
-                typeOfVal != TYPE_OF_VAL::VALUE) {
-            send(hdl, StringProc::exceptionStringOut(parsedJson.id, NONE, "Check keys for Timer", parsedJson.type_req));
+        vector<string> devices_for_rem;
+
+        if (parsedJson.check_key(keyDev) == TYPE_OF_VAL::ARRAY ||
+            parsedJson.check_key(keyDev) == TYPE_OF_VAL::VALUE)
+        {
+            if (parsedJson.check_key(keyDev) == TYPE_OF_VAL::ARRAY)
+                devices_for_rem = parsedJson.otherInpVec.at(keyDev);
+
+            if (parsedJson.check_key(keyDev) == TYPE_OF_VAL::VALUE)
+                devices_for_rem.push_back(parsedJson.otherInpStr.at(keyDev));
+            hasDev = true;
+        }
+            
+
+        if (parsedJson.check_key("group") == TYPE_OF_VAL::VALUE) 
+        {
+            string errorMessage;
+            auto devsFromGroup = GroupForWs::getArrayOfDevicesFromGroup(parsedJson.otherInpStr.at("group"), errorMessage);
+            if (!errorMessage.size() && devsFromGroup.size()) {
+                hasGr = true;
+                devices_for_rem.insert(devices_for_rem.begin(), devsFromGroup.begin(), devsFromGroup.end());
+            }            
+        }
+
+        if (!hasDev && !hasGr) {
+            send(hdl, StringProc::exceptionStringOut(parsedJson.id, NONE, "Check keys for Timer. Key devices or group has an incorrect format. Key devices must be a vector or value. Key group must be value", parsedJson.type_req));
             return;
         }
-        string outMess;
-        if (typeOfVal == TYPE_OF_VAL::ARRAY)
-            outMess = m_connections[hdl].tangoConnForClient->removeDevicesFromUpdateList(parsedJson.otherInpVec.at(keyDev));
-        if (typeOfVal == TYPE_OF_VAL::VALUE)
-            outMess = m_connections[hdl].tangoConnForClient->removeDevicesFromUpdateList(parsedJson.otherInpStr.at(keyDev));
+
+        int numOfDevsPre = m_connections[hdl].tangoConnForClient->numOfListeningDevices();
+        string outMess = m_connections[hdl].tangoConnForClient->removeDevicesFromUpdateList(devices_for_rem);
+
 
         if (outMess.size())
             send(hdl, StringProc::exceptionStringOut(parsedJson.id, NONE, outMess, parsedJson.type_req));
-        else {
-            if (m_connections[hdl].tangoConnForClient->numOfListeningDevices())
-                send(hdl, StringProc::responseStringOut(parsedJson.id, "All devices from the input list have been removed", parsedJson.type_req));
-            else {
-                send(hdl, StringProc::responseStringOut(parsedJson.id, "All devices from the input list have been removed. Total Number of Listening Devices is 0. The timer will be off", parsedJson.type_req));
-                m_connections[hdl].timing.reset(nullptr);
-            }
+
+        if (!m_connections[hdl].tangoConnForClient->numOfListeningDevices()) 
+        {
+            send(hdl, StringProc::responseStringOut(parsedJson.id, "All devices from the input list have been removed. Total Number of Listening Devices is 0. The timer will be off", parsedJson.type_req));
+            m_connections[hdl].timing.reset(nullptr);
+            return;
         }
+
+
+        if (m_connections[hdl].tangoConnForClient->numOfListeningDevices() < numOfDevsPre)
+            send(hdl, StringProc::responseStringOut(parsedJson.id, "All devices from the input list have been removed", parsedJson.type_req));
     }
 
     void WSThread::timerUpdDevsAddMeth(const ParsedInputJson &parsedJson, websocketpp::connection_hdl hdl, dev_attr_pipe_map &devAttrPipeMap)

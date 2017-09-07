@@ -312,10 +312,11 @@ Input message for timer control
 
 ```json
 {
-  "type_req" : "(always) Type request",
-  "id_req": "(always) Request id",
-  "msec": "(Depending on the type) Values for the timer in milliseconds (int). minimum 1000",
-  "devices" : "(Depending on the type) object or value or array"
+    "type_req" : "(always) Type request",
+    "id_req": "(always) Request id",
+    "msec": "(Depending on the type) Values for the timer in milliseconds (int). minimum 1000",
+    "devices" : "(Depending on the type) object or value or array",
+    "group": "(Depending on the type) object or value"
 }
 ```
 
@@ -330,7 +331,7 @@ Types of requests:
  - **timer_upd_devs_rem** - Removing attributes or pipe. If the device is already in the list. Also should be sent `devices` (object)
  - **timer_check** - Check the status of the timer.
  
-For devices of object type:
+For `devices` and `group` of object type:
 
 ```json
 {
@@ -340,18 +341,27 @@ For devices of object type:
 			"attr": "attribute name or array of names",
 			"pipe": "PipeName and (If it is needed) Properties for attributes"
 		}
+	},
+	"group": {
+		"pattern/for/group*": {
+			"attr": "attribute name or array of names",
+			"pipe": "PipeName and (If it is needed) Properties for attributes"
+		}
 	}
 }
 ```
 
+A group can contain only one key. A device can contain any number of keys
+
 You can specify the output frequency (Once in N iterations) and the iteration in which the output is made. [Read more here](#setting-the-periodicity-of-the-output-of-values-for-attributes) 
 
-For devices a value type or an array
+For devices a value type or an array, and group a value type
 
 ```json
 {
-  ...
-  "devices" : "name/of/device or Array of names"
+	...
+	"devices" : "name/of/device or Array of names",
+	"group": "pattern/for/group*"
 }
 ```
 

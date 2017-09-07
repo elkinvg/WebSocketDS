@@ -74,11 +74,11 @@ namespace WebSocketDS_ns
         return out;
     }
 
-    string GroupOrDeviceForWs::eraseAttrFromList(vector<string> &attrNames, const string& pipeName)
+    vector<string> GroupOrDeviceForWs::eraseAttrFromList(vector<string> &attrNames, const string& pipeName, const string& deviceName)
     {
         string nfndat;
         string remat;
-        string out;
+        vector<string> out;
 
         if (pipeName == _pipeAttr)
             _pipeAttr.clear();
@@ -99,11 +99,15 @@ namespace WebSocketDS_ns
             }
         }
 
-        if ( remat.size() )
-            out += (" Attributes ( " + remat + " ) removed from list ");
+        if (remat.size()) {
+            out.push_back(deviceName);
+            out.push_back(string(" Attributes ( " + remat + " ) removed from list "));
+        }
 
-        if (nfndat.size())
-            out += (" Attributes ( " + nfndat + " ) were not found in the list ");
+        if (nfndat.size()) {
+            out.push_back(deviceName);
+            out.push_back(string(" Attributes ( " + nfndat + " ) were not found in the list "));
+        }
 
         /*for (auto& pipe: attrOrPipeNames.second) {
             auto iterator = std::find(_pipeAttr.begin(),_pipeAttr.end(),pipe);
