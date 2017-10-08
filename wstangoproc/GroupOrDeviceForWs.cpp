@@ -1,6 +1,5 @@
 #include "GroupOrDeviceForWs.h"
 
-#include "WebSocketDS.h"
 #include "StringProc.h"
 #include "TangoProcessor.h"
 

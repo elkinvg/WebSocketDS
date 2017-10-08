@@ -258,4 +258,20 @@ namespace WebSocketDS_ns
         ss << "}";
         return ss.str();
     }
+
+    std::pair<string, string> StringProc::splitDeviceName(const string& deviceName)
+    {
+        std::pair<string, string> hostAndDev;
+        auto cpDevName = deviceName;
+        vector<string> parsedDeviceName = parseInputString(cpDevName, "/", true);
+
+        if (parsedDeviceName.size() == 3) {
+            hostAndDev.second = parsedDeviceName[0] + "/" + parsedDeviceName[1] + "/" + parsedDeviceName[2];
+        }
+        else if (parsedDeviceName.size() == 6) {
+            hostAndDev.first = parsedDeviceName[0] + "//" + parsedDeviceName[2] + "/";
+            hostAndDev.second = parsedDeviceName[3] + "/" + parsedDeviceName[4] + "/" + parsedDeviceName[5];
+        }
+        return hostAndDev;
+    }
 }

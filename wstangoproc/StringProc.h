@@ -33,6 +33,7 @@ namespace WebSocketDS_ns
         static vector<string> parseInputString(string &inp, string delimiter, bool isAllParts = false);
         static bool isNameAlias(const string& deviceName);
         static void removeSymbolsForString(string &str);
+        static std::pair<string, string> splitDeviceName(const string& deviceName);
         //static map<std::string, std::string> parseJsonFromCommand(const string& jsonInput, bool isGroup);
         //static ParsedInputJson parseInputJson(const string& json);
     private:

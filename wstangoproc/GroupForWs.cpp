@@ -2,17 +2,31 @@
 #include "StringProc.h"
 
 #include "TangoProcessor.h"
-#include "WebSocketDS.h"
 
 namespace WebSocketDS_ns
 {
     GroupForWs::GroupForWs(string pattern)
     {
+        auto hostAndDevice = StringProc::splitDeviceName(pattern);
         group = new Tango::Group("forws");
         group->add(pattern);
         group_length = group->get_size(true);
         group->set_timeout_millis(3000);
         deviceList = group->get_device_list(true);
+
+        // Проверяется, удаляется ли танго-хост из имени девайса.
+        // При чтении с удалённых танго-хостов, в deviceList записывается 
+        //      только имена девайсов, без имени хоста.
+        if (deviceList.size() && hostAndDevice.first.size() && !StringProc::splitDeviceName(deviceList[0]).first.size()) {
+            group->remove_all();
+
+            for (auto& dev : deviceList) {
+                group->add(hostAndDevice.first + dev);
+            }
+
+            deviceList = group->get_device_list(true);
+            group_length = group->get_size(true);
+        }
     }
 
     GroupForWs::GroupForWs(string pattern, std::pair<vector<string>, vector<string> > &attr_pipes)
