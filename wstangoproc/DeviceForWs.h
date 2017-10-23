@@ -25,6 +25,7 @@ namespace WebSocketDS_ns
         virtual string sendCommandBin(const ParsedInputJson& parsedInput, bool& statusComm) override;
 
         virtual string sendAttrWr(const ParsedInputJson& parsedInput, bool& statusComm) override;
+        virtual vector<string> getListOfDevicesNames() override;
 
         bool pingDevice(string& errorMess);
 
@@ -38,6 +39,7 @@ namespace WebSocketDS_ns
 
     private:
         Tango::DeviceProxy *device = nullptr;
+        string _deviceName;
     };
 }
 

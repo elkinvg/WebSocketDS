@@ -77,7 +77,7 @@ If the device (output):
 		{
 			"attr": "attribute_name2",
 			"data": ["data", "array"]
-		},
+		}
 	],
 	"pipe":
 		{
@@ -109,7 +109,7 @@ If a group of devices (output):
 			{
 				"attr": "attribute_name2",
 				"data": ["data", "array"]
-			},
+			}
 		]
 	},
 	"pipe":
@@ -359,7 +359,7 @@ For devices a value type or an array, and group a value type
 
 ```json
 {
-	...
+	"other" : "data",
 	"devices" : "name/of/device or Array of names",
 	"group": "pattern/for/group*"
 }
@@ -397,13 +397,17 @@ Input message:
 
 ```json
 {
-	"type_req": "attr_device_cl",
+	"type_req": "attr_device_cl or attr_group_cl",
 	"id": "Request id",
-	"device_name": "Name of the device or alias",
+	"device_name": "Name of the device or alias or pattern for group",
 	"attributes": "attribute name or array of names",
 	"pipe": ["pipe_name","attr_name;param"]
 }
 ```
+
+"type_req" : 
+ - <b>attr_device_cl</b> - for device
+ - <b>attr_group_cl</b> - for group
 
 In order to read data from all attributes of the tango module.
 
@@ -413,6 +417,7 @@ In order to read data from all attributes of the tango module.
 
 Output message:
 
+For device:
 ```json
 {
 	"event": "read",
@@ -432,6 +437,33 @@ Output message:
 		"pipe": {
 			"attr_name": "value or array",
 			"attr_name_2": "value or array"
+		}
+	}
+}
+```
+
+For Group: 
+```json
+{
+	"event": "read",
+	"type_req": "attr_group_cl",
+	"id_req": "Request id",
+	"data": {
+		"attrs": {
+			"device_name": [
+				{
+					"attr": "Attribute name",
+					"data": "value or array",
+					"dimX": "for spectrum or image",
+					"dimY": "for image"
+				}
+			]
+		},			
+		"pipe": {
+			"device_name": {
+			"attr_name": "value or array",
+			"attr_name_2": "value or array"
+			}
 		}
 	}
 }
@@ -498,9 +530,29 @@ Output message (if succesfull):
 
 ## Work with events
 
-Subscription to events is possible in all modes except `Server`.
+Subscription to events is possible in all modes.
+
+The following event types are currently supported: `CHANGE_EVENT`, `PERIODIC_EVENT`, `ARCHIVE_EVENT`, `USER_EVENT`
+
+To subscribe to events in server mode,  set values to [property list for defining Tango device](#property-list-for-defining-tango-device).
+
+Event data comes in the following format:
+
+```json
+{
+	"event": "read",
+	"type_req": "from_event",
+	"event_type": "Event type",
+	"timestamp": 1501324867,
+	"attr": "attribute name",
+	"data": "value or array"
+}
+```
+
 
 #### Subscribing to events
+
+<b style="color:blue;">Only for client mode!</b>
 
 The following event types are currently supported: `CHANGE_EVENT`, `PERIODIC_EVENT`, `ARCHIVE_EVENT`, `USER_EVENT`
 
@@ -565,6 +617,8 @@ Event data comes in the following format:
 
 #### Full unsubscription from events
 
+<b style="color:blue;">Only for client mode!</b>
+
 To unsubscribe from all events subscribed to, you need to send a message:
 
 ```json
@@ -575,6 +629,8 @@ To unsubscribe from all events subscribed to, you need to send a message:
 ```
 
 #### Partial unsubscription from events
+
+<b style="color:blue;">Only for client mode!</b>
 
 To unsubscribe from individual events, you need to send:
 
@@ -589,6 +645,8 @@ To unsubscribe from individual events, you need to send:
 Here `"event_sub_id"` is the event subscription id.
 
 #### Get the subscriber id
+
+<b style="color:blue;">Only for client mode!</b>
 
 If you want to get the subscriber id, send
 
@@ -877,6 +935,10 @@ Set true, for secure wss connection, otherwise false;  (bool)
 Default and MinValue = 60
 Used only if any server mode is selected ; (DevUShort)
   - **Options** - additional options. A list of additional options for the device. (array of string)
+  - **list_subscr_event_change** - List of subscriptions to change events. `Used only if any server mode is selected.`; (array of string)
+  - **list_subscr_event_periodic** - List of subscriptions to periodic events. `Used only if any server mode is selected.`; (array of string)
+  - **list_subscr_event_user** - List of subscriptions to user events. `Used only if any server mode is selected.`; (array of string)
+  - **list_subscr_event_archive** - List of subscriptions to archive events. `Used only if any server mode is selected.`; (array of string)
   
 ## Device operating mode
 

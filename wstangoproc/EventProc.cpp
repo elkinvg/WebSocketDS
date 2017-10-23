@@ -1,4 +1,4 @@
-#include "EventProc.h"
+п»ї#include "EventProc.h"
 
 #include "WSThread_plain.h"
 #include "WSThread_tls.h"
@@ -136,7 +136,7 @@ namespace WebSocketDS_ns
             }
             if (isNameAlias)
                 getDeviceNameFromAlias(deviceName);
-            // tmpAttrName введён для того, чтобы поместить в key имя атрибута без опций
+            // tmpAttrName РІРІРµРґС‘РЅ РґР»СЏ С‚РѕРіРѕ, С‡С‚РѕР±С‹ РїРѕРјРµСЃС‚РёС‚СЊ РІ key РёРјСЏ Р°С‚СЂРёР±СѓС‚Р° Р±РµР· РѕРїС†РёР№
             StringProc::parseInputString(tmpAttrName, ";");
             string key = tmpAttrName + "|" + deviceName + "|" + eventType;
             if (eventSubscrs.find(key) != eventSubscrs.end()) {

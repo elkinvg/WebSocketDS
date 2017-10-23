@@ -22,13 +22,14 @@ namespace WebSocketDS_ns
     class GroupOrDeviceForWs;
     class WebSocketDS;
     class UserControl;
+    class EventProcForServerMode;
 
     class WSTangoConn: public Tango::LogAdapter
     {
     public:
-        WSTangoConn(WebSocketDS *dev, pair<string, vector<string>> dsAndOptions, array<vector<string>, 3> attrCommPipe, int portNumber);
+        WSTangoConn(WebSocketDS *dev, pair<string, vector<string>> dsAndOptions, array<vector<string>, 3> attrCommPipe, int portNumber, array<vector<string>, 4> event_subcr);
 
-        WSTangoConn(WebSocketDS *dev, pair<string, vector<string>> dsAndOptions, array<vector<string>, 3> attrCommPipe, int portNumber, string cert, string key);
+        WSTangoConn(WebSocketDS *dev, pair<string, vector<string>> dsAndOptions, array<vector<string>, 3> attrCommPipe, int portNumber, array<vector<string>, 4> event_subcr, string cert, string key);
 
         ~WSTangoConn();
 
@@ -57,6 +58,8 @@ namespace WebSocketDS_ns
         bool initDeviceServer();
         bool initDeviceServer(array<vector<string>, 3> &attrCommPipe);
 
+        void initEventSubscrForServerMode(const array<vector<string>, 4> &event_subcr);
+
         string fromException(Tango::DevFailed &e, string func);
         void  removeSymbolsForString(string &str);
 
@@ -81,10 +84,14 @@ namespace WebSocketDS_ns
 
         string checkDeviceNameKey(const ParsedInputJson& inputReq, std::string &errorMessage);
 
+        bool hasAttrOrPipe;
+
 
     private:
         WSThread *wsThread = nullptr;
         WebSocketDS *_wsds;
+        std::unique_ptr<EventProcForServerMode> eventSubscrServ;
+
         std::unique_ptr<GroupOrDeviceForWs> groupOrDevice;
         std::unique_ptr<UserControl> uc;
         TYPE_OF_IDENT typeOfIdent{ TYPE_OF_IDENT::SIMPLE };

@@ -43,7 +43,7 @@ $(document).ready(function () {
      * Command "DevFloat" must be written in the propertie "Command"
      */
     $("#send_command_dev").click(function(){
-        argin = {};
+        var argin = {};
         argin.type_req = "command";
         argin.command_name = "DevFloat";
         argin.argin = 123.456;
@@ -55,7 +55,7 @@ $(document).ready(function () {
      *
      */
     $("#pipe_comm").click(function(){
-        argin = {};
+        var argin = {};
         argin.type_req = "read_pipe";
         argin.pipe_name = test_pipe_name;
         send_message_to_ws(argin);
@@ -67,7 +67,7 @@ $(document).ready(function () {
      *      with postfix ";wrt" or "onlywrt". Example double_scalar;wrt
      */
     $("#attr_write_ser").click(function(){
-        argin = {};
+        var argin = {};
         argin.type_req = "write_attr";
         argin.attr_name = "double_scalar";
         argin.argin = 3456.7891;
@@ -82,7 +82,7 @@ $(document).ready(function () {
      *      with postfix ";wrt" or "onlywrt". Example short_scalar;wrt
      */
     $("#attr_write_dev").click(function(){
-        argin = {};
+        var argin = {};
         argin.type_req = "write_attr_dev";
         argin.attr_name = "short_scalar";
         argin.device_name = test_device;
@@ -96,7 +96,7 @@ $(document).ready(function () {
      *      with postfix ";wrt" or "onlywrt". Example double_scalar;wrt
      */
     $("#attr_write_gr").click(function(){
-        argin = {};
+        var argin = {};
         argin.type_req = "write_attr_gr";
         argin.attr_name = "double_scalar";
         argin.argin = 999.999;
@@ -109,7 +109,7 @@ $(document).ready(function () {
      * Command "DevLong" must be written in the propertie "Command"
      */
     $("#send_com_dev_from_gr").click(function(){
-        argin = {};
+        var argin = {};
         argin.type_req = "command_device";
         argin.device_name = test_device;
         argin.command_name = "DevLong";
@@ -122,7 +122,7 @@ $(document).ready(function () {
      * Command "DevDouble" must be written in the propertie "Command"
      */
     $("#send_com_gr").click(function(){
-        argin = {};
+        var argin = {};
         argin.type_req = "command_group";
         argin.command_name = "DevDouble";
         argin.argin = 1000000;
@@ -134,7 +134,7 @@ $(document).ready(function () {
      *
      */
     $("#pipe_comm_dev").click(function(){
-        argin = {};
+        var argin = {};
         argin.type_req = "read_pipe_dev";
         argin.device_name = test_device;
         argin.pipe_name = test_pipe_name;
@@ -146,7 +146,7 @@ $(document).ready(function () {
      *
      */
     $("#pipe_comm_gr").click(function(){
-        argin = {};
+        var argin = {};
         argin.type_req = "read_pipe_gr";
         argin.pipe_name = test_pipe_name;
         send_message_to_ws(argin);
@@ -164,7 +164,7 @@ $(document).ready(function () {
      */
 
     $("#timer_start").click(function(){
-        argin = {};
+        var argin = {};
         argin.type_req = "timer_start";
         argin.msec = 1000;
         argin.devices = {};
@@ -182,7 +182,7 @@ $(document).ready(function () {
      */
 
     $("#timer_add_devs").click(function(){
-        argin = {};
+        var argin = {};
         argin.type_req = "timer_add_devs";
         argin.devices = {
             "sys/tg_test/2": {
@@ -197,7 +197,7 @@ $(document).ready(function () {
      * Delete device from timer
      */
     $("#timer_remove_devs").click(function () {
-        argin = {};
+        var argin = {};
         argin.type_req = "timer_remove_devs";
         argin.devices = "sys/tg_test/2";
         send_message_to_ws(argin);
@@ -207,7 +207,7 @@ $(document).ready(function () {
      * Add attributes in device from timer
      */
     $("#timer_upd_devs_add").click(function () {
-        argin = {};
+        var argin = {};
         argin.type_req = "timer_upd_devs_add";
 
         argin.devices = {};
@@ -223,7 +223,7 @@ $(document).ready(function () {
      * Delete attributes from timer
      */
     $("#timer_upd_devs_rem").click(function () {
-        argin = {};
+        var argin = {};
         argin.type_req = "timer_upd_devs_rem";
 
         argin.devices = {};
@@ -240,7 +240,7 @@ $(document).ready(function () {
      * Check timer
      */
     $("#timer_check").click(function(){
-        argin = {};
+        var argin = {};
         argin.type_req = "timer_check";
         send_message_to_ws(argin);
     });
@@ -249,7 +249,7 @@ $(document).ready(function () {
      * Change the period in the timer
      */
     $("#timer_change").click(function(){
-        argin = {};
+        var argin = {};
         argin.type_req = "timer_change";
         argin.msec = 3000;
         send_message_to_ws(argin);
@@ -259,7 +259,7 @@ $(document).ready(function () {
      * Stop timer
      */
     $("#timer_stop").click(function(){
-        argin = {};
+        var argin = {};
         argin.type_req = "timer_stop";
         send_message_to_ws(argin);
     });
@@ -268,7 +268,7 @@ $(document).ready(function () {
      * Start timer with group of device
      */
     $("#timer_gr_start").click(function(){
-        argin = {};
+        var argin = {};
         argin.type_req = "timer_start";
         argin.msec = 1000;
         argin.group = {};
@@ -285,7 +285,7 @@ $(document).ready(function () {
      * Add group of devices in timer
      */
     $("#timer_gr_add").click(function(){
-        argin = {};
+        var argin = {};
         argin.type_req = "timer_add_devs";
         argin.group = {};
 
@@ -301,7 +301,7 @@ $(document).ready(function () {
      * Remove group from timer
      */
     $("#timer_gr_rem").click(function () {
-        argin = {};
+        var argin = {};
         argin.type_req = "timer_remove_devs";
         argin.group = test_group_device;
         send_message_to_ws(argin);
@@ -315,7 +315,7 @@ $(document).ready(function () {
      * Command to the device from the client
      */
     $("#command_dev_cl").click(function(){
-        argin = {};
+        var argin = {};
         argin.type_req = "command_device_cl";
         argin.device_name = test_device;
         argin.command_name = "DevDouble;precf=5";
@@ -324,11 +324,11 @@ $(document).ready(function () {
     });
 
     /**
-     * Read attribute
+     * Read attribute from device
      */
 
     $("#attr_read_cl").click(function(){
-        argin = {};
+        var argin = {};
         argin.type_req = "attr_device_cl";
         argin.device_name = test_device;
         argin.pipe = test_pipe_name;
@@ -337,15 +337,28 @@ $(document).ready(function () {
     });
 
     /**
-     * Write attribute
+     * Write attribute to device
      */
 
     $("#attr_write_cl").click(function(){
-        argin = {};
+        var argin = {};
         argin.type_req = "write_attr_dev_cl";
         argin.device_name = test_device;
         argin.attr_name = "float_scalar";
         argin.argin = 7250.25;
+        send_message_to_ws(argin);
+    });
+    
+    /**
+    * Read attribute from group
+    */
+     
+     $("#attr_read_cl_gr").click(function(){
+        var argin = {};
+        argin.type_req = "attr_group_cl";
+        argin.device_name = test_group_device;
+        argin.pipe = test_pipe_name;
+        argin.attributes = ["ulong_scalar", "double_scalar;prec=7"];
         send_message_to_ws(argin);
     });
 
@@ -355,7 +368,7 @@ $(document).ready(function () {
      * Event subscription
      */
     $("#event_sub").click(function () {
-        argin = {};
+        var argin = {};
         argin.type_req = "eventreq_add_dev";
 
         var attributes ={};
@@ -368,7 +381,7 @@ $(document).ready(function () {
      * Event unsubscription (full)
      */
     $("#event_unsub_all").click(function () {
-        argin = {};
+        var argin = {};
         argin.type_req = "eventreq_off";
         send_message_to_ws(argin);
     });
@@ -377,7 +390,7 @@ $(document).ready(function () {
      * Event unsubscription (partial)
      */
     $("#event_unsub_one").click(function () {
-        argin = {};
+        var argin = {};
         argin.type_req = "eventreq_rem_dev";
         argin.event_sub_id = event_sub_id;
         send_message_to_ws(argin);
@@ -387,7 +400,7 @@ $(document).ready(function () {
      * Get subscriber id
      */
     $("#event_get_id").click(function () {
-        argin = {};
+        var argin = {};
         argin.type_req = "eventreq_check_dev";
         argin.event_type = "periodic";
         argin.device = test_device;
@@ -410,7 +423,7 @@ $(document).ready(function () {
      * Rand_Identification request
      */
     $("#rident_req").click(function () {
-        argin = {};
+        var argin = {};
         argin.login = myLogin;
         argin.type_req = "rident_req";
         send_message_to_ws(argin);
@@ -422,7 +435,7 @@ $(document).ready(function () {
      *      md5(rand_ident+md5(login))
      */
     $("#rident_ans").click(function () {
-        argin = {};
+        var argin = {};
         argin.login = myLogin;
         argin.type_req = "rident_ans";
         var formd5 = rident +  $.md5(myLogin);

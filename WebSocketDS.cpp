@@ -204,11 +204,12 @@ void WebSocketDS::init_device()
     try {
         // ??? !!! working mode of DS
         options.push_back("mode="+mode);
+        array<vector<string>, 4> event_subscriptions = { list_subscr_event_change, list_subscr_event_periodic, list_subscr_event_user, list_subscr_event_archive };
 
         if (secure)
-            wsTangoConn = unique_ptr<WSTangoConn>(new WSTangoConn(this, make_pair(deviceServer, options), { { attributes, commands, pipeName } }, port, certificate, key));
+            wsTangoConn = unique_ptr<WSTangoConn>(new WSTangoConn(this, make_pair(deviceServer, options), { { attributes, commands, pipeName } }, port, event_subscriptions, certificate, key));
         else
-            wsTangoConn = unique_ptr<WSTangoConn>(new WSTangoConn(this, make_pair(deviceServer, options), { { attributes, commands, pipeName } }, port));
+            wsTangoConn = unique_ptr<WSTangoConn>(new WSTangoConn(this, make_pair(deviceServer, options), { { attributes, commands, pipeName } }, port, event_subscriptions));
     }
     catch (Tango::DevFailed &e) {
         set_state(Tango::FAULT);
@@ -276,6 +277,10 @@ void WebSocketDS::get_device_property()
 	dev_prop.push_back(Tango::DbDatum("MaximumBufferSize"));
 	dev_prop.push_back(Tango::DbDatum("ResetTimestampDifference"));
 	dev_prop.push_back(Tango::DbDatum("Options"));
+	dev_prop.push_back(Tango::DbDatum("list_subscr_event_change"));
+	dev_prop.push_back(Tango::DbDatum("list_subscr_event_periodic"));
+	dev_prop.push_back(Tango::DbDatum("list_subscr_event_user"));
+	dev_prop.push_back(Tango::DbDatum("list_subscr_event_archive"));
 
 	//	is there at least one property to be read ?
 	if (dev_prop.size()>0)
@@ -444,6 +449,50 @@ void WebSocketDS::get_device_property()
 		//	And try to extract Options value from database
 		if (dev_prop[i].is_empty()==false)	dev_prop[i]  >>  options;
 
+		//	Try to initialize list_subscr_event_change from class property
+		cl_prop = ds_class->get_class_property(dev_prop[++i].name);
+		if (cl_prop.is_empty()==false)	cl_prop  >>  list_subscr_event_change;
+		else {
+			//	Try to initialize list_subscr_event_change from default device value
+			def_prop = ds_class->get_default_device_property(dev_prop[i].name);
+			if (def_prop.is_empty()==false)	def_prop  >>  list_subscr_event_change;
+		}
+		//	And try to extract list_subscr_event_change value from database
+		if (dev_prop[i].is_empty()==false)	dev_prop[i]  >>  list_subscr_event_change;
+
+		//	Try to initialize list_subscr_event_periodic from class property
+		cl_prop = ds_class->get_class_property(dev_prop[++i].name);
+		if (cl_prop.is_empty()==false)	cl_prop  >>  list_subscr_event_periodic;
+		else {
+			//	Try to initialize list_subscr_event_periodic from default device value
+			def_prop = ds_class->get_default_device_property(dev_prop[i].name);
+			if (def_prop.is_empty()==false)	def_prop  >>  list_subscr_event_periodic;
+		}
+		//	And try to extract list_subscr_event_periodic value from database
+		if (dev_prop[i].is_empty()==false)	dev_prop[i]  >>  list_subscr_event_periodic;
+
+		//	Try to initialize list_subscr_event_user from class property
+		cl_prop = ds_class->get_class_property(dev_prop[++i].name);
+		if (cl_prop.is_empty()==false)	cl_prop  >>  list_subscr_event_user;
+		else {
+			//	Try to initialize list_subscr_event_user from default device value
+			def_prop = ds_class->get_default_device_property(dev_prop[i].name);
+			if (def_prop.is_empty()==false)	def_prop  >>  list_subscr_event_user;
+		}
+		//	And try to extract list_subscr_event_user value from database
+		if (dev_prop[i].is_empty()==false)	dev_prop[i]  >>  list_subscr_event_user;
+
+		//	Try to initialize list_subscr_event_archive from class property
+		cl_prop = ds_class->get_class_property(dev_prop[++i].name);
+		if (cl_prop.is_empty()==false)	cl_prop  >>  list_subscr_event_archive;
+		else {
+			//	Try to initialize list_subscr_event_archive from default device value
+			def_prop = ds_class->get_default_device_property(dev_prop[i].name);
+			if (def_prop.is_empty()==false)	def_prop  >>  list_subscr_event_archive;
+		}
+		//	And try to extract list_subscr_event_archive value from database
+		if (dev_prop[i].is_empty()==false)	dev_prop[i]  >>  list_subscr_event_archive;
+
 	}
 
 	/*----- PROTECTED REGION ID(WebSocketDS::get_device_property_after) ENABLED START -----*/
@@ -461,7 +510,7 @@ void WebSocketDS::get_device_property()
 //--------------------------------------------------------
 void WebSocketDS::always_executed_hook()
 {
-	DEBUG_STREAM << "WebSocketDS::always_executed_hook()  " << device_name << endl;
+	//DEBUG_STREAM << "WebSocketDS::always_executed_hook()  " << device_name << endl;
 	/*----- PROTECTED REGION ID(WebSocketDS::always_executed_hook) ENABLED START -----*/
 
     //if (groupOrDevice == nullptr || wsThread == nullptr) {

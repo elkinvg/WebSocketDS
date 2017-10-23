@@ -10,11 +10,16 @@ namespace WebSocketDS_ns
     { 
         ATTRIBUTE,
         ATTRIBUTE_WRITE,
-        COMMAND, PIPE, PIPE_COMM, 
-        RIDENT_REQ, RIDENT_ANS, RIDENT,
+        COMMAND, 
+        PIPE, 
+        PIPE_COMM, 
+        RIDENT_REQ, 
+        RIDENT_ANS, 
+        RIDENT,
         COMMAND_DEV_CLIENT, // команда любому устройству command_device_cl
         ATTR_DEV_CLIENT,    // чтение атрибута любого устройства attr_device_cl
         ATTR_DEV_CLIENT_WR,    // write атрибута любого устройства write_attr_dev_cl
+        ATTR_GR_CLIENT,
         UNKNOWN};
     // форматы для IOS
     enum class TYPE_IOS_OPT { PREC, PRECF, PRECS };

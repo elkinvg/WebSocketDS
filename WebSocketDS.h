@@ -157,6 +157,14 @@ public:
 	//  Format of options:
 	//  	nameOfOption or nameOfOption=value
 	vector<string>	options;
+	//	list_subscr_event_change:	List of subscriptions to change events
+	vector<string>	list_subscr_event_change;
+	//	list_subscr_event_periodic:	List of subscriptions to periodic events
+	vector<string>	list_subscr_event_periodic;
+	//	list_subscr_event_user:	List of subscriptions to user events
+	vector<string>	list_subscr_event_user;
+	//	list_subscr_event_archive:	List of subscriptions to archive events
+	vector<string>	list_subscr_event_archive;
 
 //	Attribute data members
 public:

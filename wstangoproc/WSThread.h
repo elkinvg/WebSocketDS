@@ -49,6 +49,7 @@ namespace WebSocketDS_ns
         virtual void send(websocketpp::connection_hdl hdl, std::string msg) = 0;
         virtual void send(websocketpp::connection_hdl hdl, const void *data, size_t len) = 0;
         bool isAliasMode();
+        log4tango::Logger *logger;
 
     protected:
         std::string cache;
@@ -86,7 +87,7 @@ namespace WebSocketDS_ns
         con_list m_connections;
 
         websocketpp::lib::mutex m_connection_lock;
-        log4tango::Logger *logger;
+        
         WSTangoConn* _tc;
 
         unsigned long m_next_sessionid;

@@ -19,7 +19,6 @@ namespace WebSocketDS_ns
         void sendRequest(const ParsedInputJson & parsedJson);
         ~EventProc();
     private:
-        void subscribeToEvents(string deviceName, string attrName, Tango::EventType eventType);
         void addDevice(const ParsedInputJson & parsedJson);
         void removeDevice(const ParsedInputJson & parsedJson);
         void getDeviceNameFromAlias(string& alias);

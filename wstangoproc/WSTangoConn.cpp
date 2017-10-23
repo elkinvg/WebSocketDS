@@ -9,11 +9,12 @@
 #include "UserControl.h"
 
 #include "WebSocketDS.h"
+#include "EventProcForServerMode.h"
 
 
 namespace WebSocketDS_ns
 {
-    WSTangoConn::WSTangoConn(WebSocketDS *dev, pair<string, vector<string>> dsAndOptions, array<vector<string>, 3> attrCommPipe, int portNumber)
+    WSTangoConn::WSTangoConn(WebSocketDS *dev, pair<string, vector<string>> dsAndOptions, array<vector<string>, 3> attrCommPipe, int portNumber, array<vector<string>, 4> event_subcr)
         :Tango::LogAdapter(dev)
     {
         groupOrDevice = nullptr;
@@ -24,9 +25,12 @@ namespace WebSocketDS_ns
         uc = unique_ptr<UserControl>(new UserControl(dev->authDS, typeOfIdent, _isLogActive));
 
         wsThread = new WSThread_plain(this, portNumber);
+
+        if (_isInitDs && isServerMode())
+            initEventSubscrForServerMode(event_subcr);
     }
 
-    WSTangoConn::WSTangoConn(WebSocketDS *dev, pair<string, vector<string>> dsAndOptions, array<vector<string>, 3> attrCommPipe, int portNumber, string cert, string key)
+    WSTangoConn::WSTangoConn(WebSocketDS *dev, pair<string, vector<string>> dsAndOptions, array<vector<string>, 3> attrCommPipe, int portNumber, array<vector<string>, 4> event_subcr, string cert, string key)
         :Tango::LogAdapter(dev)
     {
         groupOrDevice = nullptr;
@@ -36,6 +40,8 @@ namespace WebSocketDS_ns
         uc = unique_ptr<UserControl>(new UserControl(dev->authDS, typeOfIdent, _isLogActive));
         
         wsThread = new WSThread_tls(this, portNumber, cert, key);
+        if (_isInitDs && isServerMode())
+            initEventSubscrForServerMode(event_subcr);
     }
 
     void WSTangoConn::initOptionsAndDeviceServer(pair<string, vector<string>>& dsAndOptions, array<vector<string>, 3> &attrCommPipe)
@@ -158,9 +164,10 @@ namespace WebSocketDS_ns
                 if (_wsds->get_status() != "The listening server is running")
                     _wsds->set_status("The listening server is running");
         }
-        if (isServerMode())
+        if (isServerMode() && hasAttrOrPipe) {
             // Только если используется серверный режим
             wsThread->send_all(jsonStrOut);
+        }
         return jsonStrOut;
     }
 
@@ -228,7 +235,7 @@ namespace WebSocketDS_ns
             return;
         }
 
-        if (typeWsReq == TYPE_WS_REQ::ATTR_DEV_CLIENT) {
+        if (typeWsReq == TYPE_WS_REQ::ATTR_DEV_CLIENT || typeWsReq == TYPE_WS_REQ::ATTR_GR_CLIENT) {
             if (ws_mode == MODE::SERVER) {
                 out = StringProc::exceptionStringOut(inputReq.id, NONE, "This request type is not supported in the current mode", inputReq.type_req);
                 return;
@@ -294,6 +301,7 @@ namespace WebSocketDS_ns
         _errorMessage.clear();
         bool isInit = false;
 
+
         try {
             if (_isGroup) {
                 groupOrDevice = unique_ptr<GroupForWs>(new GroupForWs(_deviceName, attrCommPipe));
@@ -302,6 +310,8 @@ namespace WebSocketDS_ns
                 groupOrDevice = unique_ptr<DeviceForWs>(new DeviceForWs(_deviceName, attrCommPipe));
             if (!_isShortAttr)
                 groupOrDevice->useNotShortAttrOut();
+            
+
             isInit = true;
         }
         catch (Tango::DevFailed &e)
@@ -309,6 +319,22 @@ namespace WebSocketDS_ns
             _errorMessage = fromException(e, "WSTangoConn::initDeviceServer()");
             removeSymbolsForString(_errorMessage);
         }
+
+        auto testSize = [](vector<string>& attr, vector<string>& pipe) {
+            for (auto& a : attr) {
+                if (a.size())
+                    return true;
+            }
+
+            for (auto& p : pipe) {
+                if (p.size())
+                    return true;
+            }
+            return false;
+        };
+
+        hasAttrOrPipe = testSize(attrCommPipe[0], attrCommPipe[2]);
+
         return isInit;
     }
 
@@ -333,6 +359,32 @@ namespace WebSocketDS_ns
             removeSymbolsForString(_errorMessage);
         }
         return isInit;
+    }
+
+    void WSTangoConn::initEventSubscrForServerMode(const array<vector<string>, 4> &event_subcr)
+    {
+        // Проверка наличия подписчика на события в Property
+        // true, если есть хотя бы одна подписка
+        auto hasEventSubscr = [](const array<vector<string>, 4> &event_subcr) {
+            for (const auto& ev : event_subcr) {
+                if (ev.size())
+                    return true;
+            }
+            return false;
+        };
+
+        // Пока только для одного девайса, но не для группы
+        
+        if (hasEventSubscr(event_subcr)) {
+            if (_isGroup) {
+                auto listOfdeviceNames = groupOrDevice->getListOfDevicesNames();
+                eventSubscrServ = std::unique_ptr<EventProcForServerMode>(new EventProcForServerMode(wsThread, listOfdeviceNames, event_subcr));
+            }
+            else {
+                eventSubscrServ = std::unique_ptr<EventProcForServerMode>(new EventProcForServerMode(wsThread, _deviceName, event_subcr));
+            }
+        }
+
     }
 
     string WSTangoConn::fromException(Tango::DevFailed &e, string func)
@@ -378,6 +430,8 @@ namespace WebSocketDS_ns
             return TYPE_WS_REQ::ATTRIBUTE_WRITE;
         if (req == "write_attr_dev_cl")
             return TYPE_WS_REQ::ATTR_DEV_CLIENT_WR;
+        if (req == "attr_group_cl") 
+            return TYPE_WS_REQ::ATTR_GR_CLIENT;
 
         return TYPE_WS_REQ::UNKNOWN;
     }
@@ -660,11 +714,20 @@ namespace WebSocketDS_ns
         attr_pipe.first = attributes;
         attr_pipe.second  = pipe;
         try {
-            DeviceForWs deviceForWs(device_name, attr_pipe);
+            GroupOrDeviceForWs* dev = nullptr;
+            TYPE_WS_REQ typeWsReq = getTypeWsReq(inputReq.type_req);
+            if (typeWsReq == WebSocketDS_ns::TYPE_WS_REQ::ATTR_DEV_CLIENT) {
+                dev = new WebSocketDS_ns::DeviceForWs(device_name, attr_pipe);
+            }
+            if (typeWsReq == WebSocketDS_ns::TYPE_WS_REQ::ATTR_GR_CLIENT) {
+                dev = new WebSocketDS_ns::GroupForWs(device_name, attr_pipe);
+            }
             stringstream ss;
-            deviceForWs.generateJsonForAttrReadCl(inputReq, ss);
+            dev->generateJsonForAttrReadCl(inputReq, ss);
             resp_json = ss.str();
-            return;
+
+            if (dev != nullptr)
+                delete dev;
         }
         catch (Tango::DevFailed &e) {
             vector<string> errors;
@@ -860,5 +923,4 @@ namespace WebSocketDS_ns
         errorMessage.clear();
         return inputReq.otherInpStr.at("device_name");
     }
-
 }

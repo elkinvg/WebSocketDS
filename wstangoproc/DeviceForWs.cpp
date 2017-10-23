@@ -9,6 +9,7 @@ namespace WebSocketDS_ns
     {
         StringProc::isNameAlias(deviceName);
         getDeviceNameFromAlias(deviceName);
+        _deviceName = deviceName;
 
         device = new Tango::DeviceProxy(deviceName);
         // ??? !!!
@@ -167,6 +168,11 @@ namespace WebSocketDS_ns
         }
 
         return StringProc::responseStringOut(parsedInput.id, "Was written to the attribute", parsedInput.type_req);
+    }
+
+    vector<string> DeviceForWs::getListOfDevicesNames() 
+    {
+        return vector<string>({_deviceName});
     }
 
     Tango::CommandInfo DeviceForWs::getCommandInfo(const string &command_name)

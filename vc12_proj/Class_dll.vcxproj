@@ -131,6 +131,7 @@
     <ClCompile Include="..\WebSocketDSStateMachine.cpp" />
     <ClCompile Include="..\wstangoproc\DeviceForWs.cpp" />
     <ClCompile Include="..\wstangoproc\EventProc.cpp" />
+    <ClCompile Include="..\wstangoproc\EventProcForServerMode.cpp" />
     <ClCompile Include="..\wstangoproc\EventSubscr.cpp" />
     <ClCompile Include="..\wstangoproc\GroupForWs.cpp" />
     <ClCompile Include="..\wstangoproc\GroupOrDeviceForWs.cpp" />
@@ -140,6 +141,7 @@
     <ClCompile Include="..\wstangoproc\TangoProcessor.cpp" />
     <ClCompile Include="..\wstangoproc\UserControl.cpp" />
     <ClCompile Include="..\wstangoproc\WsEvCallBack.cpp" />
+    <ClCompile Include="..\wstangoproc\WsEvCallBackForServerMode.cpp" />
     <ClCompile Include="..\wstangoproc\WSTangoConn.cpp" />
     <ClCompile Include="..\wstangoproc\WSThread.cpp" />
     <ClCompile Include="..\wstangoproc\WSThread_plain.cpp" />
@@ -154,6 +156,7 @@
     <ClInclude Include="..\wstangoproc\ConnectionData.h" />
     <ClInclude Include="..\wstangoproc\DeviceForWs.h" />
     <ClInclude Include="..\wstangoproc\EventProc.h" />
+    <ClInclude Include="..\wstangoproc\EventProcForServerMode.h" />
     <ClInclude Include="..\wstangoproc\EventSubscr.h" />
     <ClInclude Include="..\wstangoproc\GroupForWs.h" />
     <ClInclude Include="..\wstangoproc\GroupOrDeviceForWs.h" />
@@ -163,6 +166,7 @@
     <ClInclude Include="..\wstangoproc\TangoProcessor.h" />
     <ClInclude Include="..\wstangoproc\UserControl.h" />
     <ClInclude Include="..\wstangoproc\WsEvCallBack.h" />
+    <ClInclude Include="..\wstangoproc\WsEvCallBackForServerMode.h" />
     <ClInclude Include="..\wstangoproc\WSTangoConn.h" />
     <ClInclude Include="..\wstangoproc\WSThread.h" />
     <ClInclude Include="..\wstangoproc\WSThread_plain.h" />

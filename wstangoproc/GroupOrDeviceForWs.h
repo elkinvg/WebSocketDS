@@ -10,6 +10,7 @@
 using std::unordered_map;
 using std::pair;
 using std::array;
+using std::vector;
 
 namespace WebSocketDS_ns
 {
@@ -37,6 +38,8 @@ namespace WebSocketDS_ns
 
         virtual string sendAttrWr(const ParsedInputJson& parsedInput, bool& statusComm) = 0;
 
+        virtual vector<string> getListOfDevicesNames() = 0;
+
         string insertAttrToList(vector<string> &attrNames);
         vector<string> eraseAttrFromList(vector<string> &attrNames, const string& pipeName, const string& deviceName);
 
@@ -45,7 +48,7 @@ namespace WebSocketDS_ns
 
         virtual bool checkIsAttributeWriteble(const string& attr_name) = 0;
 
-        void generateAttrJson(std::stringstream& json, std::vector<Tango::DeviceAttribute> *attrList);
+        void generateAttrJson(std::stringstream& json, vector<Tango::DeviceAttribute> *attrList);
 
         Tango::DeviceData tangoCommandInoutForDevice(Tango::DeviceProxy *deviceProxy, const ParsedInputJson& dataFromJson, string& errorMessInJson);
         Tango::DeviceData tangoCommandInoutForDeviceCl(Tango::DeviceProxy *deviceProxy, const ParsedInputJson& dataFromJson, string& errorMessInJson);

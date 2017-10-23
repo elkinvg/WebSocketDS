@@ -37,6 +37,8 @@ namespace WebSocketDS_ns
 
         virtual string sendAttrWr(const ParsedInputJson& parsedInput, bool& statusComm) override;
 
+        virtual vector<string> getListOfDevicesNames() override;
+
     private:
         virtual Tango::CommandInfo getCommandInfo(const string& command_name) override;
         virtual bool checkIsAttributeWriteble(const string& attr_name) override;

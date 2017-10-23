@@ -173,7 +173,93 @@ namespace WebSocketDS_ns
 
     void GroupForWs::generateJsonForAttrReadCl(const ParsedInputJson& parsedInput, std::stringstream& json)
     {
-        // ??? !!! Пока только для девайсов, а не для групп
+        json << "{\"event\": \"read\", \"type_req\": \"" << parsedInput.type_req << "\" ,";
+
+        try {
+            auto idTmp = stoi(parsedInput.id);
+            json << "\"id_req\": " << idTmp << ", ";
+        }
+        catch (...) {
+            // id_req может быть числом, либо случайной строкой
+            if (parsedInput.id == NONE)
+                json << "\"id_req\": " << parsedInput.id << ", ";
+            else
+                json << "\"id_req\": \"" << parsedInput.id << "\", ";
+        }
+
+        json << "\"data\": {";
+        json << "\"attrs\": {";
+        int it = 0;
+
+
+
+        for (long i = 0; i < group_length; i++)
+        {
+
+            if (it != 0)
+                json << ", ";
+            std::vector<Tango::DeviceAttribute> *attrList = nullptr;
+            attrList = getAttributeList(deviceList[i], _attributes);
+            it++;
+            json << "\"" << deviceList[i] << "\": ";
+
+            if (attrList == nullptr) {
+                json << "\"Device unavailable. Check the status of corresponding tango-server\"";
+                continue;
+            }
+            if (!attrList->size()) {
+                json << "\"size of attrList from " << deviceList[i] << "  is 0\"";
+                continue;
+            }
+            
+
+            json << "[";
+            generateAttrJson(json, attrList);
+            json << "]";
+            if (attrList != nullptr) {
+                delete attrList;
+            }
+        }
+        json << "}";
+
+
+
+        if (_pipeAttr.size()) {
+            it = 0;
+            json << ", \"pipe\": {";
+            for (long i = 0; i < group_length; i++)
+            {
+                if (it != 0)
+                    json << ", ";
+                Tango::DeviceProxy *dp;
+
+                try {
+                    dp = group->get_device(deviceList[i]);
+
+                    if (dp == 0)
+                        continue;
+                    it++;
+
+                    json << "\"" << deviceList[i] << "\": ";
+                    Tango::DevicePipe devicePipe = dp->read_pipe(_pipeAttr);
+                    json << processor->processPipe(devicePipe, TYPE_WS_REQ::PIPE);
+                }
+                catch (Tango::DevFailed &e) {
+                    json << "[";
+                    for (int i = 0; i < e.errors.length(); i++) {
+                        if (i > 0)
+                            json << ", ";
+                        json << "\"" << e.errors[i].desc << "\"";
+                    }
+                    json << "]";
+                }
+            }
+            json << "}";
+        }
+        json << "}";
+        iterator++;
+
+        json << "}";
     }
 
     string GroupForWs::sendPipeCommand(const ParsedInputJson& parsedInput)
@@ -371,6 +457,11 @@ namespace WebSocketDS_ns
         return StringProc::responseStringOut(parsedInput.id, "Was written to the attribute", parsedInput.type_req);
     }
 
+    vector<string> GroupForWs::getListOfDevicesNames()
+    {
+        return deviceList;
+    }
+
     Tango::CommandInfo GroupForWs::getCommandInfo(const string& command_name)
     {
         Tango::CommandInfo ci_out;
@@ -489,7 +580,6 @@ namespace WebSocketDS_ns
     {
         std::vector<Tango::DeviceAttribute>* devAttrList = nullptr;
         Tango::DeviceProxy *dp;
-
         try {
             dp = group->get_device(device_name_i);
 

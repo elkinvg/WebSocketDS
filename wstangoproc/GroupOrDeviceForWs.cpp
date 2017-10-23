@@ -132,6 +132,8 @@ namespace WebSocketDS_ns
         }
 
         for (auto& attr : attributes) {
+            if (!attr.size())
+                continue;
             if (!isAllAttrs) {
                 string tmpAttrName = attr;
                 std::transform(tmpAttrName.begin(), tmpAttrName.end(), tmpAttrName.begin(), ::tolower);
