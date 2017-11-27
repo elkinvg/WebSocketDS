@@ -172,11 +172,20 @@ namespace WebSocketDS_ns
         std::unordered_map<string, string> parsedGet;
         remoteEndpoint = parseOfAddress(remoteEndpoint);
 
+        // Получение X-Forwarded-For проксированных запросов
+        string xforwarded = con->get_request_header("X-Forwarded-For");
+        xforwarded.erase(remove(xforwarded.begin(), xforwarded.end(), ' '), xforwarded.end());
+        vector<string> proxyes = StringProc::parseInputString(xforwarded
+            , ",", true);
+
         string query = uri->get_query(); // returns empty string if no query string set.
 
         if (!query.empty()) {
             parsedGet = parseOfGetQuery(query);
-            parsedGet["ip"] = remoteEndpoint;
+            if (proxyes.size())
+                parsedGet["ip"] = proxyes[0];
+            else
+                parsedGet["ip"] = remoteEndpoint;
         }
         return parsedGet;
     }

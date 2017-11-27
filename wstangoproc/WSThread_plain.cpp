@@ -167,13 +167,22 @@ namespace WebSocketDS_ns
         string remoteEndpoint = con->get_remote_endpoint();
         remoteEndpoint = parseOfAddress(remoteEndpoint);
 
+        // Получение X-Forwarded-For проксированных запросов
+        string xforwarded =  con->get_request_header("X-Forwarded-For");
+        xforwarded.erase(remove(xforwarded.begin(), xforwarded.end(), ' '), xforwarded.end());
+        vector<string> proxyes = StringProc::parseInputString(xforwarded
+, ",", true);
+
         unordered_map<string, string> parsedGet;
 
         string query = uri->get_query(); // returns empty string if no query string set.
 
         if (!query.empty()) {
             parsedGet = parseOfGetQuery(query);
-            parsedGet["ip"] = remoteEndpoint;
+            if (proxyes.size())
+                parsedGet["ip"] = proxyes[0];
+            else
+                parsedGet["ip"] = remoteEndpoint;
         }
         return parsedGet;
     }
