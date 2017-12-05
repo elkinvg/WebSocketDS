@@ -34,6 +34,13 @@ $(document).ready(function () {
     else
         var myPassword = myPassword;
 
+    // Check User Status
+    
+    $("#check_user").click(function(){
+        var argin = {};
+        argin.type_req = "user_status";
+        send_message_to_ws(argin);
+    });
     // Server mode___________________________________________________
 
     // SINGLE DEVICE

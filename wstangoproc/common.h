@@ -20,6 +20,7 @@ namespace WebSocketDS_ns
         ATTR_DEV_CLIENT,    // чтение атрибута любого устройства attr_device_cl
         ATTR_DEV_CLIENT_WR,    // write атрибута любого устройства write_attr_dev_cl
         ATTR_GR_CLIENT,
+        USER_CHECK_STATUS,
         UNKNOWN};
     // форматы для IOS
     enum class TYPE_IOS_OPT { PREC, PRECF, PRECS };
