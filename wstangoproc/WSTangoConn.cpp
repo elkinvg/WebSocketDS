@@ -271,6 +271,11 @@ namespace WebSocketDS_ns
             sendRequest_AttrWrite_DevClient(inputReq, connData, out);
             return;
         }
+        
+        if (typeWsReq == TYPE_WS_REQ::USER_CHECK_STATUS) {
+            sendRequest_UserStatus(inputReq, connData, out);
+            return;
+        }
 
         // В обычном случае не возвращается никогда
         out = "{\"error\": \"Unknown Request\"}";
@@ -432,6 +437,8 @@ namespace WebSocketDS_ns
             return TYPE_WS_REQ::ATTR_DEV_CLIENT_WR;
         if (req == "attr_group_cl") 
             return TYPE_WS_REQ::ATTR_GR_CLIENT;
+        if (req == "user_status")
+            return TYPE_WS_REQ::USER_CHECK_STATUS;
 
         return TYPE_WS_REQ::UNKNOWN;
     }
@@ -815,6 +822,20 @@ namespace WebSocketDS_ns
             }
             resp_json = StringProc::exceptionStringOut(inputReq.id, NONE, errors, inputReq.type_req);
         }
+    }
+
+    void WSTangoConn::sendRequest_UserStatus(const ParsedInputJson& inputReq, ConnectionData& connData, string& resp_json)
+    {
+        // Проверка статуса клиента. Возвращает результат запроса check_user
+        bool user_status = connData.userCheckStatus.first;
+
+        std::stringstream json;
+        json << "{\"event\": \"read\", \"type_req\": \"" << inputReq.type_req << "\", \"data\": {";
+        json << "\"status\": " << boolalpha << user_status;
+        json << "}";
+        json << "}";
+
+        resp_json = json.str();
     }
 
     string WSTangoConn::checkPermissionForRequest(const ParsedInputJson &inputReq, ConnectionData &connData, string &commandName, string device_name, TYPE_WS_REQ typeWsReq)

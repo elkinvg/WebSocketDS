@@ -424,7 +424,8 @@ namespace WebSocketDS_ns
     void WSThread::timerCheckMeth(const ParsedInputJson &parsedJson, websocketpp::connection_hdl hdl) {
         bool timerStatus = false;
         std::stringstream json;
-        json << "{\"event\": \"read\", \"type_req\": \"timer_check\", \"data\":{";
+        json << "{\"event\": \"read\", \"type_req\": \"timer_check\", ";
+        
         std::string id = parsedJson.id;
         try {
             auto idTmp = stoi(id);
@@ -436,6 +437,9 @@ namespace WebSocketDS_ns
             else
                 json << "\"id_req\": \"" << id << "\", ";
         }
+
+        json << "\"data\":{";
+        
         json << "\"timer_started\": ";
         if (m_connections[hdl].timing == nullptr) {
             json << boolalpha << false;

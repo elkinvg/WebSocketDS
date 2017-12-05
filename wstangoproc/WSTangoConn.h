@@ -84,6 +84,9 @@ namespace WebSocketDS_ns
 
         string checkDeviceNameKey(const ParsedInputJson& inputReq, std::string &errorMessage);
 
+        // check status
+        void sendRequest_UserStatus(const ParsedInputJson& inputReq, ConnectionData& connData, string& resp_json);
+
         bool hasAttrOrPipe;
 
 
