@@ -76,7 +76,6 @@ namespace WebSocketDS_ns
 
         //void removeSymbolsForString(string &str);
 
-        bool forValidate(map<string, string> remoteConf);
         int port;
 
         const unsigned long maximumBufferSizeMin = 1;
@@ -108,9 +107,13 @@ namespace WebSocketDS_ns
         vector<string> &split(const string &s, char delim, vector<string> &elems);
         vector<string> split(const string &s, char delim);
 
+        ConnectionData getConnectionData(websocketpp::connection_hdl hdl);
+        bool checkKeysFromParsedGet(const unordered_map<string, string>& parsedGet);
+        
         websocketpp::lib::mutex m_action_lock;
         websocketpp::lib::condition_variable m_action_cond;
         bool local_th_exit;
+
     };
 }
 

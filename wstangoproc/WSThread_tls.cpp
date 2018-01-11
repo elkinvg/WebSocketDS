@@ -182,11 +182,13 @@ namespace WebSocketDS_ns
 
         if (!query.empty()) {
             parsedGet = parseOfGetQuery(query);
-            if (proxyes.size())
-                parsedGet["ip"] = proxyes[0];
-            else
-                parsedGet["ip"] = remoteEndpoint;
         }
+
+        if (proxyes.size())
+                parsedGet["ip"] = proxyes[0];
+        else
+                parsedGet["ip"] = remoteEndpoint;
+
         return parsedGet;
     }
 

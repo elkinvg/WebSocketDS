@@ -17,13 +17,12 @@
 
 namespace WebSocketDS_ns
 {
-    struct ForRandIdent2 {
-        bool identState { false };
+    struct ForRandIdent {
         bool isRandSended{ false };
         std::string rand_ident_hash;
-        std::string login;
-        int rand_ident;
         string rand_ident_str;
+        // Временное значение логина. Сохраняется в основное только при успешной аутентификации
+        string tmp_login;
     };
 
     struct TimingStruct {
@@ -38,24 +37,39 @@ namespace WebSocketDS_ns
         ~ConnectionData(){}
 
         ConnectionData& operator=(ConnectionData& data) = delete;
-        ConnectionData(ConnectionData&& other) = delete;
+
+        ConnectionData(ConnectionData&& data) {
+            this->tangoConnForClient = std::move(data.tangoConnForClient);
+            this->login = std::move(data.login);
+            this->password = std::move(data.password);
+            this->ip_client = std::move(data.ip_client);
+            this->forRandIdent = std::move(data.forRandIdent);
+            this->remoteConf = std::move(data.remoteConf);
+        }
 
         ConnectionData& operator=(ConnectionData&& data)
         {
             this->tangoConnForClient = std::move(data.tangoConnForClient);
+            this->login = std::move(data.login);
+            this->password = std::move(data.password);
+            this->ip_client = std::move(data.ip_client);
+            this->forRandIdent = std::move(data.forRandIdent);
             this->remoteConf = std::move(data.remoteConf);
-            this->userCheckStatus = std::move(data.userCheckStatus);
-            this->sessionId = data.sessionId;
+           
             return *this;
         }
 
+        std::string login;
+        std::string password;
+        std::string ip_client;
         unsigned long sessionId;
-        bool userStatus{ false };
+
         json_val_map remoteConf;
         std::pair<bool, std::string> userCheckStatus;
-        ForRandIdent2 forRandIdent2;
-        std::string name;
+        
+        ForRandIdent forRandIdent;
         unique_ptr<TangoConnForClient> tangoConnForClient = nullptr;
+
         unique_ptr<TimingStruct> timing = nullptr;
         unique_ptr<EventProc> eventProc = nullptr;
 

@@ -371,7 +371,7 @@ namespace WebSocketDS_ns
         try {
             string attr_name = parsedInput.otherInpStr.at("attr_name");
 
-            if (isWrtAttribute.find(attr_name) == isWrtAttribute.end())
+            if (listWrtAttributes.find(attr_name) == listWrtAttributes.end())
                 return StringProc::exceptionStringOut(parsedInput.id, NONE, "Attribute " + attr_name + " is not included in the list of writable attributes, Or it is not writable. Read README.md for information", parsedInput.type_req);
 
             if (parsedInput.type_req == "write_attr_gr") {

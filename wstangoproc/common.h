@@ -21,13 +21,14 @@ namespace WebSocketDS_ns
         ATTR_DEV_CLIENT_WR,    // write атрибута любого устройства write_attr_dev_cl
         ATTR_GR_CLIENT,
         USER_CHECK_STATUS,
+        CHANGE_USER,
         UNKNOWN};
     // форматы для IOS
     enum class TYPE_IOS_OPT { PREC, PRECF, PRECS };
     // тип 
     enum class OUTPUT_DATA_TYPE { JSON, BINARY };
 
-    enum class TYPE_OF_IDENT { SIMPLE, RANDIDENT, RANDIDENT2, RANDIDENT3 };
+    enum class TYPE_OF_IDENT { SIMPLE, RANDIDENT, RANDIDENT2 };
     enum class TYPE_OF_VAL { VALUE, ARRAY, OBJECT, NONE };
 
 

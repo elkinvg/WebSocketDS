@@ -10,10 +10,6 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/asio.hpp>
 
-
-
-
-
 #include "ConnectionData.h"
 #include "EventProc.h"
 
@@ -119,14 +115,16 @@ namespace WebSocketDS_ns
     void WSThread::on_open(websocketpp::connection_hdl hdl) {
         if (_tc->isServerMode())
             websocketpp::lib::unique_lock<websocketpp::lib::mutex> con_lock(m_connection_lock);
-        ConnectionData conn_data;
-        conn_data.remoteConf = getRemoteConf(hdl);
-        if (_tc->getTypeOfIdent() != TYPE_OF_IDENT::RANDIDENT2 && _tc->getTypeOfIdent() != TYPE_OF_IDENT::RANDIDENT3)
-            _tc->checkUser(conn_data);
-        conn_data.sessionId = m_next_sessionid++;
-        
-        m_connections[hdl] = std::move(conn_data);
+
+        m_connections[hdl] = std::move(getConnectionData(hdl));
+        m_connections[hdl].sessionId = m_next_sessionid++;
+
+        if (_tc->getTypeOfIdent() == TYPE_OF_IDENT::SIMPLE || _tc->getTypeOfIdent() == TYPE_OF_IDENT::RANDIDENT) {
+            _tc->checkUser(m_connections[hdl]);
+        }
+
         _tc->setNumOfConnections(m_connections.size());
+        
         DEBUG_STREAM_F << "New user has been connected!! sessionId = " << m_connections[hdl].sessionId << endl;
         DEBUG_STREAM_F << m_connections.size() << " client connected!!" << endl;
         send(hdl, cache);
@@ -523,19 +521,6 @@ namespace WebSocketDS_ns
         return outMap;
     }
 
-
-    bool WSThread::forValidate(map<string, string> remoteConf) {
-        bool isValid = false;
-
-        if (!remoteConf.empty()) {
-            // ??? !!! USERCHECK isValid = uc->check_user(remoteConf);
-        }
-        else {
-            //DEBUG_STREAM << "query from GET is empty " << endl;
-        }
-        return isValid;
-    }
-
     vector<string> &WSThread::split(const string &s, char delim, vector<string> &elems) {
         stringstream ss(s);
         string item;
@@ -555,6 +540,63 @@ namespace WebSocketDS_ns
     WSThread::~WSThread() {
         if (parsing != nullptr)
             delete parsing;
+    }
+
+    ConnectionData WSThread::getConnectionData(websocketpp::connection_hdl hdl) {
+        ConnectionData conn_data;
+
+        auto parsedGet = getRemoteConf(hdl);
+
+        auto typeOfIdent = _tc->getTypeOfIdent();
+
+        if (typeOfIdent == TYPE_OF_IDENT::SIMPLE || typeOfIdent == TYPE_OF_IDENT::RANDIDENT) {
+            // If login and password not found in GET
+            if (!checkKeysFromParsedGet(parsedGet)) {
+                if (typeOfIdent == TYPE_OF_IDENT::SIMPLE) {
+                    conn_data.userCheckStatus.first = false;
+                    conn_data.userCheckStatus.second = "login or password or ip not found";
+                }
+                if (typeOfIdent == TYPE_OF_IDENT::RANDIDENT) {
+                    conn_data.userCheckStatus.first = false;
+                    conn_data.userCheckStatus.second = "login or rand_ident_hash and rand_ident or ip not found";
+                }
+            }
+        }
+        conn_data.login = parsedGet["login"];
+        conn_data.ip_client = parsedGet["ip"];
+
+        if (typeOfIdent == TYPE_OF_IDENT::SIMPLE)
+        {            
+            conn_data.password = parsedGet["password"];
+        }
+        else if (typeOfIdent == TYPE_OF_IDENT::RANDIDENT) {
+            conn_data.forRandIdent.rand_ident_str = parsedGet["rand_ident"];
+            conn_data.forRandIdent.rand_ident_hash = parsedGet["rand_ident_hash"];
+        }
+
+        return conn_data;
+    }
+
+    bool WSThread::checkKeysFromParsedGet(const unordered_map<string, string>& parsedGet)
+    {
+        if (_tc->getTypeOfIdent() == TYPE_OF_IDENT::RANDIDENT)
+        {
+            if (parsedGet.find("login") == parsedGet.end())
+                return false;
+
+            if (parsedGet.find("ip") == parsedGet.end())
+                return false;
+
+            if (parsedGet.find("rand_ident_hash") == parsedGet.end() || parsedGet.find("rand_ident") == parsedGet.end())
+                return false;
+        }
+        else {
+            if (parsedGet.find("login") == parsedGet.end() || parsedGet.find("password") == parsedGet.end() || parsedGet.find("ip") == parsedGet.end()) {
+                DEBUG_STREAM_F << "login or password or ip not found" << endl;
+                return false;
+            }
+        }
+        return true;
     }
 
 }
