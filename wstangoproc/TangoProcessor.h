@@ -291,12 +291,13 @@ namespace WebSocketDS_ns
         void attrsToString(Tango::DeviceAttribute *attr, stringstream& ss) {
             Tango::AttrDataFormat format = attr->get_data_format();
             int type = attr->get_type();
-            std::vector<T> dataVector;
+            std::vector<T> dataVector, dataVectorFromSet;
             T data;
             Tango::DevState stateIn;
             string stateStr;
 
             string nameAttr = attr->get_name();
+
 
             if (format == Tango::AttrDataFormat::SPECTRUM || format == Tango::AttrDataFormat::IMAGE)
                 ss << "\"dimX\": " << attr->dim_x << ", ";
@@ -313,11 +314,22 @@ namespace WebSocketDS_ns
                 else {
                     (*attr) >> data;
                     dataFromAttrsOrCommToJson(data, ss, TYPE_WS_REQ::ATTRIBUTE, nameAttr);
+                    
+                    try {
+                        attr->extract_set(dataVectorFromSet);
+
+                        if (dataVectorFromSet.size() == 1) {
+                            ss << ", \"set\": ";
+                            dataFromAttrsOrCommToJson(dataVectorFromSet[0], ss, TYPE_WS_REQ::ATTRIBUTE, nameAttr);
+                        }
+                    }
+                    catch (Tango::DevFailed &e) {}
                 }
             }
             else
                 if (format == Tango::AttrDataFormat::SPECTRUM || format == Tango::AttrDataFormat::IMAGE) {
                     (*attr) >> dataVector;
+
                     int dim_x = attr->dim_x;
                     int dim_y = attr->dim_y;
 
@@ -333,6 +345,17 @@ namespace WebSocketDS_ns
                     ss << "[";
                     dataArrayFromAttrOrCommToJson(dataVector, ss, TYPE_WS_REQ::ATTRIBUTE, nameAttr);
                     ss << "]";
+                    
+                    try {
+                        attr->extract_set(dataVectorFromSet);
+
+                        if (dataVectorFromSet.size()) {
+                            ss << ", \"set\": [";
+                            dataArrayFromAttrOrCommToJson(dataVectorFromSet, ss, TYPE_WS_REQ::ATTRIBUTE, nameAttr);
+                            ss << "]";
+                        }
+                    }
+                    catch (Tango::DevFailed &e) {}
                 }
         }
 
