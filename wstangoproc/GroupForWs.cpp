@@ -171,8 +171,10 @@ namespace WebSocketDS_ns
         // ??? !!! Пока только для девайсов, а не для групп
     }
 
-    void GroupForWs::generateJsonForAttrReadCl(const ParsedInputJson& parsedInput, std::stringstream& json)
+    void GroupForWs::generateJsonForAttrRead(const ParsedInputJson& parsedInput, std::stringstream& json)
     {
+        int it = 0;
+
         json << "{\"event\": \"read\", \"type_req\": \"" << parsedInput.type_req << "\" ,";
 
         try {
@@ -188,10 +190,8 @@ namespace WebSocketDS_ns
         }
 
         json << "\"data\": {";
+        
         json << "\"attrs\": {";
-        int it = 0;
-
-
 
         for (long i = 0; i < group_length; i++)
         {
@@ -211,7 +211,7 @@ namespace WebSocketDS_ns
                 json << "\"size of attrList from " << deviceList[i] << "  is 0\"";
                 continue;
             }
-            
+
 
             json << "[";
             generateAttrJson(json, attrList);
@@ -220,9 +220,8 @@ namespace WebSocketDS_ns
                 delete attrList;
             }
         }
+        
         json << "}";
-
-
 
         if (_pipeAttr.size()) {
             it = 0;
@@ -455,6 +454,64 @@ namespace WebSocketDS_ns
         }
 
         return StringProc::responseStringOut(parsedInput.id, "Was written to the attribute", parsedInput.type_req);
+    }
+
+    string GroupForWs::sendAttrRead(const ParsedInputJson& parsedInput)
+    {
+        //TODO
+        // Дописать для девайса из группы. Пока при запросе read_attr_gr и read_attr_dev
+        // присылаетс данные со всей группы
+        int it = 0;
+        stringstream json;
+        json << "{\"event\": \"read\", \"type_req\": \"" << parsedInput.type_req << "\" ,";
+
+        try {
+            auto idTmp = stoi(parsedInput.id);
+            json << "\"id_req\": " << idTmp << ", ";
+        }
+        catch (...) {
+            // id_req может быть числом, либо случайной строкой
+            if (parsedInput.id == NONE)
+                json << "\"id_req\": " << parsedInput.id << ", ";
+            else
+                json << "\"id_req\": \"" << parsedInput.id << "\", ";
+        }
+
+        json << "\"data\": {";
+
+        string attribute = parsedInput.otherInpStr.at("attr_name");
+        vector<string> attributes{ attribute };
+        
+        for (long i = 0; i < group_length; i++)
+        {
+
+            if (it != 0)
+                json << ", ";
+            std::vector<Tango::DeviceAttribute> *attrList = nullptr;
+            
+            attrList = getAttributeList(deviceList[i], attributes);
+            it++;
+            json << "\"" << deviceList[i] << "\": ";
+
+            if (attrList == nullptr) {
+                json << "\"Device unavailable. Check the status of corresponding tango-server\"";
+                continue;
+            }
+            if (!attrList->size()) {
+                json << "\"size of attrList from " << deviceList[i] << "  is 0\"";
+                continue;
+            }
+
+            json << "[";
+            generateAttrJson(json, attrList);
+            json << "]";
+
+            if (attrList != nullptr) {
+                delete attrList;
+            }
+        }
+        json << "}}";
+        return json.str();
     }
 
     vector<string> GroupForWs::getListOfDevicesNames()

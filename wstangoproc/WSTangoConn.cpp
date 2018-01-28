@@ -280,6 +280,15 @@ namespace WebSocketDS_ns
             return;
         }
 
+        if (typeWsReq == TYPE_WS_REQ::ATTRIBUTE_READ) {
+            if (!isServerMode()) {
+                out = StringProc::exceptionStringOut(inputReq.id, NONE, "This mode does not support commands of this type", inputReq.type_req);
+                return;
+            }
+            sendRequest_AttrRead(inputReq, connData, out);
+            return;
+        }
+
         // В обычном случае не возвращается никогда
         out = "{\"error\": \"Unknown Request\"}";
     }
@@ -340,6 +349,7 @@ namespace WebSocketDS_ns
         {
             _errorMessage = fromException(e, "WSTangoConn::initDeviceServer()");
             removeSymbolsForString(_errorMessage);
+            return isInit;
         }
 
         auto testSize = [=](vector<string>& attr, vector<string>& pipe) {
@@ -461,6 +471,8 @@ namespace WebSocketDS_ns
             return TYPE_WS_REQ::USER_CHECK_STATUS;
         if (req == "change_user_smpl")
             return TYPE_WS_REQ::CHANGE_USER;
+        if (req == "read_attr" || req == "read_attr_dev" || req == "read_attr_gr")
+            return TYPE_WS_REQ::ATTRIBUTE_READ;
 
         return TYPE_WS_REQ::UNKNOWN;
     }
@@ -804,7 +816,7 @@ namespace WebSocketDS_ns
                 dev = new WebSocketDS_ns::GroupForWs(device_name, attr_pipe);
             }
             stringstream ss;
-            dev->generateJsonForAttrReadCl(inputReq, ss);
+            dev->generateJsonForAttrRead(inputReq, ss);
             resp_json = ss.str();
 
             if (dev != nullptr)
@@ -817,6 +829,28 @@ namespace WebSocketDS_ns
             }
             resp_json = StringProc::exceptionStringOut(inputReq.id, NONE, errors, inputReq.type_req);
         }        
+    }
+
+    void WSTangoConn::sendRequest_AttrRead(const ParsedInputJson& inputReq, ConnectionData& connData, string& resp_json)
+    {
+        if (inputReq.check_key("attr_name") != TYPE_OF_VAL::VALUE) {
+            resp_json = StringProc::exceptionStringOut(inputReq.id, NONE, "Not found key attr_name or attr_name is not value", inputReq.type_req);
+            return;
+        }
+
+        if (_isGroup) {
+            if (inputReq.type_req != "read_attr_dev" && inputReq.type_req != "read_attr_gr") {
+                resp_json = StringProc::exceptionStringOut(inputReq.id, inputReq.otherInpStr.at("attr_name"), "type_req must be read_attr_dev or read_attr_gr", inputReq.type_req);
+                return;
+            }
+        }
+        else {
+            if (inputReq.type_req != "read_attr") {
+                resp_json = StringProc::exceptionStringOut(inputReq.id, inputReq.otherInpStr.at("attr_name"), "type_req must be read_attr", inputReq.type_req);
+                return;
+            }
+        }
+        resp_json = groupOrDevice->sendAttrRead(inputReq);
     }
 
     void WSTangoConn::sendRequest_AttrWrite(const ParsedInputJson& inputReq, ConnectionData& connData, string& resp_json)

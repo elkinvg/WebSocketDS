@@ -30,13 +30,14 @@ namespace WebSocketDS_ns
         virtual string generateJsonForUpdate() = 0;
         virtual void generateJsonForUpdate(std::stringstream& json) = 0;
 
-        virtual void generateJsonForAttrReadCl(const ParsedInputJson& parsedInput, std::stringstream& json) = 0;
+        virtual void generateJsonForAttrRead(const ParsedInputJson& parsedInput, std::stringstream& json) = 0;
 
         virtual string sendPipeCommand(const ParsedInputJson& parsedInput) = 0;
         virtual string sendCommand(const ParsedInputJson& parsedInput, bool& statusComm) = 0;
         virtual string sendCommandBin(const ParsedInputJson& parsedInput, bool& statusComm) = 0;
 
         virtual string sendAttrWr(const ParsedInputJson& parsedInput, bool& statusComm) = 0;
+        virtual string sendAttrRead(const ParsedInputJson& parsedInput) = 0;
 
         virtual vector<string> getListOfDevicesNames() = 0;
 
