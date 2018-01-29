@@ -52,6 +52,7 @@ namespace WebSocketDS_ns
         virtual bool checkIsAttributeWriteble(const string& attr_name) = 0;
 
         void generateAttrJson(std::stringstream& json, vector<Tango::DeviceAttribute> *attrList);
+        void generateAttrJson(std::stringstream& json, Tango::DeviceAttribute& attr);
 
         Tango::DeviceData tangoCommandInoutForDevice(Tango::DeviceProxy *deviceProxy, const ParsedInputJson& dataFromJson, string& errorMessInJson);
         Tango::DeviceData tangoCommandInoutForDeviceCl(Tango::DeviceProxy *deviceProxy, const ParsedInputJson& dataFromJson, string& errorMessInJson);

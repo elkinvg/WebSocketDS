@@ -502,8 +502,9 @@ namespace WebSocketDS_ns
                 continue;
             }
 
+            // TODO: Пока для одного девайса
             json << "[";
-            generateAttrJson(json, attrList);
+            generateAttrJson(json, (*attrList)[0]);
             json << "]";
 
             if (attrList != nullptr) {

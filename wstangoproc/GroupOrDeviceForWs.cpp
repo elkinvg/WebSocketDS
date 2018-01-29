@@ -279,6 +279,11 @@ namespace WebSocketDS_ns
         }
     }
 
+    void GroupOrDeviceForWs::generateAttrJson(std::stringstream& json, Tango::DeviceAttribute& attr)
+    {
+        processor->process_attribute_t(attr, json, _isShortAttr);
+    }
+
     Tango::DeviceData GroupOrDeviceForWs::tangoCommandInoutForDevice(Tango::DeviceProxy *deviceProxy, const ParsedInputJson& dataFromJson, string& errorMessInJson)
     {
         Tango::DeviceData outDeviceData;
