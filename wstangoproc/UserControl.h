@@ -15,6 +15,9 @@ namespace WebSocketDS_ns
 
         bool check_permission(const ParsedInputJson& parsedInputJson, const ConnectionData &connectionData, string deviceName, bool isGroup, string &mess, TYPE_WS_REQ typeWsReq);
 
+        void setCommandNameForCheckUser(const string& new_command_name);
+        void setCommandNameForCheckPermission(const string& new_command_name);
+
         bool sendLogCommand(const WebSocketDS_ns::ParsedInputJson &parsedInputJson, const ConnectionData &connectionData, string deviceName, bool isGroup, bool status, TYPE_WS_REQ typeWsReq);
         pair<bool, string> check_user(const string& login, const string& password);
         pair<bool, string> check_user_rident(string login, string rand_ident, string rand_ident_hash);
@@ -27,6 +30,8 @@ namespace WebSocketDS_ns
         TYPE_OF_IDENT _toi;
         bool _isLogActive;
         bool _hasConf{ false };
+        string _command_name_for_user_control;
+        string _command_name_for_check_permission;
     };
 }
 

@@ -610,7 +610,7 @@ AttrName;pipecomm;par1=val;par2
 Проверка осуществляется через TANGO девайс, прописанный в свойстве AuthDS.
 Также возможна смена пользователя. Смена проиходит только если аутентификация для нового пользователя проходит успшно.
 
-- Этот сервер должен содержать метод `check_user(const Tango::DevVarStringArray (*argin)`, возвращающий true или false. Используется для типа авторизации SIMPLE
+- Этот сервер должен содержать метод `check_user(const Tango::DevVarStringArray (*argin)`, возвращающий true или false. Используется для типа авторизации SIMPLE. Если вы хотите сменить имя команды установите `command_name_for_check_user=НОВОЕ_ИМЯ_МЕТОДА_ДЛЯ_CHECK_USER` in Property "Options"
    * **\(\*argin)[0]** = login
    * **\(\*argin)[1]** = password
    
@@ -634,7 +634,7 @@ AttrName;pipecomm;par1=val;par2
 
    Обязательно должна быть учтена последовательность и размер.
 
-- Также сервер должен содержать метод `check_permissions(const Tango::DevVarStringArray (*argin)`, применяемый для аутентификации. В него передаётся массив, содержащий перечисленные ниже данные. Данный метод должен возвращать true или false
+- Также сервер должен содержать метод `check_permissions(const Tango::DevVarStringArray (*argin)`, применяемый для аутентификации. В него передаётся массив, содержащий перечисленные ниже данные. Данный метод должен возвращать true или false. Если вы хотите сменить имя команды установите `command_name_for_check_permission=НОВОЕ_ИМЯ_МЕТОДА_ДЛЯ_CHECK_PERMISSIONS` in Property "Options"
    * **\(\*argin)[0]** — Танго девайс
    * **\(\*argin)[1]** — запускаемая команда
    * **\(\*argin)[2]** — Ip, с которого производится запуск

@@ -6,6 +6,8 @@ WebSocketDS_ns::UserControl::UserControl(string authDS, TYPE_OF_IDENT toi, bool 
     _authDS = authDS;
     _toi = toi;
     _isLogActive = isLogActive;
+    _command_name_for_user_control = "check_user";
+    _command_name_for_check_permission = "check_permissions";
 }
 
 bool WebSocketDS_ns::UserControl::check_permission(const ParsedInputJson& parsedInputJson, const ConnectionData &connectionData, string deviceName, bool isGroup, string &mess, TYPE_WS_REQ typeWsReq) {
@@ -19,7 +21,7 @@ bool WebSocketDS_ns::UserControl::check_permission(const ParsedInputJson& parsed
     try {
         argin << permission_data;
         authProxy = new Tango::DeviceProxy(_authDS);
-        argout = authProxy->command_inout("check_permissions", argin);
+        argout = authProxy->command_inout(_command_name_for_check_permission, argin);
         argout >> isAuth;
         std::stringstream ss;
         ss << "User " << permission_data[3] << " tried to run the command " << permission_data[1] << ". Access status is " << std::boolalpha << isAuth;
@@ -42,6 +44,14 @@ bool WebSocketDS_ns::UserControl::check_permission(const ParsedInputJson& parsed
             delete authProxy;
     }
     return isAuth;
+}
+
+void WebSocketDS_ns::UserControl::setCommandNameForCheckUser(const string& new_command_name) {
+    _command_name_for_user_control = new_command_name;
+}
+
+void WebSocketDS_ns::UserControl::setCommandNameForCheckPermission(const string& new_command_name) {
+    _command_name_for_check_permission = new_command_name;
 }
 
 pair<bool, string> WebSocketDS_ns::UserControl::check_user(const string& login, const string& password) {
