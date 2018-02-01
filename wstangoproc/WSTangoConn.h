@@ -108,6 +108,8 @@ namespace WebSocketDS_ns
         unsigned long _numOfConnections{0};
         string _errorMessage;
         std::default_random_engine generator;
+        string _command_name_for_user_control;
+        string _command_name_for_check_permission;
     };
 }
 #endif

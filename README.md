@@ -691,11 +691,13 @@ Authorization and authentication are performed in the Device `AuthDS`.
 `ws(wss)://ip_or_hostname:port?login=zzz&password=zzz`
 
 Device `AuthDS` must contain method `check_user(const Tango::DevVarStringArray (*argin)` and return true or false.
+If you want to change the name of method, you need to define `command_name_for_check_user=NEW_NAME_FOR_CHECK_USER_METHOD` in Property "Options"
 
    * **\(\*argin)[0]** = login
    * **\(\*argin)[1]** = password
    
 Also the server should contain the method `check_permissions(const Tango::DevVarStringArray *argin)`, used for authentication. return true or false.
+If you want to change the name of method, you need to define `command_name_for_check_permission=NEW_NAME_FOR_CHECK_PERMISSIONS_METHOD` in Property "Options"
  
    * **\(\*argin)[0]** — Device name
    * **\(\*argin)[1]** — Running command

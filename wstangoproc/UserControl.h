@@ -13,6 +13,9 @@ namespace WebSocketDS_ns
         UserControl(string authDS, TYPE_OF_IDENT toi, bool isLogActive);
         ~UserControl(){};
 
+        void setCommandNameForCheckUser(const string& new_command_name);
+        void setCommandNameForCheckPermission(const string& new_command_name);
+
         bool check_permission(const ParsedInputJson& parsedInputJson, const unordered_map<string, string> &remoteConf, string deviceName, bool isGroup, string &mess, TYPE_WS_REQ typeWsReq);
         pair<bool, string> getInformationFromCheckingUser(const ConnectionData& connectionData);
         bool sendLogCommand(const WebSocketDS_ns::ParsedInputJson &parsedInputJson, const std::unordered_map<std::string, std::string> &remoteConf, string deviceName, bool isGroup, bool status, TYPE_WS_REQ typeWsReq);
@@ -29,6 +32,8 @@ namespace WebSocketDS_ns
         TYPE_OF_IDENT _toi;
         bool _isLogActive;
         bool _hasConf{ false };
+        string _command_name_for_user_control;
+        string _command_name_for_check_permission;
     };
 }
 

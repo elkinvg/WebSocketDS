@@ -24,6 +24,13 @@ namespace WebSocketDS_ns
         _wsds = dev;
         uc = unique_ptr<UserControl>(new UserControl(dev->authDS, typeOfIdent, _isLogActive));
 
+        if (_command_name_for_user_control.size()) {
+            uc->setCommandNameForCheckUser(_command_name_for_user_control);
+        }
+        if (_command_name_for_check_permission.size()) {
+            uc->setCommandNameForCheckPermission(_command_name_for_check_permission);
+        }
+
         wsThread = new WSThread_plain(this, portNumber);
 
         if (_isInitDs && isServerMode())
@@ -38,6 +45,13 @@ namespace WebSocketDS_ns
         
         _wsds = dev;
         uc = unique_ptr<UserControl>(new UserControl(dev->authDS, typeOfIdent, _isLogActive));
+
+        if (_command_name_for_user_control.size()) {
+            uc->setCommandNameForCheckUser(_command_name_for_user_control);
+        }
+        if (_command_name_for_check_permission.size()) {
+            uc->setCommandNameForCheckPermission(_command_name_for_check_permission);
+        }
         
         wsThread = new WSThread_tls(this, portNumber, cert, key);
         if (_isInitDs && isServerMode())
@@ -98,6 +112,18 @@ namespace WebSocketDS_ns
             }
             if (opt == "tm100ms") {
                 _istm100ms = true;
+            }
+            if (opt.find("command_name_for_check_user") != string::npos) {
+                auto gettedIdentOpt = StringProc::parseInputString(opt, "=", true);
+                if (gettedIdentOpt.size() > 1) {
+                    _command_name_for_user_control = gettedIdentOpt[1];
+                }
+            }
+            if (opt.find("command_name_for_check_permission") != string::npos) {
+                auto gettedIdentOpt = StringProc::parseInputString(opt, "=", true);
+                if (gettedIdentOpt.size() > 1) {
+                    _command_name_for_check_permission = gettedIdentOpt[1];
+                }
             }
         }
         _isInitDs = initDeviceServer(attrCommPipe);
