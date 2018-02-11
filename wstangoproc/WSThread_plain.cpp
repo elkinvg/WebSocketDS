@@ -247,8 +247,11 @@ namespace WebSocketDS_ns
     void WSThread_plain::close_from_server(websocketpp::connection_hdl hdl) {
         if (_tc->isServerMode())
             websocketpp::lib::unique_lock<websocketpp::lib::mutex> con_lock(m_connection_lock);
-        websocketpp::server<websocketpp::config::asio>::connection_ptr con = m_server.get_con_from_hdl(hdl);
-        con->close(websocketpp::close::status::going_away, "");
+        try {
+            websocketpp::server<websocketpp::config::asio>::connection_ptr con = m_server.get_con_from_hdl(hdl);
+            con->close(websocketpp::close::status::going_away, "");
+        }
+        catch (...){}
         m_connections.erase(hdl);
     }
 
