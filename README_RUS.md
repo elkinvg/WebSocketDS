@@ -74,7 +74,6 @@ WebSocketDS
  <h2><b style="color:red;"> В методе CheckPoll проверяется сколько секунд прошло после последнего запуска метода UpdateData. Если значение превысит, заданное в property, количество секунд, произойдёт перезагрузка девайс-сервера.  Не выставляйте значение polling для UpdateData близким к значению ResetTimestampDifference</b></h2>
 
 ## Перечень атрибутов
- - **JSON** - текущий JSON-output; (DevString)
  - **TimestampDiff** - текущая разница таймстампов (обновляется в методе CheckPoll. Значение Polling по умолчанию для него 10 секунд); (DevULong)
  - **NumberOfConnections** - текущее число клиентов (соединений). (DevULong)
 

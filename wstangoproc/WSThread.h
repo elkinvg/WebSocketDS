@@ -52,7 +52,6 @@ namespace WebSocketDS_ns
         log4tango::Logger *logger;
 
     protected:
-        std::string cache;
         virtual bool on_validate(websocketpp::connection_hdl hdl) = 0;
         void on_message(websocketpp::connection_hdl hdl, server::message_ptr msg);
         void on_open(websocketpp::connection_hdl hdl);

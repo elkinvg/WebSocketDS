@@ -32,11 +32,11 @@ namespace WebSocketDS_ns
     EventSubscr::~EventSubscr()
     {
         DEBUG_STREAM_F << "unsubscribe_event with id :" << _eventId << endl;
+        eventDev->unsubscribe_event(_eventId);
         if (wsEvCallBacksSer != nullptr)
             delete wsEvCallBacksSer;
         if (wsEvCallBacks != nullptr)
             delete wsEvCallBacks;
-        eventDev->unsubscribe_event(_eventId);
     }
     
     EventSubscr::EventSubscr(){}

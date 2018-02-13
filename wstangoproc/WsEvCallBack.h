@@ -15,6 +15,8 @@ namespace WebSocketDS_ns
         
         void push_event(Tango::EventData *dt) override;
     private:
+        void send_mess(const std::string& mess);
+
         websocketpp::connection_hdl _hdl;
         WSThread* _wsThread;
         TangoProcessor *tango_proc;

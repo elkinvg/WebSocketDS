@@ -55,22 +55,6 @@ namespace WebSocketDS_ns
 
 //--------------------------------------------------------
 /**
- *	Method      : WebSocketDS::is_JSON_allowed()
- *	Description : Execution allowed for JSON attribute
- */
-//--------------------------------------------------------
-bool WebSocketDS::is_JSON_allowed(TANGO_UNUSED(Tango::AttReqType type))
-{
-
-	//	Not any excluded states for JSON attribute in read access.
-	/*----- PROTECTED REGION ID(WebSocketDS::JSONStateAllowed_READ) ENABLED START -----*/
-    
-    /*----- PROTECTED REGION END -----*/	//	WebSocketDS::JSONStateAllowed_READ
-	return true;
-}
-
-//--------------------------------------------------------
-/**
  *	Method      : WebSocketDS::is_TimestampDiff_allowed()
  *	Description : Execution allowed for TimestampDiff attribute
  */

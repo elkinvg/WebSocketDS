@@ -13,6 +13,8 @@ namespace WebSocketDS_ns
         ~WsEvCallBackForServerMode();
         void push_event(Tango::EventData *dt) override;
     private:
+        void send_mess_all(const std::string& mess);
+
         WSThread* _wsThread;
         TangoProcessor *tango_proc;
     };

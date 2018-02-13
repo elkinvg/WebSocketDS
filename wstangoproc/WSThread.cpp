@@ -129,7 +129,6 @@ namespace WebSocketDS_ns
         _tc->setNumOfConnections(m_connections.size());
         DEBUG_STREAM_F << "New user has been connected!! sessionId = " << m_connections[hdl].sessionId << endl;
         DEBUG_STREAM_F << m_connections.size() << " client connected!!" << endl;
-        send(hdl, cache);
     }
 
     void WSThread::on_close(websocketpp::connection_hdl hdl) {

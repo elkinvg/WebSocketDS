@@ -26,7 +26,7 @@ namespace WebSocketDS_ns
                 for (int i = 0; i < dt->errors.length(); i++) {
                     errors.push_back((string)dt->errors[i].desc);
                 }
-                _wsThread->send(_hdl, StringProc::exceptionStringOut(errors,"from_event"));
+                send_mess(StringProc::exceptionStringOut(errors, "from_event"));
                 return;
             }
             stringstream json;
@@ -37,18 +37,26 @@ namespace WebSocketDS_ns
             json << "\"attr\": \"" << dt->attr_name << "\", ";
             tango_proc->devAttrToStr(dt->attr_value, json);
             json << "}";
-            _wsThread->send(_hdl, json.str());
+            send_mess(json.str());
         }
         catch (Tango::DevFailed &e) {
             vector<string> errors;
             for (int i = 0; i < e.errors.length(); i++) {
                 errors.push_back((string)e.errors[i].desc);
             }
-            _wsThread->send(_hdl, StringProc::exceptionStringOut(errors, "exc_from_event"));
+            send_mess(StringProc::exceptionStringOut(errors, "exc_from_event"));
         }
 
         catch (...) {
+            send_mess(StringProc::exceptionStringOut("Unknown exception from event", "exc_from_event"));
+        }
+    }
+
+    void WsEvCallBack::send_mess(const std::string& mess) {
+        try{
             _wsThread->send(_hdl, StringProc::exceptionStringOut("Unknown exception from event", "exc_from_event"));
         }
+        catch (...){}
+        
     }
 }

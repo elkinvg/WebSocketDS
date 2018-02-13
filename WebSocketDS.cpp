@@ -97,7 +97,6 @@ static const char *RcsId = "$Id:  $";
 //================================================================
 //  Attributes managed are:
 //================================================================
-//  JSON                 |  Tango::DevString	Scalar
 //  TimestampDiff        |  Tango::DevULong	Scalar
 //  NumberOfConnections  |  Tango::DevULong	Scalar
 //================================================================
@@ -155,10 +154,7 @@ void WebSocketDS::delete_device()
 	DEBUG_STREAM << "WebSocketDS::delete_device() " << device_name << endl;
 	/*----- PROTECTED REGION ID(WebSocketDS::delete_device) ENABLED START -----*/
 
-    CORBA::string_free(*attr_JSON_read);
-
     /*----- PROTECTED REGION END -----*/	//	WebSocketDS::delete_device
-	delete[] attr_JSON_read;
 	delete[] attr_TimestampDiff_read;
 	delete[] attr_NumberOfConnections_read;
 }
@@ -182,11 +178,9 @@ void WebSocketDS::init_device()
 	//	Get the device properties from database
 	get_device_property();
 	
-	attr_JSON_read = new Tango::DevString[1];
 	attr_TimestampDiff_read = new Tango::DevULong[1];
 	attr_NumberOfConnections_read = new Tango::DevULong[1];
 	/*----- PROTECTED REGION ID(WebSocketDS::init_device) ENABLED START -----*/
-    attr_JSON_read[0] = Tango::string_dup("[{\"success\": false}]");
     attr_NumberOfConnections_read[0] = 0;
     
 
@@ -540,24 +534,6 @@ void WebSocketDS::read_attr_hardware(TANGO_UNUSED(vector<long> &attr_list))
 
 //--------------------------------------------------------
 /**
- *	Read attribute JSON related method
- *	Description: 
- *
- *	Data type:	Tango::DevString
- *	Attr type:	Scalar
- */
-//--------------------------------------------------------
-void WebSocketDS::read_JSON(Tango::Attribute &attr)
-{
-	DEBUG_STREAM << "WebSocketDS::read_JSON(Tango::Attribute &attr) entering... " << endl;
-	/*----- PROTECTED REGION ID(WebSocketDS::read_JSON) ENABLED START -----*/
-    //    Set the attribute value
-    attr.set_value(attr_JSON_read);
-
-    /*----- PROTECTED REGION END -----*/	//	WebSocketDS::read_JSON
-}
-//--------------------------------------------------------
-/**
  *	Read attribute TimestampDiff related method
  *	Description: The difference between the timestamps from UpdateData and CheckPoll
  *
@@ -656,9 +632,7 @@ void WebSocketDS::update_data()
 	/*----- PROTECTED REGION ID(WebSocketDS::update_data) ENABLED START -----*/
 
     timeFromUpdateData = std::chrono::seconds(/*std::*/time(NULL)); 
-    //wsTangoConn->for_update_data();
-    CORBA::string_free(*attr_JSON_read);
-    attr_JSON_read[0] = Tango::string_dup(wsTangoConn->for_update_data().c_str());
+    wsTangoConn->for_update_data();
 
     /*----- PROTECTED REGION END -----*/	//	WebSocketDS::update_data
 }

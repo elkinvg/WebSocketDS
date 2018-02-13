@@ -79,6 +79,9 @@ namespace WebSocketDS_ns
                         typeOfIdent = TYPE_OF_IDENT::RANDIDENT2;
                     else if (gettedIdentOpt[1] == "rndid3")
                         typeOfIdent = TYPE_OF_IDENT::RANDIDENT3;
+                    // Для аутентификации в Егоровом AuthDS в check_permissions_www
+                    else if (gettedIdentOpt[1] == "permission_www")
+                        typeOfIdent = TYPE_OF_IDENT::PERMISSION_WWW;
                     else
                         typeOfIdent = TYPE_OF_IDENT::SIMPLE;
                 }

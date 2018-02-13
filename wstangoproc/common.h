@@ -27,7 +27,7 @@ namespace WebSocketDS_ns
     // тип 
     enum class OUTPUT_DATA_TYPE { JSON, BINARY };
 
-    enum class TYPE_OF_IDENT { SIMPLE, RANDIDENT, RANDIDENT2, RANDIDENT3 };
+    enum class TYPE_OF_IDENT { SIMPLE, RANDIDENT, RANDIDENT2, RANDIDENT3, PERMISSION_WWW };
     enum class TYPE_OF_VAL { VALUE, ARRAY, OBJECT, NONE };
 
 

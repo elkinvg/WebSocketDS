@@ -69,9 +69,11 @@ namespace WebSocketDS_ns
             }
         }
 
-        if (isExcFromSubscr)
-            _wsThread->send_all(StringProc::exceptionStringOutForEvent(NONE, exceptions, "event_subscr", "exc_from_subscr"));
-        
+        try {
+            if (isExcFromSubscr)
+                _wsThread->send_all(StringProc::exceptionStringOutForEvent(NONE, exceptions, "event_subscr", "exc_from_subscr"));
+        }
+        catch (...){}        
     }
 
     EventProcForServerMode::~EventProcForServerMode() {
