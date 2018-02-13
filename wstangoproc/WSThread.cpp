@@ -127,7 +127,6 @@ namespace WebSocketDS_ns
         
         DEBUG_STREAM_F << "New user has been connected!! sessionId = " << m_connections[hdl].sessionId << endl;
         DEBUG_STREAM_F << m_connections.size() << " client connected!!" << endl;
-        send(hdl, cache);
     }
 
     void WSThread::on_close(websocketpp::connection_hdl hdl) {
@@ -549,10 +548,10 @@ namespace WebSocketDS_ns
 
         auto typeOfIdent = _tc->getTypeOfIdent();
 
-        if (typeOfIdent == TYPE_OF_IDENT::SIMPLE || typeOfIdent == TYPE_OF_IDENT::RANDIDENT) {
+        if (typeOfIdent == TYPE_OF_IDENT::SIMPLE || typeOfIdent == TYPE_OF_IDENT::RANDIDENT || typeOfIdent == TYPE_OF_IDENT::PERMISSION_WWW) {
             // If login and password not found in GET
             if (!checkKeysFromParsedGet(parsedGet)) {
-                if (typeOfIdent == TYPE_OF_IDENT::SIMPLE) {
+                if (typeOfIdent == TYPE_OF_IDENT::SIMPLE || typeOfIdent == TYPE_OF_IDENT::PERMISSION_WWW) {
                     conn_data.userCheckStatus.first = false;
                     conn_data.userCheckStatus.second = "login or password or ip not found";
                 }
@@ -565,7 +564,7 @@ namespace WebSocketDS_ns
         conn_data.login = parsedGet["login"];
         conn_data.ip_client = parsedGet["ip"];
 
-        if (typeOfIdent == TYPE_OF_IDENT::SIMPLE)
+        if (typeOfIdent == TYPE_OF_IDENT::SIMPLE || typeOfIdent == TYPE_OF_IDENT::PERMISSION_WWW)
         {            
             conn_data.password = parsedGet["password"];
         }

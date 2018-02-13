@@ -791,30 +791,6 @@ void WebSocketDSClass::attribute_factory(vector<Tango::Attr *> &att_list)
     //    Add your own code
     
     /*----- PROTECTED REGION END -----*/	//	WebSocketDSClass::attribute_factory_before
-	//	Attribute : JSON
-	JSONAttrib	*json = new JSONAttrib();
-	Tango::UserDefaultAttrProp	json_prop;
-	//	description	not set for JSON
-	//	label	not set for JSON
-	//	unit	not set for JSON
-	//	standard_unit	not set for JSON
-	//	display_unit	not set for JSON
-	//	format	not set for JSON
-	//	max_value	not set for JSON
-	//	min_value	not set for JSON
-	//	max_alarm	not set for JSON
-	//	min_alarm	not set for JSON
-	//	max_warning	not set for JSON
-	//	min_warning	not set for JSON
-	//	delta_t	not set for JSON
-	//	delta_val	not set for JSON
-	
-	json->set_default_properties(json_prop);
-	//	Not Polled
-	json->set_disp_level(Tango::OPERATOR);
-	//	Not Memorized
-	att_list.push_back(json);
-
 	//	Attribute : TimestampDiff
 	TimestampDiffAttrib	*timestampdiff = new TimestampDiffAttrib();
 	Tango::UserDefaultAttrProp	timestampdiff_prop;

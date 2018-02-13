@@ -168,7 +168,6 @@ public:
 
 //	Attribute data members
 public:
-	Tango::DevString	*attr_JSON_read;
 	Tango::DevULong	*attr_TimestampDiff_read;
 	Tango::DevULong	*attr_NumberOfConnections_read;
 
@@ -232,15 +231,6 @@ public:
 	//--------------------------------------------------------
 	virtual void read_attr_hardware(vector<long> &attr_list);
 
-/**
- *	Attribute JSON related methods
- *	Description: 
- *
- *	Data type:	Tango::DevString
- *	Attr type:	Scalar
- */
-	virtual void read_JSON(Tango::Attribute &attr);
-	virtual bool is_JSON_allowed(Tango::AttReqType type);
 /**
  *	Attribute TimestampDiff related methods
  *	Description: The difference between the timestamps from UpdateData and CheckPoll

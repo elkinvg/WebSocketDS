@@ -42,7 +42,6 @@ namespace WebSocketDS_ns
     void *WSThread_tls::run_undetached(void *ptr)
     {
         DEBUG_STREAM_F << "The upload thread (TLS) starts..." << endl;
-        cache = "";
         m_server.set_open_handler(websocketpp::lib::bind(&WSThread_tls::on_open,this,websocketpp::lib::placeholders::_1));
         m_server.set_close_handler(websocketpp::lib::bind(&WSThread_tls::on_close,this,websocketpp::lib::placeholders::_1));
         m_server.set_message_handler(websocketpp::lib::bind(&WSThread_tls::on_message,this,websocketpp::lib::placeholders::_1,websocketpp::lib::placeholders::_2));
@@ -80,8 +79,6 @@ namespace WebSocketDS_ns
     }
 
     void WSThread_tls::send_all(std::string msg) {
-        cache.clear();
-        cache = msg;
         StringProc::removeSymbolsForString(msg);
         //msg.clear();
         con_list::iterator it;

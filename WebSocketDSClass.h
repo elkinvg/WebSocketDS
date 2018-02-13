@@ -59,19 +59,6 @@ namespace WebSocketDS_ns
 //=========================================
 //	Define classes for attributes
 //=========================================
-//	Attribute JSON class definition
-class JSONAttrib: public Tango::Attr
-{
-public:
-	JSONAttrib():Attr("JSON",
-			Tango::DEV_STRING, Tango::READ) {};
-	~JSONAttrib() {};
-	virtual void read(Tango::DeviceImpl *dev,Tango::Attribute &att)
-		{(static_cast<WebSocketDS *>(dev))->read_JSON(att);}
-	virtual bool is_allowed(Tango::DeviceImpl *dev,Tango::AttReqType ty)
-		{return (static_cast<WebSocketDS *>(dev))->is_JSON_allowed(ty);}
-};
-
 //	Attribute TimestampDiff class definition
 class TimestampDiffAttrib: public Tango::Attr
 {

@@ -77,6 +77,9 @@ namespace WebSocketDS_ns
                         typeOfIdent = TYPE_OF_IDENT::SIMPLE;
                     else if (gettedIdentOpt[1] == "rndid2")
                         typeOfIdent = TYPE_OF_IDENT::RANDIDENT2;
+                    // Для аутентификации в Егоровом AuthDS в check_permissions_www
+                    else if (gettedIdentOpt[1] == "permission_www")
+                        typeOfIdent = TYPE_OF_IDENT::PERMISSION_WWW;
                     else
                         typeOfIdent = TYPE_OF_IDENT::SIMPLE;
                 }
@@ -333,6 +336,17 @@ namespace WebSocketDS_ns
                 connData.userCheckStatus = uc->check_user_rident(connData.login, connData.forRandIdent.rand_ident_str, connData.forRandIdent.rand_ident_hash);
             }
             else {
+                connData.userCheckStatus.second = "You need to authenticate";
+            }
+        }
+        if (typeOfIdent == TYPE_OF_IDENT::PERMISSION_WWW) {
+            // Для аутентификации в Егоровом AuthDS в check_permissions_www
+            // В данном случае логин и пароль просто сохраняется.
+            if (connData.login.size() && connData.password.size()) {
+                connData.userCheckStatus = make_pair(true, "");
+            }
+            else {
+                connData.userCheckStatus.first = false;
                 connData.userCheckStatus.second = "You need to authenticate";
             }
         }

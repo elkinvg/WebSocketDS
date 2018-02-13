@@ -21,11 +21,24 @@ bool WebSocketDS_ns::UserControl::check_permission(const ParsedInputJson& parsed
     try {
         argin << permission_data;
         authProxy = new Tango::DeviceProxy(_authDS);
-        argout = authProxy->command_inout(_command_name_for_check_permission, argin);
+        if (_toi != TYPE_OF_IDENT::PERMISSION_WWW) {
+            argout = authProxy->command_inout(_command_name_for_check_permission, argin);
+        }
+        else {
+            argout = authProxy->command_inout("check_permissions_www", argin);
+        }
+        
         argout >> isAuth;
-        std::stringstream ss;
-        ss << "User " << permission_data[3] << " tried to run the command " << permission_data[1] << ". Access status is " << std::boolalpha << isAuth;
-        mess = ss.str();
+        if (_toi != TYPE_OF_IDENT::PERMISSION_WWW) {
+            std::stringstream ss;
+            ss << "User " << permission_data[3] << " tried to run the command " << permission_data[1] << ". Access status is " << std::boolalpha << isAuth;
+            mess = ss.str();
+        }
+        else {
+            std::stringstream ss;
+            ss << "User " << permission_data[0] << " tried to run the command " << permission_data[3] << ". Access status is " << std::boolalpha << isAuth;
+            mess = ss.str();
+        }
 
         // Если включён режим отправления данных в журналы.
         // Если задан uselog в Property "Options". Подробнее в README.md
@@ -55,9 +68,9 @@ void WebSocketDS_ns::UserControl::setCommandNameForCheckPermission(const string&
 }
 
 pair<bool, string> WebSocketDS_ns::UserControl::check_user(const string& login, const string& password) {
+
     pair<bool, string> authStatus;
     authStatus.first = false;
-
     vector<string> auth_data;
 
     auth_data.push_back(login);
@@ -169,10 +182,20 @@ bool WebSocketDS_ns::UserControl::sendLog(Tango::DeviceProxy *authProxy, const v
     vector <string> permission_data_for_log;
 
     permission_data_for_log.push_back(timestamp_string);
-    permission_data_for_log.push_back(permission_data[3]); // login
-    permission_data_for_log.push_back(permission_data[0]); // device_name
-    permission_data_for_log.push_back(permission_data[2]); // ip
-    permission_data_for_log.push_back(permission_data[1]); // command_name
+    if (_toi != TYPE_OF_IDENT::PERMISSION_WWW) {
+        permission_data_for_log.push_back(permission_data[3]); // login
+        permission_data_for_log.push_back(permission_data[0]); // device_name
+        permission_data_for_log.push_back(permission_data[2]); // ip
+        permission_data_for_log.push_back(permission_data[1]); // command_name
+    }
+    else {
+        // Для аутентификации в Егоровом AuthDS в check_permissions_www
+        permission_data_for_log.push_back(permission_data[0]); // login
+        permission_data_for_log.push_back(permission_data[2]); // device_name
+        permission_data_for_log.push_back(permission_data[4]); // ip
+        permission_data_for_log.push_back(permission_data[3]); // command_name
+    }
+
     permission_data_for_log.push_back(commandJson);
     permission_data_for_log.push_back(to_string(isAuthOrStatusAndIsGroup.first)); // isAuth
     permission_data_for_log.push_back(to_string(isAuthOrStatusAndIsGroup.second)); // isGroup
@@ -196,17 +219,32 @@ vector<string> WebSocketDS_ns::UserControl::getPermissionData(const ParsedInputJ
     // Проверка ключей из remoteConf проводится checkKeysFromParsedGet
     vector <string> permission_data;
 
-    permission_data.resize(4);
+    if (_toi != TYPE_OF_IDENT::PERMISSION_WWW) {
+        permission_data.resize(4);
 
-    permission_data[0] = deviceName; // device
-    if (typeWsReq == TYPE_WS_REQ::COMMAND || typeWsReq == TYPE_WS_REQ::COMMAND_DEV_CLIENT)
-        permission_data[1] = parsedInputJson.otherInpStr.at("command_name"); // commandName
-    else if (typeWsReq == TYPE_WS_REQ::ATTRIBUTE_WRITE || typeWsReq == TYPE_WS_REQ::ATTR_DEV_CLIENT_WR)
-        permission_data[1] = parsedInputJson.otherInpStr.at("attr_name"); // commandName
-    else
-        throw std::runtime_error("check getPermissionData");
-    permission_data[2] = connectionData.ip_client;
-    permission_data[3] = connectionData.login;
+        permission_data[0] = deviceName; // device
+        if (typeWsReq == TYPE_WS_REQ::COMMAND || typeWsReq == TYPE_WS_REQ::COMMAND_DEV_CLIENT)
+            permission_data[1] = parsedInputJson.otherInpStr.at("command_name"); // commandName
+        else if (typeWsReq == TYPE_WS_REQ::ATTRIBUTE_WRITE || typeWsReq == TYPE_WS_REQ::ATTR_DEV_CLIENT_WR)
+            permission_data[1] = parsedInputJson.otherInpStr.at("attr_name"); // commandName
+        else
+            throw std::runtime_error("check getPermissionData");
+        permission_data[2] = connectionData.ip_client;
+        permission_data[3] = connectionData.login;
+    }
+    else { // Для аутентификации в Егоровом AuthDS в check_permissions_www
+        permission_data.resize(5);
+        permission_data[0] = connectionData.login;
+        permission_data[1] = connectionData.password;
+        permission_data[2] = deviceName;
+
+        if (typeWsReq == TYPE_WS_REQ::COMMAND || typeWsReq == TYPE_WS_REQ::COMMAND_DEV_CLIENT)
+            permission_data[3] = parsedInputJson.otherInpStr.at("command_name") + "/write"; // commandName
+        else if (typeWsReq == TYPE_WS_REQ::ATTRIBUTE_WRITE || typeWsReq == TYPE_WS_REQ::ATTR_DEV_CLIENT_WR)
+            permission_data[3] = parsedInputJson.otherInpStr.at("attr_name") + "/write"; // commandName
+
+        permission_data[4] = connectionData.ip_client;
+    }
     
     return permission_data;
 }
