@@ -773,7 +773,7 @@ namespace WebSocketDS_ns
     }
 
     string WSTangoConn::sendRequest_ForAuth(const ParsedInputJson& inputReq, ConnectionData& connData) {
-        if (typeOfIdent != TYPE_OF_IDENT::SIMPLE)
+        if (typeOfIdent != TYPE_OF_IDENT::SIMPLE &&  typeOfIdent != TYPE_OF_IDENT::PERMISSION_WWW)
             return StringProc::exceptionStringOut(inputReq.id, NONE, "This type_req is only used when TYPE_OF_IDENT is SIMPLE", inputReq.type_req);
         
         // Производится проверка пользователя
@@ -785,6 +785,10 @@ namespace WebSocketDS_ns
 
         string login = inputReq.otherInpStr.at("login");
         string pass = inputReq.otherInpStr.at("password");
+
+        if (!login.size() || !pass.size()) {
+            return StringProc::exceptionStringOut(inputReq.id, NONE, "keys login and password should not be empty", inputReq.type_req);
+        }
         
         if (connData.login.size())
         // Информация о последнем клиенте хранится connData
@@ -793,7 +797,17 @@ namespace WebSocketDS_ns
             return StringProc::exceptionStringOut(inputReq.id, NONE, "User " + connData.login + " already verified", inputReq.type_req);
         }
 
-        auto userCheckStatus = uc->check_user(login, pass);
+        pair<bool, string> userCheckStatus;
+
+        if (typeOfIdent != TYPE_OF_IDENT::PERMISSION_WWW) {
+            userCheckStatus = uc->check_user(login, pass);
+        }
+        else {
+            // Для аутентификации в Егоровом AuthDS в check_permissions_www
+            // При подключении не проводится check_user. 
+            userCheckStatus = make_pair(true,"");
+        }
+        
 
         if (!userCheckStatus.first) {
             return StringProc::exceptionStringOut(inputReq.id, NONE, userCheckStatus.second, inputReq.type_req);

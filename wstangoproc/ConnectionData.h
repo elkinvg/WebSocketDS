@@ -45,6 +45,7 @@ namespace WebSocketDS_ns
             this->ip_client = std::move(data.ip_client);
             this->forRandIdent = std::move(data.forRandIdent);
             this->remoteConf = std::move(data.remoteConf);
+            this->userCheckStatus = std::move(data.userCheckStatus);
         }
 
         ConnectionData& operator=(ConnectionData&& data)
@@ -55,6 +56,7 @@ namespace WebSocketDS_ns
             this->ip_client = std::move(data.ip_client);
             this->forRandIdent = std::move(data.forRandIdent);
             this->remoteConf = std::move(data.remoteConf);
+            this->userCheckStatus = std::move(data.userCheckStatus);
            
             return *this;
         }

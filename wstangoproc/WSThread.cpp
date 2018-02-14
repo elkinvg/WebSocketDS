@@ -567,6 +567,12 @@ namespace WebSocketDS_ns
         if (typeOfIdent == TYPE_OF_IDENT::SIMPLE || typeOfIdent == TYPE_OF_IDENT::PERMISSION_WWW)
         {            
             conn_data.password = parsedGet["password"];
+
+            if (typeOfIdent == TYPE_OF_IDENT::PERMISSION_WWW) {
+                // Для аутентификации в Егоровом AuthDS в check_permissions_www
+                // При подключении не проводится check_user. 
+                conn_data.userCheckStatus.first = true;
+            }
         }
         else if (typeOfIdent == TYPE_OF_IDENT::RANDIDENT) {
             conn_data.forRandIdent.rand_ident_str = parsedGet["rand_ident"];

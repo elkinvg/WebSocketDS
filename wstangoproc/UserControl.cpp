@@ -23,12 +23,14 @@ bool WebSocketDS_ns::UserControl::check_permission(const ParsedInputJson& parsed
         authProxy = new Tango::DeviceProxy(_authDS);
         if (_toi != TYPE_OF_IDENT::PERMISSION_WWW) {
             argout = authProxy->command_inout(_command_name_for_check_permission, argin);
+            argout >> isAuth;
         }
         else {
-            argout = authProxy->command_inout("check_permissions_www", argin);
+            authProxy->command_inout("check_permissions_www", argin);
+            isAuth = true;
         }
         
-        argout >> isAuth;
+
         if (_toi != TYPE_OF_IDENT::PERMISSION_WWW) {
             std::stringstream ss;
             ss << "User " << permission_data[3] << " tried to run the command " << permission_data[1] << ". Access status is " << std::boolalpha << isAuth;
@@ -49,11 +51,20 @@ bool WebSocketDS_ns::UserControl::check_permission(const ParsedInputJson& parsed
     }
     catch (Tango::DevFailed &e) {
         std::stringstream ss;
-        ss << "Could not connect to auth-device-server " << _authDS << " .. Desc:";
+        ss << "Exception from AuthDS " << _authDS << " .. Desc:";
         for (unsigned int i = 0; i < e.errors.length(); i++)
-            ss << " " << e.errors[0].reason << ".";
+            ss << " " << e.errors[0].desc << ".";
         mess = ss.str();
         if (authProxy!=nullptr)
+            delete authProxy;
+    }
+    catch (std::exception &e)
+    {
+        std::stringstream ss;
+        ss << "Exception from AuthDS " << _authDS << " .. Desc: ";
+        ss << e.what();
+        mess = ss.str();
+        if (authProxy != nullptr)
             delete authProxy;
     }
     return isAuth;
