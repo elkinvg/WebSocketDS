@@ -66,7 +66,7 @@ namespace WebSocketDS_ns
         iterator++;
     }
 
-    void DeviceForWs::generateJsonForAttrReadCl(const ParsedInputJson& parsedInput, std::stringstream& json)
+    void DeviceForWs::generateJsonForAttrRead(const ParsedInputJson& parsedInput, std::stringstream& json)
     {
         json << "{\"event\": \"read\", \"type_req\": \"" << parsedInput.type_req << "\", ";
         if (parsedInput.check_key("device_name") == TYPE_OF_VAL::VALUE)
@@ -143,7 +143,7 @@ namespace WebSocketDS_ns
             
             string attr_name = parsedInput.otherInpStr.at("attr_name");
 
-            if (isWrtAttribute.find(attr_name) == isWrtAttribute.end())
+            if (listWrtAttributes.find(attr_name) == listWrtAttributes.end())
                 return StringProc::exceptionStringOut(parsedInput.id, NONE, "Attribute " + attr_name + " is not included in the list of writable attributes, Or it is not writable. Read README.md for information", parsedInput.type_req);
 
             Tango::AttributeInfoEx attr_info =  device->attribute_query(attr_name);
@@ -168,6 +168,47 @@ namespace WebSocketDS_ns
         }
 
         return StringProc::responseStringOut(parsedInput.id, "Was written to the attribute", parsedInput.type_req);
+    }
+
+    string DeviceForWs::sendAttrRead(const ParsedInputJson& parsedInput)
+    {
+        std::vector<Tango::DeviceAttribute> *attrList = nullptr;
+        stringstream json;
+
+        string attribute = parsedInput.otherInpStr.at("attr_name");
+
+        try {
+            device->attribute_query(attribute);
+        }
+        catch (Tango::DevFailed &e) {
+            vector<string> errors;
+            for (int i = 0; i < e.errors.length(); i++) {
+                errors.push_back((string)e.errors[i].desc);
+            }
+            return StringProc::exceptionStringOut(parsedInput.id, attribute, errors, parsedInput.type_req);
+        }
+
+        vector<string> attributes{ attribute };
+
+        json << "{\"event\": \"read\", \"type_req\": \"" << parsedInput.type_req << "\", ";
+
+        try {
+            auto idTmp = stoi(parsedInput.id);
+            json << "\"id_req\": " << idTmp << ", ";
+        }
+        catch (...) {
+            // id_req может быть числом, либо случайной строкой
+            if (parsedInput.id == NONE)
+                json << "\"id_req\": " << parsedInput.id << ", ";
+            else
+                json << "\"id_req\": \"" << parsedInput.id << "\", ";
+        }
+        json << "\"data\": [";
+        attrList = device->read_attributes(attributes);
+        generateAttrJson(json, attrList);
+        json << "]";
+        json << "}";
+        return json.str();
     }
 
     vector<string> DeviceForWs::getListOfDevicesNames() 

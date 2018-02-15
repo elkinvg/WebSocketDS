@@ -26,7 +26,6 @@ WebSocketDS
     - **[Method SIMPLE](#method-simple)**
     - **[Method USERANDIDENT](#method-userandident)**
     - **[Method USERANDIDENT2](#method-userandident)**
-    - **[Method USERANDIDENT3](#method-userandident3)**
     
 - **[Logging](#logging)**
 
@@ -688,7 +687,18 @@ Authorization and authentication are performed in the Device `AuthDS`.
 
 #### Method SIMPLE
 
-`ws(wss)://ip_or_hostname:port?login=zzz&password=zzz`
+login and password must be written to URL `ws(wss)://ip_or_hostname:port?login=zzz&password=zzz`
+
+or after connection:
+
+   ```json
+	{
+		"type_req": "change_user_smpl",
+		"id": "Request id",
+		"login": "login",
+		"password": "password"
+	}
+   ```
 
 Device `AuthDS` must contain method `check_user(const Tango::DevVarStringArray (*argin)` and return true or false.
 If you want to change the name of method, you need to define `command_name_for_check_user=NEW_NAME_FOR_CHECK_USER_METHOD` in Property "Options"
@@ -706,7 +716,30 @@ If you want to change the name of method, you need to define `command_name_for_c
 
 #### Method USERANDIDENT
 
-`ws(wss)://ip_or_hostname:port?login=yyy&rand_ident=yyy&rand_ident_hash=yyy`
+login, rand_ident and rand_ident_hash must be written to URL `ws(wss)://ip_or_hostname:port?login=yyy&rand_ident=yyy&rand_ident_hash=yyy`
+
+or sent in json-message:
+
+  ```json
+  {
+  	"type_req": "rident",
+  	"id": "Request id",
+  	"login": "login",
+  	"rident": "rand_ident",
+  	"rident_hash": "rand_ident_hash"
+  }
+  ```
+  
+The server will send a response:
+  
+  ```json
+  {
+  	"event": "read",
+  	"type_req": "rident",
+  	"id_req": "Request id",
+  	"success": "true or false"
+  }
+  ```  
 
 To activate this feature, you need to define `tident=rndid` in Property "Options"
 
@@ -769,35 +802,7 @@ Finish. The server will send a response:
   	"success": "true or false"
   }
   ```
-   
-#### Method USERANDIDENT3
-
-The same as in [Method USERANDIDENT](#method-userandident), but authentication will be after connecting
-
-To activate this feature, you need to define `tident=rndid3` in Property "Options"
-
-To authorize, send:
-
-  ```json
-  {
-  	"type_req": "rident",
-  	"id": "Request id",
-  	"login": "login",
-  	"rident": "rand_ident",
-  	"rident_hash": "rand_ident_hash"
-  }
-  ```
   
-The server will send a response:
-  
-  ```json
-  {
-  	"event": "read",
-  	"type_req": "rident",
-  	"id_req": "Request id",
-  	"success": "true or false"
-  }
-  ```  
 
 ## Logging
 

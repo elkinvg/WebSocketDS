@@ -117,6 +117,15 @@ namespace WebSocketDS_ns
         return out;
     }
 
+    bool GroupOrDeviceForWs::isOnlyWrtAttribute(const string& attr_name) {
+        if (listOnlyWrtAttribute.find(attr_name) != listOnlyWrtAttribute.end()) {
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
     void GroupOrDeviceForWs::initAttr(vector<string> &attributes)
     {
         //DEBUG_STREAM << "Attributes: " << endl;
@@ -152,8 +161,10 @@ namespace WebSocketDS_ns
 
                 if (it != gettedOptions.end()) {
                     
-                    if (checkIsAttributeWriteble(attr))
-                        isWrtAttribute.insert(attr);
+                    if (checkIsAttributeWriteble(attr)) {
+                        listWrtAttributes.insert(attr);
+                        listOnlyWrtAttribute.insert(attr);
+                    }
                     continue;
                 }
 
@@ -162,7 +173,7 @@ namespace WebSocketDS_ns
 
                 // An attribute can be writable only if it has option  "wrt". 
                 if (processor->checkOption(attr, "wrt", TYPE_WS_REQ::ATTRIBUTE).first && checkIsAttributeWriteble(attr)) {
-                    isWrtAttribute.insert(attr);
+                    listWrtAttributes.insert(attr);
                 }
             }
 
@@ -266,6 +277,11 @@ namespace WebSocketDS_ns
             else
                 processor->process_attribute_t(att, json, _isShortAttr);
         }
+    }
+
+    void GroupOrDeviceForWs::generateAttrJson(std::stringstream& json, Tango::DeviceAttribute& attr)
+    {
+        processor->process_attribute_t(attr, json, _isShortAttr);
     }
 
     Tango::DeviceData GroupOrDeviceForWs::tangoCommandInoutForDevice(Tango::DeviceProxy *deviceProxy, const ParsedInputJson& dataFromJson, string& errorMessInJson)

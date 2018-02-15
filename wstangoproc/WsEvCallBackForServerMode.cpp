@@ -26,6 +26,7 @@ namespace WebSocketDS_ns
                 for (int i = 0; i < dt->errors.length(); i++) {
                     errors.push_back((string)dt->errors[i].desc);
                 }
+
                 send_mess_all(StringProc::exceptionStringOut(errors, "from_event"));
                 return;
             }
@@ -60,5 +61,4 @@ namespace WebSocketDS_ns
         }
         catch (...) {}
     }
-
 }

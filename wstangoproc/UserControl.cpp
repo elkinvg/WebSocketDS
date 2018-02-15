@@ -10,10 +10,10 @@ WebSocketDS_ns::UserControl::UserControl(string authDS, TYPE_OF_IDENT toi, bool 
     _command_name_for_check_permission = "check_permissions";
 }
 
-bool WebSocketDS_ns::UserControl::check_permission(const ParsedInputJson& parsedInputJson, const unordered_map<string, string> &remoteConf, string deviceName, bool isGroup, string &mess, TYPE_WS_REQ typeWsReq) {
+bool WebSocketDS_ns::UserControl::check_permission(const ParsedInputJson& parsedInputJson, const ConnectionData &connectionData, string deviceName, bool isGroup, string &mess, TYPE_WS_REQ typeWsReq) {
     bool isAuth = false;
 
-    vector <string> permission_data = getPermissionData(parsedInputJson, remoteConf, deviceName, typeWsReq);
+    vector <string> permission_data = getPermissionData(parsedInputJson, connectionData, deviceName, typeWsReq);
 
     Tango::DeviceData argin, argout;
     Tango::DeviceProxy *authProxy = nullptr;
@@ -23,12 +23,14 @@ bool WebSocketDS_ns::UserControl::check_permission(const ParsedInputJson& parsed
         authProxy = new Tango::DeviceProxy(_authDS);
         if (_toi != TYPE_OF_IDENT::PERMISSION_WWW) {
             argout = authProxy->command_inout(_command_name_for_check_permission, argin);
+            argout >> isAuth;
         }
         else {
-            argout = authProxy->command_inout("check_permissions_www", argin);
+            authProxy->command_inout("check_permissions_www", argin);
+            isAuth = true;
         }
         
-        argout >> isAuth;
+
         if (_toi != TYPE_OF_IDENT::PERMISSION_WWW) {
             std::stringstream ss;
             ss << "User " << permission_data[3] << " tried to run the command " << permission_data[1] << ". Access status is " << std::boolalpha << isAuth;
@@ -49,11 +51,20 @@ bool WebSocketDS_ns::UserControl::check_permission(const ParsedInputJson& parsed
     }
     catch (Tango::DevFailed &e) {
         std::stringstream ss;
-        ss << "Could not connect to auth-device-server " << _authDS << " .. Desc:";
+        ss << "Exception from AuthDS " << _authDS << " .. Desc:";
         for (unsigned int i = 0; i < e.errors.length(); i++)
-            ss << " " << e.errors[0].reason << ".";
+            ss << " " << e.errors[0].desc << ".";
         mess = ss.str();
         if (authProxy!=nullptr)
+            delete authProxy;
+    }
+    catch (std::exception &e)
+    {
+        std::stringstream ss;
+        ss << "Exception from AuthDS " << _authDS << " .. Desc: ";
+        ss << e.what();
+        mess = ss.str();
+        if (authProxy != nullptr)
             delete authProxy;
     }
     return isAuth;
@@ -67,77 +78,14 @@ void WebSocketDS_ns::UserControl::setCommandNameForCheckPermission(const string&
     _command_name_for_check_permission = new_command_name;
 }
 
-pair<bool, string> WebSocketDS_ns::UserControl::getInformationFromCheckingUser(const ConnectionData &connectionData)
-{
-    bool isAuth = false;
-    string mess;
+pair<bool, string> WebSocketDS_ns::UserControl::check_user(const string& login, const string& password) {
 
-    auto parsedGet = connectionData.remoteConf;
-
-    if (_toi == TYPE_OF_IDENT::SIMPLE || _toi == TYPE_OF_IDENT::RANDIDENT || _toi == TYPE_OF_IDENT::PERMISSION_WWW) {
-        if (!checkKeysFromParsedGet(parsedGet)) {
-            if (_toi == TYPE_OF_IDENT::SIMPLE || _toi == TYPE_OF_IDENT::PERMISSION_WWW)
-                mess = "login or password or ip not found";
-            if (_toi == TYPE_OF_IDENT::RANDIDENT)
-                mess = "login or rand_ident_hash and rand_ident or ip not found";
-                
-            return make_pair(isAuth, mess);
-        }
-    }    
-
-    if (_toi == TYPE_OF_IDENT::SIMPLE)
-    {
-        isAuth = check_user(parsedGet, mess);
-
-        if (!isAuth) {
-            if (!mess.size())
-                mess = "incorrect login or password";
-        }
-    }
-    else if (_toi == TYPE_OF_IDENT::RANDIDENT || _toi == TYPE_OF_IDENT::RANDIDENT2 || _toi == TYPE_OF_IDENT::RANDIDENT3) {
-        string login, rand_ident, rand_ident_hash;
-
-        if (_toi == TYPE_OF_IDENT::RANDIDENT) {
-            login = connectionData.remoteConf.at("login");
-            rand_ident = connectionData.remoteConf.at("rand_ident");
-            rand_ident_hash = connectionData.remoteConf.at("rand_ident_hash");
-        }
-        if (_toi == TYPE_OF_IDENT::RANDIDENT2 || _toi == TYPE_OF_IDENT::RANDIDENT3) {
-            login = connectionData.forRandIdent2.login;
-            rand_ident_hash = connectionData.forRandIdent2.rand_ident_hash;
-        }
-
-        if (_toi == TYPE_OF_IDENT::RANDIDENT3)
-            rand_ident = connectionData.forRandIdent2.rand_ident_str;
-        if (_toi == TYPE_OF_IDENT::RANDIDENT2)
-            rand_ident = std::to_string(connectionData.forRandIdent2.rand_ident);
-
-        isAuth = check_user_rident(login, rand_ident, rand_ident_hash, mess);
-
-        if (!isAuth) {
-            if (!mess.size())
-                mess = "Incorrect login or rand_ident or rand_ident_hash. ";
-        }
-
-    }
-    else if (_toi == TYPE_OF_IDENT::PERMISSION_WWW) {
-        // Для аутентификации в Егоровом AuthDS в check_permissions_www
-        // В данном случае логин и пароль просто сохраняется.
-        isAuth = true;
-    }
-    return make_pair(isAuth, mess);
-}
-
-bool WebSocketDS_ns::UserControl::check_user(const unordered_map<string, string>& parsedGet, string& errMess) {
-    bool isAuth = false;
-
+    pair<bool, string> authStatus;
+    authStatus.first = false;
     vector<string> auth_data;
 
-    if (parsedGet.find("login") == parsedGet.end() || parsedGet.find("password") == parsedGet.end())
-        return isAuth;
-
-    auth_data.push_back(parsedGet.at("login"));
-    auth_data.push_back(parsedGet.at("password"));
+    auth_data.push_back(login);
+    auth_data.push_back(password);
 
     Tango::DeviceData argin, argout;
     Tango::DeviceProxy *authProxy = nullptr;
@@ -145,26 +93,32 @@ bool WebSocketDS_ns::UserControl::check_user(const unordered_map<string, string>
     try {
         argin << auth_data;
         authProxy = new Tango::DeviceProxy(_authDS);
-        argout = authProxy->command_inout(_command_name_for_user_control, argin);
-        argout >> isAuth;
+        argout = authProxy->command_inout("check_user", argin);
+        argout >> authStatus.first;
         delete authProxy;
+        
+        if (!authStatus.first) {
+            authStatus.second = "Incorrect password for " + login + " or user is not registered";
+        }
     }
     catch (Tango::DevFailed &e) {
         std::stringstream ss;
         ss << "Could not connect to auth-device-server " << _authDS << " .. Desc:";
         for (unsigned int i = 0; i < e.errors.length(); i++)
             ss << " " << i << ": " << e.errors[0].desc << ".";
-        errMess = ss.str();
+        authStatus.second = ss.str();
         if (authProxy != nullptr)
             delete authProxy;
     }
 
-    return isAuth;
+    return authStatus;
 }
 
-bool WebSocketDS_ns::UserControl::check_user_rident(string login, string rand_ident, string rand_ident_hash, string& errMess)
+pair<bool, string> WebSocketDS_ns::UserControl::check_user_rident(string login, string rand_ident, string rand_ident_hash)
 {
-    bool isAuth = false;
+    pair<bool, string> authStatus;
+    authStatus.first = false;
+
     vector<string> auth_data;
 
     auth_data.push_back(login);
@@ -178,28 +132,32 @@ bool WebSocketDS_ns::UserControl::check_user_rident(string login, string rand_id
         argin << auth_data;
         authProxy = new Tango::DeviceProxy(_authDS);
         argout = authProxy->command_inout("check_user_ident", argin);
-        argout >> isAuth;
+        argout >> authStatus.first;
         delete authProxy;
+
+        if (!authStatus.first) {
+            authStatus.second = "Incorrect input data for " + login + " or user is not registered";
+        }
     }
     catch (Tango::DevFailed &e) {
         std::stringstream ss;
         ss << "Could not connect to auth-device-server " << _authDS << " .. Desc:";
         for (unsigned int i = 0; i < e.errors.length(); i++)
             ss << " " << i << ": " << e.errors[0].desc << ".";
-        errMess = ss.str();
+        authStatus.second = ss.str();
         if (authProxy != nullptr)
             delete authProxy;
     }
 
-    return isAuth;
+    return authStatus;
 }
 
-bool WebSocketDS_ns::UserControl::sendLogCommand(const WebSocketDS_ns::ParsedInputJson &parsedInputJson, const std::unordered_map<std::string, std::string> &remoteConf, string deviceName, bool isGroup, bool status, TYPE_WS_REQ typeWsReq)
+bool WebSocketDS_ns::UserControl::sendLogCommand(const WebSocketDS_ns::ParsedInputJson &parsedInputJson, const ConnectionData &connectionData, string deviceName, bool isGroup, bool status, TYPE_WS_REQ typeWsReq)
 {
     if (!_isLogActive)
         return false;
 
-    vector <string> permission_data = getPermissionData(parsedInputJson, remoteConf, deviceName, typeWsReq);
+    vector <string> permission_data = getPermissionData(parsedInputJson, connectionData, deviceName, typeWsReq);
     Tango::DeviceProxy *authProxy = nullptr;
     try {
         authProxy = new Tango::DeviceProxy(_authDS);
@@ -267,7 +225,7 @@ bool WebSocketDS_ns::UserControl::sendLog(Tango::DeviceProxy *authProxy, const v
     return isSuccess;
 }
 
-vector<string> WebSocketDS_ns::UserControl::getPermissionData(const ParsedInputJson &parsedInputJson, const std::unordered_map<std::string, std::string> &remoteConf, const string &deviceName, TYPE_WS_REQ typeWsReq)
+vector<string> WebSocketDS_ns::UserControl::getPermissionData(const ParsedInputJson &parsedInputJson, const ConnectionData &connectionData, const string &deviceName, TYPE_WS_REQ typeWsReq)
 {
     // Проверка ключей из remoteConf проводится checkKeysFromParsedGet
     vector <string> permission_data;
@@ -282,13 +240,13 @@ vector<string> WebSocketDS_ns::UserControl::getPermissionData(const ParsedInputJ
             permission_data[1] = parsedInputJson.otherInpStr.at("attr_name"); // commandName
         else
             throw std::runtime_error("check getPermissionData");
-        permission_data[2] = remoteConf.at("ip");
-        permission_data[3] = remoteConf.at("login");
+        permission_data[2] = connectionData.ip_client;
+        permission_data[3] = connectionData.login;
     }
     else { // Для аутентификации в Егоровом AuthDS в check_permissions_www
         permission_data.resize(5);
-        permission_data[0] = remoteConf.at("login");
-        permission_data[1] = remoteConf.at("password");
+        permission_data[0] = connectionData.login;
+        permission_data[1] = connectionData.password;
         permission_data[2] = deviceName;
 
         if (typeWsReq == TYPE_WS_REQ::COMMAND || typeWsReq == TYPE_WS_REQ::COMMAND_DEV_CLIENT)
@@ -296,30 +254,8 @@ vector<string> WebSocketDS_ns::UserControl::getPermissionData(const ParsedInputJ
         else if (typeWsReq == TYPE_WS_REQ::ATTRIBUTE_WRITE || typeWsReq == TYPE_WS_REQ::ATTR_DEV_CLIENT_WR)
             permission_data[3] = parsedInputJson.otherInpStr.at("attr_name") + "/write"; // commandName
 
-        permission_data[4] = remoteConf.at("ip");
-    } 
+        permission_data[4] = connectionData.ip_client;
+    }
     
     return permission_data;
-}
-
-bool WebSocketDS_ns::UserControl::checkKeysFromParsedGet(const unordered_map<string, string>& parsedGet)
-{
-    if (_toi == TYPE_OF_IDENT::RANDIDENT)
-    {
-        if (parsedGet.find("login") == parsedGet.end() /*|| parsedGet.find("id_ri") == parsedGet.end()*/)
-            return false;
-
-        if (parsedGet.find("ip") == parsedGet.end())
-            return false;
-
-        if (parsedGet.find("rand_ident_hash") == parsedGet.end() || parsedGet.find("rand_ident") == parsedGet.end())
-            return false;
-    }
-    else {
-        if (parsedGet.find("login") == parsedGet.end() || parsedGet.find("password") == parsedGet.end() || parsedGet.find("ip") == parsedGet.end()) {
-            //ERROR_STREAM << "login or password or ip not found" << endl;
-            return false;
-        }
-    }
-    return true;    
 }

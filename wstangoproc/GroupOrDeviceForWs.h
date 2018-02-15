@@ -30,18 +30,21 @@ namespace WebSocketDS_ns
         virtual string generateJsonForUpdate() = 0;
         virtual void generateJsonForUpdate(std::stringstream& json) = 0;
 
-        virtual void generateJsonForAttrReadCl(const ParsedInputJson& parsedInput, std::stringstream& json) = 0;
+        virtual void generateJsonForAttrRead(const ParsedInputJson& parsedInput, std::stringstream& json) = 0;
 
         virtual string sendPipeCommand(const ParsedInputJson& parsedInput) = 0;
         virtual string sendCommand(const ParsedInputJson& parsedInput, bool& statusComm) = 0;
         virtual string sendCommandBin(const ParsedInputJson& parsedInput, bool& statusComm) = 0;
 
         virtual string sendAttrWr(const ParsedInputJson& parsedInput, bool& statusComm) = 0;
+        virtual string sendAttrRead(const ParsedInputJson& parsedInput) = 0;
 
         virtual vector<string> getListOfDevicesNames() = 0;
 
         string insertAttrToList(vector<string> &attrNames);
         vector<string> eraseAttrFromList(vector<string> &attrNames, const string& pipeName, const string& deviceName);
+
+        bool isOnlyWrtAttribute(const string& attr_name);
 
     protected:
         virtual Tango::CommandInfo getCommandInfo(const string& command_name) = 0;
@@ -49,6 +52,7 @@ namespace WebSocketDS_ns
         virtual bool checkIsAttributeWriteble(const string& attr_name) = 0;
 
         void generateAttrJson(std::stringstream& json, vector<Tango::DeviceAttribute> *attrList);
+        void generateAttrJson(std::stringstream& json, Tango::DeviceAttribute& attr);
 
         Tango::DeviceData tangoCommandInoutForDevice(Tango::DeviceProxy *deviceProxy, const ParsedInputJson& dataFromJson, string& errorMessInJson);
         Tango::DeviceData tangoCommandInoutForDeviceCl(Tango::DeviceProxy *deviceProxy, const ParsedInputJson& dataFromJson, string& errorMessInJson);
@@ -59,9 +63,6 @@ namespace WebSocketDS_ns
 
         virtual bool initAllAttrs() = 0;
 
-    //private:
-
-        //void initAttrAndPipe(vector<string> &attributes, vector<string>&pipeName);
         void initAttr(vector<string> &attributes);
         void initPipe(vector<string> &pipeName);
         void initComm(vector<string> &commands);
@@ -82,7 +83,8 @@ namespace WebSocketDS_ns
         std::unordered_map<std::string, Tango::CommandInfo> accessibleCommandInfo;
         std::unique_ptr<TangoProcessor> processor;
         //const string ERR_PRED = "err"; // .insert(0, ERR_PRED)
-        std::unordered_set<std::string> isWrtAttribute;
+        std::unordered_set<std::string> listWrtAttributes;
+        std::unordered_set<std::string> listOnlyWrtAttribute;
     
     private:
         bool _isShortAttr{ true };

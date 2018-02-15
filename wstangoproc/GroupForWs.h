@@ -29,13 +29,14 @@ namespace WebSocketDS_ns
         virtual string generateJsonForUpdate() override;
         virtual void generateJsonForUpdate(std::stringstream& json) override;
 
-        virtual void generateJsonForAttrReadCl(const ParsedInputJson& parsedInput, std::stringstream& json) override;
+        virtual void generateJsonForAttrRead(const ParsedInputJson& parsedInput, std::stringstream& json) override;
 
         virtual string sendPipeCommand(const ParsedInputJson& parsedInput) override;
         virtual string sendCommand(const ParsedInputJson& parsedInput, bool& statusComm) override;
         virtual string sendCommandBin(const ParsedInputJson& parsedInput, bool& statusComm) override;
 
         virtual string sendAttrWr(const ParsedInputJson& parsedInput, bool& statusComm) override;
+        virtual string sendAttrRead(const ParsedInputJson& parsedInput) override;
 
         virtual vector<string> getListOfDevicesNames() override;
 
@@ -47,6 +48,7 @@ namespace WebSocketDS_ns
         Tango::GroupCmdReplyList tangoCommandInoutForGroup(const ParsedInputJson& dataFromJson, string& errorMessInJson);
         // For device
         std::vector<Tango::DeviceAttribute>* getAttributeList(const string& device_name_i, vector<string> &attributes);
+
 
     private:
         string generateJsonFromPipeCommForGroup(const ParsedInputJson& parsedInput);

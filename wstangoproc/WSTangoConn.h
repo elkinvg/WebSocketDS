@@ -75,7 +75,13 @@ namespace WebSocketDS_ns
         string sendRequest_RidentAns(const ParsedInputJson& inputReq, ConnectionData& connData);
         string sendRequest_Rident(const ParsedInputJson& inputReq, ConnectionData& connData);
 
-        // attribute write
+        // for authentification
+        string sendRequest_ForAuth(const ParsedInputJson& inputReq, ConnectionData& connData);
+
+        // read attribute
+        void sendRequest_AttrRead(const ParsedInputJson& inputReq, ConnectionData& connData, string& resp_json);
+
+        // write attribute
         void sendRequest_AttrClient(const ParsedInputJson& inputReq, ConnectionData& connData, string& resp_json);
         void sendRequest_AttrWrite(const ParsedInputJson& inputReq, ConnectionData& connData, string& resp_json);
         void sendRequest_AttrWrite_DevClient(const ParsedInputJson& inputReq, ConnectionData& connData, string& resp_json);
