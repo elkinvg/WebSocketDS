@@ -45,11 +45,11 @@ namespace WebSocketDS_ns
             for (int i = 0; i < e.errors.length(); i++) {
                 errors.push_back((string)e.errors[i].desc);
             }
-            send_mess_all(StringProc::exceptionStringOut(errors, "exc_from_event_dev"));
+            //send_mess_all(StringProc::exceptionStringOut(errors, "exc_from_event_dev"));
         }
 
         catch (...) {
-            send_mess_all(StringProc::exceptionStringOut("Unknown exception from event", "exc_from_event_dev"));
+            //send_mess_all(StringProc::exceptionStringOut("Unknown exception from event", "exc_from_event_dev"));
         }
         return;
     }
