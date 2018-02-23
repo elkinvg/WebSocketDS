@@ -44,17 +44,17 @@ namespace WebSocketDS_ns
             for (int i = 0; i < e.errors.length(); i++) {
                 errors.push_back((string)e.errors[i].desc);
             }
-            send_mess(StringProc::exceptionStringOut(errors, "exc_from_event"));
+            //send_mess(StringProc::exceptionStringOut(errors, "exc_from_event"));
         }
 
         catch (...) {
-            send_mess(StringProc::exceptionStringOut("Unknown exception from event", "exc_from_event"));
+            //send_mess(StringProc::exceptionStringOut("Unknown exception from event", "exc_from_event"));
         }
     }
 
     void WsEvCallBack::send_mess(const std::string& mess) {
         try{
-            _wsThread->send(_hdl, StringProc::exceptionStringOut("Unknown exception from event", "exc_from_event"));
+            _wsThread->send(_hdl, mess);
         }
         catch (...){}
         
