@@ -76,19 +76,19 @@ namespace WebSocketDS_ns
 
         for (it = m_connections.begin(); it != m_connections.end();) {
             try {
-                //websocketpp::lib::error_code erc;
-                //size_t buffered_amount = get_buffered_amount((it->first));
+                websocketpp::lib::error_code erc;
+                size_t buffered_amount = get_buffered_amount((it->first));
 
-                //total += buffered_amount;
-                //DEBUG_STREAM_F << "con: " << ii << " bufersize: " << buffered_amount << " bytes | " << std::fixed << std::setprecision(3) << (buffered_amount / (1024. * 1024.)) << " Mb" << endl;
+                total += buffered_amount;
+                DEBUG_STREAM_F << "con: " << ii << " bufersize: " << buffered_amount << " bytes | " << std::fixed << std::setprecision(3) << (buffered_amount / (1024. * 1024.)) << " Mb" << endl;
 
-                //if (buffered_amount<maxBuffSize)
+                if (buffered_amount<maxBuffSize)
                     m_server.send((it->first), msg, websocketpp::frame::opcode::text);
-                //else {
-                //    ii++;
-                //    close_from_server((it++->first));
-                //    continue;
-                //}
+                else {
+                    ii++;
+                    close_from_server((it++->first));
+                    continue;
+                }
 
                 ++it;
                 ii++;
