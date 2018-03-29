@@ -69,7 +69,7 @@ namespace WebSocketDS_ns
             if (std::find(_pipeAttr.begin(),_pipeAttr.end(),pipe) == _pipeAttr.end())
                 _pipeAttr.push_back(pipe.);
         }*/
-        nAttributes = _attributes.size();
+
         return out;
     }
 
@@ -113,7 +113,6 @@ namespace WebSocketDS_ns
             if (iterator != _pipeAttr.end())
                 _pipeAttr.erase(iterator);
         }*/
-        nAttributes = _attributes.size();
         return out;
     }
 
@@ -192,8 +191,6 @@ namespace WebSocketDS_ns
                     isJsonAttribute.insert(attr);
             }
         }
-
-        nAttributes = _attributes.size();
     }
 
     void GroupOrDeviceForWs::initPipe(vector<string>&pipeName)
@@ -258,11 +255,11 @@ namespace WebSocketDS_ns
     void GroupOrDeviceForWs::generateAttrJson(std::stringstream& json, std::vector<Tango::DeviceAttribute> *attrList) {
         int it = 0;
 
-        for (int i = 0; i < nAttributes; i++)
+        for (auto& att : *attrList)
         {
             // Если задан niter для данного атрибута
             // Вывод будет только если iterator кратно nIters
-            Tango::DeviceAttribute att = attrList->at(i);
+            //Tango::DeviceAttribute att = attrList->at(i);
             if (nIters.find(att.get_name()) != nIters.end()) {
                 if (nIters[att.get_name()].first != 0) {
                     if ((iterator + (nIters[att.get_name()].first - nIters[att.get_name()].second)) % nIters[att.get_name()].first != 0)
