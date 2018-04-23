@@ -80,8 +80,8 @@ namespace WebSocketDS_ns
 
     void WSThread_tls::send_all(std::string msg) {
         StringProc::removeSymbolsForString(msg);
-        //msg.clear();
-        con_list::iterator it;
+        int ii = 0;
+        size_t total = 0;
 
         unsigned int maxBuffSize = _tc->getMaxBuffSize();
         if (maxBuffSize < maximumBufferSizeMin || maxBuffSize > maximumBufferSizeMax)
@@ -89,32 +89,50 @@ namespace WebSocketDS_ns
         else
             maxBuffSize = maxBuffSize * 1024;
 
-        for (it = m_connections.begin(); it != m_connections.end();) {
+        vector<websocketpp::connection_hdl> for_close;
+
+        websocketpp::lib::unique_lock<websocketpp::lib::mutex> con_lock(m_connection_lock);
+
+        for (const auto& conn : m_connections) {
             try {
-                size_t buffered_amount = get_buffered_amount((it->first));
+                websocketpp::lib::error_code erc;
+                size_t buffered_amount = get_buffered_amount((conn.first));
+
+                total += buffered_amount;
+                DEBUG_STREAM_F << "con: " << ii << " bufersize: " << buffered_amount << " bytes | " << std::fixed << std::setprecision(3) << (buffered_amount / (1024. * 1024.)) << " Mb" << endl;
 
                 if (buffered_amount<maxBuffSize)
-                    m_server.send((it->first), msg, websocketpp::frame::opcode::text);
+                    m_server.send((conn.first), msg, websocketpp::frame::opcode::text);
                 else {
-                    close_from_server((it++->first));
+                    ii++;
+                    for_close.push_back(conn.first);
                     continue;
                 }
-
-                ++it;
+                ii++;
             }
             catch (websocketpp::exception const & e) {
                 ERROR_STREAM_F << "exception from send_all: " << e.what() << endl;
-                close_from_server((it++->first));
+                ii++;
+                for_close.push_back(conn.first);
             }
-            catch (std::exception& e) {
+            catch (std::exception& e)
+            {
                 ERROR_STREAM_F << "exception from send_all: " << e.what() << endl;
-                close_from_server((it++->first));
+                ii++;
+                for_close.push_back(conn.first);
             }
             catch (...) {
                 ERROR_STREAM_F << "unknown error from send_all " << endl;
-                close_from_server((it++->first));
+                ii++;
+                for_close.push_back(conn.first);
             }
         }
+
+        for (auto& cls : for_close) {
+            close_from_server(cls);
+        }
+
+        DEBUG_STREAM_F << std::fixed << "total bufersize: " << total << " | " << std::setprecision(3) << (total / (1024.*1024.)) << "  Mb: " << endl;
     }
 
     void WSThread_tls::send(websocketpp::connection_hdl hdl, std::string msg) {
@@ -212,8 +230,6 @@ namespace WebSocketDS_ns
     }
 
     void WSThread_tls::close_from_server(websocketpp::connection_hdl hdl) {
-        if (_tc->isServerMode())
-            websocketpp::lib::unique_lock<websocketpp::lib::mutex> con_lock(m_connection_lock);
         try {
             websocketpp::server<websocketpp::config::asio_tls>::connection_ptr con = m_server.get_con_from_hdl(hdl);
             con->close(websocketpp::close::status::normal, "");

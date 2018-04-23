@@ -113,29 +113,46 @@ namespace WebSocketDS_ns
     }
 
     void WSThread::on_open(websocketpp::connection_hdl hdl) {
-        if (_tc->isServerMode())
+
+        auto open_action = [&]() {
+            m_connections[hdl] = std::move(getConnectionData(hdl));
+            m_connections[hdl].sessionId = m_next_sessionid++;
+
+            if (_tc->getTypeOfIdent() == TYPE_OF_IDENT::SIMPLE || _tc->getTypeOfIdent() == TYPE_OF_IDENT::RANDIDENT) {
+                _tc->checkUser(m_connections[hdl]);
+            }
+
+            _tc->setNumOfConnections(m_connections.size());
+
+            DEBUG_STREAM_F << "New user has been connected!! sessionId = " << m_connections[hdl].sessionId << endl;
+            DEBUG_STREAM_F << m_connections.size() << " client connected!!" << endl;
+        };
+
+        if (_tc->isServerMode()) {
             websocketpp::lib::unique_lock<websocketpp::lib::mutex> con_lock(m_connection_lock);
-
-        m_connections[hdl] = std::move(getConnectionData(hdl));
-        m_connections[hdl].sessionId = m_next_sessionid++;
-
-        if (_tc->getTypeOfIdent() == TYPE_OF_IDENT::SIMPLE || _tc->getTypeOfIdent() == TYPE_OF_IDENT::RANDIDENT) {
-            _tc->checkUser(m_connections[hdl]);
+            open_action();
         }
-
-        _tc->setNumOfConnections(m_connections.size());
-        
-        DEBUG_STREAM_F << "New user has been connected!! sessionId = " << m_connections[hdl].sessionId << endl;
-        DEBUG_STREAM_F << m_connections.size() << " client connected!!" << endl;
+        else {
+            open_action();
+        }        
     }
 
     void WSThread::on_close(websocketpp::connection_hdl hdl) {
-        DEBUG_STREAM_F << "User has been disconnected!!" << endl;
-        if (_tc->isServerMode())
+
+        auto close_action = [&]() {
+            DEBUG_STREAM_F << "User has been disconnected!!" << endl;
+            m_connections.erase(hdl);
+            _tc->setNumOfConnections(m_connections.size());
+            DEBUG_STREAM_F << m_connections.size() << " client connected!!" << endl;
+        };
+
+        if (_tc->isServerMode()) {
             websocketpp::lib::unique_lock<websocketpp::lib::mutex> con_lock(m_connection_lock);
-        m_connections.erase(hdl);
-        _tc->setNumOfConnections(m_connections.size());
-        DEBUG_STREAM_F << m_connections.size() << " client connected!!" << endl;
+            close_action();
+        }
+        else {
+            close_action();
+        }
     }
 
     void  WSThread::on_fail(websocketpp::connection_hdl hdl) {
