@@ -167,7 +167,10 @@ namespace WebSocketDS_ns
         vector<string> out;
 
         try {
-            boost::property_tree::ptree child = inPtree.get_child(key);
+            // Поправлено. Добавлен сепаратор |
+            // По умолчанию в качестве сепаратора принимает . и / или \
+            // 
+            boost::property_tree::ptree child = inPtree.get_child(ptree::path_type(ptree::path_type{ key, '|' }));
             if (child.data().size())
                 return vector<string>({ child.data() });
 
