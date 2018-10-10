@@ -916,7 +916,9 @@ namespace WebSocketDS_ns
         typeOfData[Tango::DEVVAR_ULONG64ARRAY] = TYPE_OF_DEVICE_DATA::ARRAY;
         typeOfData[Tango::DEV_INT] = TYPE_OF_DEVICE_DATA::DATA;
         //typeOfData[Tango::DEV_ENCODED] = TYPE_OF_DEVICE_DATA::DATA;
+#if TANGO_VERSION_MAJOR > 8
         typeOfData[Tango::DEV_ENUM] = TYPE_OF_DEVICE_DATA::DATA;
+#endif
     }
 
     void TangoProcessor::process_device_attribute_json(Tango::DeviceAttribute& data, stringstream& json)
