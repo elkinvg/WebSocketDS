@@ -71,7 +71,7 @@ namespace WebSocketDS_ns
         stringunmap optsForPipeComm;
         std::array<string, 5> attrQuality;
         std::array<string, 14> tangoState;
-        std::array<TYPE_OF_DEVICE_DATA,28> typeOfData;
+        std::array<TYPE_OF_DEVICE_DATA,30> typeOfData;
 
     private: // templates
         template <typename T>
