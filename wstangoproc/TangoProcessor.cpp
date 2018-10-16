@@ -23,8 +23,8 @@ namespace WebSocketDS_ns
     {
         /** Генерация JSON для pipe
         {
-            "nameOfAttr" : value,
-            "nameOfAttr2" : [value1, value2]
+        "nameOfAttr" : value,
+        "nameOfAttr2" : [value1, value2]
         }
         **/
 
@@ -32,7 +32,7 @@ namespace WebSocketDS_ns
         size_t numElements = pipe.get_data_elt_nb();
 
         json << "{";
-        for (size_t i=0; i<numElements; i++) {
+        for (size_t i = 0; i < numElements; i++) {
             string nameOfAttr = pipe.get_data_elt_name(i);
             int typeD = pipe.get_data_elt_type(i);
             if (i)
@@ -66,7 +66,7 @@ namespace WebSocketDS_ns
             json << "\"data\": " << NONE;
         else
             devAttrToStr(&att, json);
-          
+
         json << "}";
     }
 
@@ -121,7 +121,7 @@ namespace WebSocketDS_ns
         }
 
         json << "\"argout\":";
-        generateArgoutForJson(devData,json,command_name);
+        generateArgoutForJson(devData, json, command_name);
 
         json << "} ";
         json << "}";
@@ -150,13 +150,13 @@ namespace WebSocketDS_ns
         json << "\"data\":";
         json << "{";
         json << "\"command_name\": " << "\"" << commandName << "\", ";
-       
+
 
         json << "\"argout\":";
         json << " {";
 
         bool notFirst = false;
-        for (auto& reply: replyList) {
+        for (auto& reply : replyList) {
             //string object_name = reply.obj_name();
 
             // Get device name.
@@ -166,7 +166,7 @@ namespace WebSocketDS_ns
             // Getting status. Returns a boolean set to true if the command executed
             // on the group element has failed.
             bool isFailed = reply.has_failed();
-            
+
             if (notFirst)
                 json << ", ";
             else
@@ -181,7 +181,7 @@ namespace WebSocketDS_ns
                 json << " {";
                 json << "\"errors\": [";
                 bool tmpf = false;
-                for (unsigned int i=0; i<el.length(); i++) {
+                for (unsigned int i = 0; i < el.length(); i++) {
                     if (tmpf)
                         json << ", ";
                     else
@@ -204,18 +204,18 @@ namespace WebSocketDS_ns
         // Now it is option "prec" for precision
         for (auto opt : options) {
             if (type_req == TYPE_WS_REQ::ATTRIBUTE)
-                optsForAttributes.insert(make_pair(nameAttrOrComm,opt));
+                optsForAttributes.insert(make_pair(nameAttrOrComm, opt));
             if (type_req == TYPE_WS_REQ::COMMAND)
-                optsForCommands.insert(make_pair(nameAttrOrComm,opt));
+                optsForCommands.insert(make_pair(nameAttrOrComm, opt));
             if (type_req == TYPE_WS_REQ::PIPE)
-                optsForPipe.insert(make_pair(nameAttrOrComm,opt));
+                optsForPipe.insert(make_pair(nameAttrOrComm, opt));
             if (type_req == TYPE_WS_REQ::PIPE_COMM)
-                optsForPipeComm.insert(make_pair(nameAttrOrComm,opt));
+                optsForPipeComm.insert(make_pair(nameAttrOrComm, opt));
         }
     }
 
     void TangoProcessor::devAttrToStr(Tango::DeviceAttribute *attr, stringstream& ss) {
-        
+
         int type = attr->get_type();
         std::string out;
         switch (type) {
@@ -267,8 +267,8 @@ namespace WebSocketDS_ns
             vector<unsigned short> tmpVec;
             if (format == Tango::AttrDataFormat::SCALAR) {
                 (*attr) >> data;
-                tmp = (unsigned short)data;                
-                dataFromAttrsOrCommToJson(tmp, ss, TYPE_WS_REQ::ATTRIBUTE,nameAttr);
+                tmp = (unsigned short)data;
+                dataFromAttrsOrCommToJson(tmp, ss, TYPE_WS_REQ::ATTRIBUTE, nameAttr);
             }
             else
                 if (format == Tango::AttrDataFormat::SPECTRUM || format == Tango::AttrDataFormat::IMAGE) {
@@ -287,7 +287,7 @@ namespace WebSocketDS_ns
                         iter++;
                     }
                     ss << "[";
-                    dataArrayFromAttrOrCommToJson(tmpVec, ss,TYPE_WS_REQ::ATTRIBUTE,nameAttr);
+                    dataArrayFromAttrOrCommToJson(tmpVec, ss, TYPE_WS_REQ::ATTRIBUTE, nameAttr);
                     ss << "]";
                 }
         }
@@ -317,11 +317,23 @@ namespace WebSocketDS_ns
             attrsToString<Tango::DevState>(attr, ss);
         }
         break;
+#if TANGO_VERSION_MAJOR > 8
+        case Tango::DEV_ENUM:
+        {
+            attrsToString<Tango::DevEnum>(attr, ss);
+        }
+        break;
+#endif
         case Tango::DEV_ENCODED:
-            // посмотреть
-            break;
+        {
+            ss << "\"data\": " << "null";
+        }
+        break;
         default:
-            break;
+        {
+            ss << "\"data\": " << "null";
+        }
+        break;
         }
     }
 
@@ -504,6 +516,13 @@ namespace WebSocketDS_ns
         ////        case Tango::DEV_ENCODED:
         ////            json << devEncodedToStr(&data);
         ////            break;
+#if TANGO_VERSION_MAJOR > 8
+        case Tango::DEV_ENUM:
+        {
+            generateStringJsonFromDevData<Tango::DevEnum>(devData, json, command_name);
+        }
+        break;
+#endif
         default:
             json << noneComm;
             break;
@@ -666,6 +685,13 @@ namespace WebSocketDS_ns
                 deviceData = getDeviceData<Tango::DevULong64>(inpVecStr);
             }
             break;
+#if TANGO_VERSION_MAJOR > 8
+            case Tango::DEV_ENUM:
+            {
+                deviceData = getDeviceData<Tango::DevEnum>(inpStr);
+            }
+            break;
+#endif
             default:
             {
             }
@@ -698,7 +724,7 @@ namespace WebSocketDS_ns
         // By Default. dimX - size of arginArray
         int dimX = arginArray.size();
         int dimY = 0;
-        
+
         if (data_format == Tango::AttrDataFormat::IMAGE)
             dimY = 1;
 
@@ -707,7 +733,7 @@ namespace WebSocketDS_ns
         }
         if (dataFromJson.check_key("dimY") == TYPE_OF_VAL::VALUE) {
             dimY = stoi(dataFromJson.otherInpStr.at("dimY"));
-        }       
+        }
 
         try {
             switch (data_type)
@@ -719,7 +745,7 @@ namespace WebSocketDS_ns
                 if (data_format == Tango::AttrDataFormat::SCALAR)
                     getDeviceAttribute<bool>(argin, outDevAttr);
                 if (data_format == Tango::AttrDataFormat::IMAGE || data_format == Tango::AttrDataFormat::SPECTRUM)
-                    getDeviceAttributeImageOrSpectr<bool>(arginArray, outDevAttr,dimX,dimY);
+                    getDeviceAttributeImageOrSpectr<bool>(arginArray, outDevAttr, dimX, dimY);
             }
             break;
             case Tango::DEV_SHORT:
@@ -776,9 +802,9 @@ namespace WebSocketDS_ns
                     outDevAttr << argin;
                 if (data_format == Tango::AttrDataFormat::IMAGE || data_format == Tango::AttrDataFormat::SPECTRUM)
                     outDevAttr.insert(arginArray, dimX, dimY);
-                
+
             }
-            break;           
+            break;
             case Tango::DEV_STATE:
             {
                 // // ??? !!! NO
@@ -812,6 +838,13 @@ namespace WebSocketDS_ns
                     getDeviceAttributeImageOrSpectr<Tango::DevULong64>(arginArray, outDevAttr, dimX, dimY);
             }
             break;
+#if TANGO_VERSION_MAJOR > 8
+            case Tango::DEV_ENUM:
+            {
+                getDeviceAttribute<Tango::DevEnum>(argin, outDevAttr);
+            }
+            break;
+#endif
             default:
             {
             }
@@ -870,7 +903,7 @@ namespace WebSocketDS_ns
         typeOfData[Tango::DEVVAR_STRINGARRAY] = TYPE_OF_DEVICE_DATA::ARRAY;
         typeOfData[Tango::DEVVAR_LONGSTRINGARRAY] = TYPE_OF_DEVICE_DATA::ARRAY;
         typeOfData[Tango::DEVVAR_DOUBLESTRINGARRAY] = TYPE_OF_DEVICE_DATA::ARRAY;
-        
+
         //typeOfData[Tango::DEV_STATE] = TYPE_OF_DEVICE_DATA::ARRAY;
         //typeOfData[Tango::CONST_DEV_STRING] = TYPE_OF_DEVICE_DATA::ARRAY;
 
@@ -883,6 +916,9 @@ namespace WebSocketDS_ns
         typeOfData[Tango::DEVVAR_ULONG64ARRAY] = TYPE_OF_DEVICE_DATA::ARRAY;
         typeOfData[Tango::DEV_INT] = TYPE_OF_DEVICE_DATA::DATA;
         //typeOfData[Tango::DEV_ENCODED] = TYPE_OF_DEVICE_DATA::DATA;
+#if TANGO_VERSION_MAJOR > 8
+        typeOfData[Tango::DEV_ENUM] = TYPE_OF_DEVICE_DATA::DATA;
+#endif
     }
 
     void TangoProcessor::process_device_attribute_json(Tango::DeviceAttribute& data, stringstream& json)
@@ -984,140 +1020,147 @@ namespace WebSocketDS_ns
         {
             json << NONE;
         }
-            break;
+        break;
         case Tango::DEV_BOOLEAN: // ??? not boolean?
         {
             forExtractingFromPipe<bool>(pipe, json, nameOfAttrAndTypeWsReq, false);
         }
-            break;
+        break;
         case Tango::DEV_SHORT:
         {
             forExtractingFromPipe<Tango::DevShort>(pipe, json, nameOfAttrAndTypeWsReq, false);
         }
-            break;
+        break;
         case Tango::DEV_LONG:
         {
             forExtractingFromPipe<Tango::DevLong>(pipe, json, nameOfAttrAndTypeWsReq, false);
         }
-            break;
+        break;
         case Tango::DEV_FLOAT:
         {
             forExtractingFromPipe<Tango::DevFloat>(pipe, json, nameOfAttrAndTypeWsReq, false);
         }
-            break;
+        break;
         case Tango::DEV_DOUBLE:
         {
             forExtractingFromPipe<Tango::DevDouble>(pipe, json, nameOfAttrAndTypeWsReq, false);
         }
-            break;
+        break;
         case Tango::DEV_USHORT:
         {
             forExtractingFromPipe<Tango::DevUShort>(pipe, json, nameOfAttrAndTypeWsReq, false);
         }
-            break;
+        break;
         case Tango::DEV_ULONG:
         {
             forExtractingFromPipe<Tango::DevULong>(pipe, json, nameOfAttrAndTypeWsReq, false);
         }
-            break;
+        break;
         case Tango::DEV_STRING:
         {
             forExtractingFromPipe<string>(pipe, json, nameOfAttrAndTypeWsReq, false);
         }
-            break;
+        break;
         case Tango::DEVVAR_CHARARRAY: // ??? why not DEVVAR_CHARARRAY
         {
             json << NONE;
         }
-            break;
+        break;
         case Tango::DEVVAR_SHORTARRAY:
         {
             forExtractingFromPipe<short>(pipe, json, nameOfAttrAndTypeWsReq, true);
         }
-            break;
+        break;
         case Tango::DEVVAR_LONGARRAY:
         {
             forExtractingFromPipe<Tango::DevLong>(pipe, json, nameOfAttrAndTypeWsReq, true);
         }
-            break;
+        break;
         case Tango::DEVVAR_FLOATARRAY:
         {
             forExtractingFromPipe<float>(pipe, json, nameOfAttrAndTypeWsReq, true);
         }
-            break;
+        break;
         case Tango::DEVVAR_DOUBLEARRAY:
         {
             forExtractingFromPipe<double>(pipe, json, nameOfAttrAndTypeWsReq, true);
         }
-            break;
+        break;
         case Tango::DEVVAR_USHORTARRAY:
         {
             forExtractingFromPipe<unsigned short>(pipe, json, nameOfAttrAndTypeWsReq, true);
         }
-            break;
+        break;
         case Tango::DEVVAR_ULONGARRAY:
         {
             forExtractingFromPipe<Tango::DevULong>(pipe, json, nameOfAttrAndTypeWsReq, true);
         }
-            break;
+        break;
         case Tango::DEVVAR_STRINGARRAY:
         {
             forExtractingFromPipe<string>(pipe, json, nameOfAttrAndTypeWsReq, true);
         }
-            break;
+        break;
         case Tango::DEVVAR_LONGSTRINGARRAY:
         {
             json << NONE;
         }
-            break;
+        break;
         case Tango::DEVVAR_DOUBLESTRINGARRAY:
         {
             json << NONE;
         }
-            break;
+        break;
         case Tango::DEV_STATE:
         {
             Tango::DevState state;
             pipe >> state;
             json << "\"" << tangoState[state] << "\"";
         }
-            break;
+        break;
         case Tango::DEVVAR_BOOLEANARRAY:
         {
             forExtractingFromPipe<bool>(pipe, json, nameOfAttrAndTypeWsReq, true);
         }
-            break;
+        break;
         case Tango::DEV_UCHAR:
         {
             json << NONE;
             // ??? forExtractingFromPipe<Tango::DevUChar>(pipe, json, false);
         }
-            break;
+        break;
         case Tango::DEV_LONG64:
         {
             forExtractingFromPipe<Tango::DevLong64>(pipe, json, nameOfAttrAndTypeWsReq, false);
         }
-            break;
+        break;
         case Tango::DEV_ULONG64:
         {
             forExtractingFromPipe<Tango::DevULong64>(pipe, json, nameOfAttrAndTypeWsReq, false);
         }
-            break;
+        break;
         case Tango::DEVVAR_LONG64ARRAY:
         {
             forExtractingFromPipe<Tango::DevLong64>(pipe, json, nameOfAttrAndTypeWsReq, true);
         }
-            break;
+        break;
         case Tango::DEVVAR_ULONG64ARRAY:
         {
             forExtractingFromPipe<Tango::DevULong64>(pipe, json, nameOfAttrAndTypeWsReq, true);
         }
-            break;
+        break;
+#if TANGO_VERSION_MAJOR > 8
+        case Tango::DEV_ENUM:
+        {
+            forExtractingFromPipe<Tango::DevEnum>(pipe, json, nameOfAttrAndTypeWsReq, false);
+        }
+        break;
+#endif
         default:
         {
             json << NONE;
         }
-            break;
+        break;
         }
     }
 }
