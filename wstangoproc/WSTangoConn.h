@@ -44,6 +44,7 @@ namespace WebSocketDS_ns
         MODE getMode() {return ws_mode;}
         bool isServerMode();
         bool isLogActive() {return _isLogActive; }
+        bool isObjData() { return _isObjData; }
 
         bool isTm100ms() { return _istm100ms; }
         unsigned int getMaxBuffSize();
@@ -111,6 +112,7 @@ namespace WebSocketDS_ns
         bool _isGroup{ false };
         bool _isShortAttr{ true };
         bool _istm100ms{ false };
+        bool _isObjData{ true }; // New version. Output data in OBJECT type
         unsigned long _numOfConnections{0};
         string _errorMessage;
         std::default_random_engine generator;

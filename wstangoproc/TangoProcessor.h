@@ -33,7 +33,7 @@ namespace WebSocketDS_ns
 
         string processPipe(DevicePipe& pipe, TYPE_WS_REQ pipeType);
 
-        void process_attribute_t(Tango::DeviceAttribute& att, stringstream& json, bool isShortAttr);
+        void process_attribute_t(Tango::DeviceAttribute& att, stringstream& json, bool isShortAttr, bool isObjData);
 
         Tango::DeviceData getDeviceDataFromParsedJson(const ParsedInputJson& dataFromJson, int typeForDeviceData);
 

@@ -306,7 +306,7 @@ namespace WebSocketDS_ns
         }
 
         if (m_connections[hdl].tangoConnForClient == nullptr)
-            m_connections[hdl].tangoConnForClient = unique_ptr<TangoConnForClient>(new TangoConnForClient(devAttrPipeMap));
+            m_connections[hdl].tangoConnForClient = unique_ptr<TangoConnForClient>(new TangoConnForClient(devAttrPipeMap, _tc->isObjData()));
         else
             m_connections[hdl].tangoConnForClient->addDevicesToUpdateList(devAttrPipeMap);
 

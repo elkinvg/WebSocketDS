@@ -586,7 +586,7 @@ $(document).ready(function () {
                 event_sub_id = tmp;
         }
         catch(e) {
-            $("#error_mess").html(e.message)
+            $("#error_mess").html(e.message + " <br>" + data)
         }
     }
 

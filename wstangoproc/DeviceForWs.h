@@ -8,14 +8,14 @@ namespace WebSocketDS_ns
     class DeviceForWs : public GroupOrDeviceForWs
     {
     public:
-        DeviceForWs(string deviceName);
-        DeviceForWs(string deviceName, std::pair<vector<string>, vector<string>>& attr_pipes);
-        DeviceForWs(string deviceName, array<vector<string>, 3>& attrCommPipe);
-        DeviceForWs(string deviceName, const string& commandOrAttrName, TYPE_WS_REQ type_req);
+		DeviceForWs(string deviceName, bool isObjData);
+		DeviceForWs(string deviceName, std::pair<vector<string>, vector<string>>& attr_pipes, bool isObjData);
+		DeviceForWs(string deviceName, array<vector<string>, 3>& attrCommPipe, bool isObjData);
+		DeviceForWs(string deviceName, const string& commandOrAttrName, TYPE_WS_REQ type_req, bool isObjData);
         ~DeviceForWs();
 
-        virtual string generateJsonForUpdate() override;
-        virtual void generateJsonForUpdate(std::stringstream& json) override;
+		virtual string generateJsonForUpdate() override;
+		virtual void generateJsonForUpdate(std::stringstream& json) override;
 
         virtual void generateJsonForAttrRead(const ParsedInputJson& parsedInput, std::stringstream& json) override;
 
@@ -35,7 +35,7 @@ namespace WebSocketDS_ns
         virtual bool checkIsAttributeWriteble(const string& attr_name) override;
 
         virtual bool initAllAttrs() override;
-        void forGenerateJsonForUpdate(stringstream &json);
+		void forGenerateJsonForUpdate(stringstream &json);
         void getDeviceNameFromAlias(string& alias);
 
     private:
