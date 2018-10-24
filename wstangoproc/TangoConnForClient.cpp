@@ -8,19 +8,21 @@
 // for debug
 //int itt = 0;
 
-WebSocketDS_ns::TangoConnForClient::TangoConnForClient(const json_arr_map& listDeviceWithAttr)
+WebSocketDS_ns::TangoConnForClient::TangoConnForClient(const json_arr_map& listDeviceWithAttr, bool isObjData)
 {
+    _isObjData = isObjData;
     for (const auto& deviceAndAttrList : listDeviceWithAttr) {
         try {
-            devices.insert(make_pair(deviceAndAttrList.first, unique_ptr<DeviceForWs>(new DeviceForWs(deviceAndAttrList.first))));
+            devices.insert(make_pair(deviceAndAttrList.first, unique_ptr<DeviceForWs>(new DeviceForWs(deviceAndAttrList.first, _isObjData))));
             //devices.at(deviceAndAttrList.first)->initAttrCommPipe()
         }
         catch (...) {}
     }
 }
 
-WebSocketDS_ns::TangoConnForClient::TangoConnForClient(dev_attr_pipe_map& listDeviceWithAttrNPipes)
+WebSocketDS_ns::TangoConnForClient::TangoConnForClient(dev_attr_pipe_map& listDeviceWithAttrNPipes, bool isObjData)
 {
+    _isObjData = isObjData;
     addDevicesToUpdateList(listDeviceWithAttrNPipes);
 }
 
@@ -54,7 +56,7 @@ pair<string, string> WebSocketDS_ns::TangoConnForClient::addDevicesToUpdateList(
 
     for (auto& deviceAndAttrList : listDeviceWithAttrNPipes) {
         try {
-            devices.insert(make_pair(deviceAndAttrList.first, unique_ptr<DeviceForWs>(new DeviceForWs(deviceAndAttrList.first, deviceAndAttrList.second))));
+            devices.insert(make_pair(deviceAndAttrList.first, unique_ptr<DeviceForWs>(new DeviceForWs(deviceAndAttrList.first, deviceAndAttrList.second, _isObjData))));
         }
         catch (Tango::DevFailed &e) {
             for (unsigned int i = 0; i < e.errors.length(); i++) {
@@ -165,13 +167,17 @@ string WebSocketDS_ns::TangoConnForClient::getJsonForAttribute(bool &hasDevice)
         string errMess;
         bool isPng = dev.second->pingDevice(errMess); 
         if (isPng) {
-            json << "\"attrs\": [";
+            if (!_isObjData)
+                json << "\"attrs\": [";
+
             dev.second->generateJsonForUpdate(json);
         }
         else {
             json << "\"errors\": " << errMess;
         }
-        json << "}";
+
+        if (!_isObjData)
+            json << "}";
     }
 
     

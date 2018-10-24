@@ -272,13 +272,13 @@ namespace WebSocketDS_ns
             if (isJsonAttribute.find(att.get_name()) != isJsonAttribute.end())
                 processor->process_device_attribute_json(att, json);
             else
-                processor->process_attribute_t(att, json, _isShortAttr);
+                processor->process_attribute_t(att, json, _isShortAttr, _isObjData);
         }
     }
 
     void GroupOrDeviceForWs::generateAttrJson(std::stringstream& json, Tango::DeviceAttribute& attr)
     {
-        processor->process_attribute_t(attr, json, _isShortAttr);
+		processor->process_attribute_t(attr, json, _isShortAttr, _isObjData);
     }
 
     Tango::DeviceData GroupOrDeviceForWs::tangoCommandInoutForDevice(Tango::DeviceProxy *deviceProxy, const ParsedInputJson& dataFromJson, string& errorMessInJson)

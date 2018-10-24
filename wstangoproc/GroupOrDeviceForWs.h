@@ -79,6 +79,7 @@ namespace WebSocketDS_ns
         string _pipeAttr;
         std::unordered_set<std::string> isJsonAttribute;
         //std::vector<bool>  isJsonAttribute;
+		bool _isObjData;
 
         std::unordered_map<std::string, Tango::CommandInfo> accessibleCommandInfo;
         std::unique_ptr<TangoProcessor> processor;

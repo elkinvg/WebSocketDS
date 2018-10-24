@@ -11,7 +11,6 @@ WebSocketDS
     - **[Write attribute](#write-attribute)**
     
 - **[Client mode](#client-mode)**
-    - **[Timer control](#timer-control)**
     - **[Reading data from attributes and pipe](#reading-data-from-attributes-and-pipe)**
     - **[Client running of commands](#client-running-of-commands)**
     - **[Client attribute writing](#client-attribute-writing)**
@@ -68,16 +67,12 @@ If the device (output):
 {
 	"event": "read",
 	"type_req":"attribute",
-	"data": [
-		{
-			"attr": "attribute_name",
-			"data": "data"
-		},
-		{
-			"attr": "attribute_name2",
-			"data": ["data", "array"]
+	"data": {
+		"attribute_name": {
+			"data": "data",
+			"set": "if writable attribute"
 		}
-	],
+	},
 	"pipe":
 		{
 			"attrName1" : "Data in format dependent on type",
@@ -85,6 +80,8 @@ If the device (output):
 		}
 }
 ```
+
+[old version](./old_version.md#server-mode-attributes) To use the old version add in Property `Options` - ʻarray_out`
 
 
 #### Data from group of devices
@@ -99,17 +96,12 @@ If a group of devices (output):
 	"type_req":"group_attribute",
 	"data":
 	{
-		"name/tango/device_from_group" :
-		[
-			{
-				"attr": "attribute_name",
-				"data": "data"
-			},
-			{
-				"attr": "attribute_name2",
-				"data": ["data", "array"]
+		"name/tango/device_from_group": {
+			"attribute_name": {
+			"data": "data",
+			"set": "if writable attribute"
 			}
-		]
+		}
 	},
 	"pipe":
 		{
@@ -121,6 +113,8 @@ If a group of devices (output):
 		}
 }
 ```
+
+[old version](./old_version.md#server-mode-attributes-for-group) To use the old version add in Property `Options` - ʻarray_out`
 
 #### Reading data from pipe
 
@@ -290,9 +284,9 @@ Request types:
  
 ```json
 {
-	"event":"read", 
-	"type_req": "write_attr", 
-	"id_req": 0, 
+	"event":"read",
+	"type_req": "write_attr",
+	"id_req": 0,
 	"resp": "Was written to the attribute."
 }
 ```
@@ -304,91 +298,6 @@ Request types:
 Client mode is everything except `ser`. (`ser_cli_all_ro`, `ser_cli_all`, `ser_cli_ali_ro`, `ser_cli_ali`, `cli_all_ro`, `cli_all`, `cli_ali_ro`, `cli_ali`)
 
 More about the modes and list of modes [here](#device-operating-mode)
-
-#### Timer control
-
-Input message for timer control
-
-```json
-{
-    "type_req" : "(always) Type request",
-    "id_req": "(always) Request id",
-    "msec": "(Depending on the type) Values for the timer in milliseconds (int). minimum 1000",
-    "devices" : "(Depending on the type) object or value or array",
-    "group": "(Depending on the type) object or value"
-}
-```
-
-Types of requests:
-
- - **timer_start** - Start the timer. Also should be sent `"msec": value` and `devices` (object)
- - **timer_stop** - Stop the timer. Request type only.
- - **timer_change** - Changes in the data update period. Also should be sent `"msec": value`
- - **timer_add_devs** - Adding devices to the list of listeners. Also should be sent `devices` (object)
- - **timer_remove_devs** - Removal of devices from the list of listeners. Also should be sent `devices` (value or array)
- - **timer_upd_devs_add** - Adding attributes or pipe. If the device is already in the list. Also should be sent `devices` (object)
- - **timer_upd_devs_rem** - Removing attributes or pipe. If the device is already in the list. Also should be sent `devices` (object)
- - **timer_check** - Check the status of the timer.
- 
-For `devices` and `group` of object type:
-
-```json
-{
-	"other" : "data",
-	"devices": {
-		"name/of/device": {
-			"attr": "attribute name or array of names",
-			"pipe": "PipeName and (If it is needed) Properties for attributes"
-		}
-	},
-	"group": {
-		"pattern/for/group*": {
-			"attr": "attribute name or array of names",
-			"pipe": "PipeName and (If it is needed) Properties for attributes"
-		}
-	}
-}
-```
-
-A group can contain only one key. A device can contain any number of keys
-
-You can specify the output frequency (Once in N iterations) and the iteration in which the output is made. [Read more here](#setting-the-periodicity-of-the-output-of-values-for-attributes) 
-
-For devices a value type or an array, and group a value type
-
-```json
-{
-	"other" : "data",
-	"devices" : "name/of/device or Array of names",
-	"group": "pattern/for/group*"
-}
-```
-
-Output message:
-
-```json
-{
-	"event": "read",
-	"type_req": "from_timer",
-	"data": {
-		"name/of/tangodevice": {
-			"attrs": [{
-				"attr": "Attribute name",
-				"data": "value or array"
-			}, {
-				"attr": "Name of another attribute",
-				"data": "value or array"
-			}],
-			"pipe": {
-				"Attribute name": "value or array",
-				"Name of another attribute": "value or array"
-			}
-		}
-	}
-}
-```
-
-
 
 #### Reading data from attributes and pipe
 
@@ -421,21 +330,18 @@ For device:
 {
 	"event": "read",
 	"type_req": "attr_device_cl",
-	"device_name": "device_name or alias",
-	"id_req": "Request id",
+	"device_name": "имя девайса или alias",
+	"id_req": "id запроса",
 	"data": {
-		"attrs":
-			[
-				{
-					"attr": "Attribute name",
-					"data": "value or array",
-					"dimX": "for spectrum or image",
-					"dimY": "for image"
-				}
-			],
+		"attrs": {
+			"attribute_name": {
+				"data": "data",
+				"set": "if writable attribute"
+			}
+		},
 		"pipe": {
-			"attr_name": "value or array",
-			"attr_name_2": "value or array"
+				"attribute_name": "value",
+				"other_attribute": ["value", "value"]
 		}
 	}
 }
@@ -449,19 +355,17 @@ For Group:
 	"id_req": "Request id",
 	"data": {
 		"attrs": {
-			"device_name": [
-				{
-					"attr": "Attribute name",
-					"data": "value or array",
-					"dimX": "for spectrum or image",
-					"dimY": "for image"
+			"device_name": {
+				"attribute_name": {
+				"data": "data",
+				"set": "if writable attribute"
 				}
-			]
-		},			
+			}
+		},
 		"pipe": {
 			"device_name": {
-			"attr_name": "value or array",
-			"attr_name_2": "value or array"
+			"attr_name": "данные",
+			"attr_name_2": ["массив", "данных"]
 			}
 		}
 	}
@@ -482,6 +386,8 @@ Input message:
 	"command_name": "Command name"
 }
 ```
+
+[old version](./old_version.md#client-mode-attributes) To use the old version add in Property `Options` - ʻarray_out`
 
 Output message:
 

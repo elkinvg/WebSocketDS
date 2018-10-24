@@ -45,13 +45,17 @@ namespace WebSocketDS_ns
     }
 
 
-    void TangoProcessor::process_attribute_t(Tango::DeviceAttribute& att, std::stringstream& json, bool isShortAttr) {
+    void TangoProcessor::process_attribute_t(Tango::DeviceAttribute& att, std::stringstream& json, bool isShortAttr, bool isObjData) {
         // Генерация JSON из DeviceAttribute
-        json << "";
 
         std::string quality = attrQuality[att.get_quality()]; //SwitchAttrQuality(att.get_quality());
-        json << "{";
-        json << "\"attr\": \"" << att.get_name() << "\", ";
+        if (isObjData) {
+            json << "\"" << att.get_name() << "\": {";
+        }
+        else {
+            json << "{";
+            json << "\"attr\": \"" << att.get_name() << "\", ";
+        }        
 
         // Выводятся TIMESTAMP и quality, только isShortAttr == false
         if (!isShortAttr) {

@@ -64,6 +64,9 @@ namespace WebSocketDS_ns
         vector<string> gettedOptions = dsAndOptions.second;
 
         for (auto& opt : gettedOptions) {
+			if (opt == "array_out") {
+				_isObjData = false;
+			}
             if (opt == "group")
                 _isGroup = true;
             if (opt == "uselog")
@@ -374,10 +377,10 @@ namespace WebSocketDS_ns
 
         try {
             if (_isGroup) {
-                groupOrDevice = unique_ptr<GroupForWs>(new GroupForWs(_deviceName, attrCommPipe));
+				groupOrDevice = unique_ptr<GroupForWs>(new GroupForWs(_deviceName, attrCommPipe, _isObjData));
             }
             else
-                groupOrDevice = unique_ptr<DeviceForWs>(new DeviceForWs(_deviceName, attrCommPipe));
+                groupOrDevice = unique_ptr<DeviceForWs>(new DeviceForWs(_deviceName, attrCommPipe, _isObjData));
             if (!_isShortAttr)
                 groupOrDevice->useNotShortAttrOut();
 
@@ -420,10 +423,10 @@ namespace WebSocketDS_ns
 
         try {
             if (_isGroup) {
-                groupOrDevice = unique_ptr<GroupForWs>(new GroupForWs(_deviceName));
+				groupOrDevice = unique_ptr<GroupForWs>(new GroupForWs(_deviceName, _isObjData));
             }
             else
-                groupOrDevice = unique_ptr<DeviceForWs>(new DeviceForWs(_deviceName));
+				groupOrDevice = unique_ptr<DeviceForWs>(new DeviceForWs(_deviceName, _isObjData));
             if (!_isShortAttr)
                 groupOrDevice->useNotShortAttrOut();
             isInit = true;
@@ -592,7 +595,7 @@ namespace WebSocketDS_ns
 
         vector<string> commands{ commandName };
         try {
-            DeviceForWs deviceForWs(device_name, commandName, TYPE_WS_REQ::COMMAND_DEV_CLIENT);
+			DeviceForWs deviceForWs(device_name, commandName, TYPE_WS_REQ::COMMAND_DEV_CLIENT, _isObjData);
             bool statusComm;
             OUTPUT_DATA_TYPE odt = deviceForWs.checkDataType(commands[0]);
             if (odt == OUTPUT_DATA_TYPE::JSON)
@@ -864,10 +867,10 @@ namespace WebSocketDS_ns
             GroupOrDeviceForWs* dev = nullptr;
             TYPE_WS_REQ typeWsReq = getTypeWsReq(inputReq.type_req);
             if (typeWsReq == WebSocketDS_ns::TYPE_WS_REQ::ATTR_DEV_CLIENT) {
-                dev = new WebSocketDS_ns::DeviceForWs(device_name, attr_pipe);
+				dev = new WebSocketDS_ns::DeviceForWs(device_name, attr_pipe, _isObjData);
             }
             if (typeWsReq == WebSocketDS_ns::TYPE_WS_REQ::ATTR_GR_CLIENT) {
-                dev = new WebSocketDS_ns::GroupForWs(device_name, attr_pipe);
+				dev = new WebSocketDS_ns::GroupForWs(device_name, attr_pipe, _isObjData);
             }
             stringstream ss;
             dev->generateJsonForAttrRead(inputReq, ss);
@@ -966,7 +969,7 @@ namespace WebSocketDS_ns
         }
 
         try {
-            DeviceForWs deviceForWs(device_name, attrName, TYPE_WS_REQ::ATTR_DEV_CLIENT_WR);
+			DeviceForWs deviceForWs(device_name, attrName, TYPE_WS_REQ::ATTR_DEV_CLIENT_WR, _isObjData);
 
             bool statusAttr;
             resp_json = deviceForWs.sendAttrWr(inputReq, statusAttr);

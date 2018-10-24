@@ -17,17 +17,17 @@ namespace WebSocketDS_ns
     class GroupForWs : public GroupOrDeviceForWs
     {
     public:
-        GroupForWs(string pattern);
-        GroupForWs(string pattern, std::pair<vector<string>, vector<string>>& attr_pipes);
-        GroupForWs(string pattern, array<vector<string>, 3>& attrCommPipe);
-        GroupForWs(string pattern, vector<string> &commands);
+		GroupForWs(string pattern, bool isObjData);
+		GroupForWs(string pattern, std::pair<vector<string>, vector<string>>& attr_pipes, bool isObjData);
+		GroupForWs(string pattern, array<vector<string>, 3>& attrCommPipe, bool isObjData);
+		GroupForWs(string pattern, vector<string> &commands, bool isObjData);
         ~GroupForWs();
 
         static dev_attr_pipe_map getListDevicesFromGroupForAttrAndPipeProc(const dev_attr_pipe_map &group_of_devs, string& errorMessage);
         static vector<string> getArrayOfDevicesFromGroup(const string pattern, string& errorMessage);
 
-        virtual string generateJsonForUpdate() override;
-        virtual void generateJsonForUpdate(std::stringstream& json) override;
+		virtual string generateJsonForUpdate() override;
+		virtual void generateJsonForUpdate(std::stringstream& json) override;
 
         virtual void generateJsonForAttrRead(const ParsedInputJson& parsedInput, std::stringstream& json) override;
 

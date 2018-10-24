@@ -5,8 +5,9 @@
 
 namespace WebSocketDS_ns
 {
-    GroupForWs::GroupForWs(string pattern)
+	GroupForWs::GroupForWs(string pattern, bool isObjData)
     {
+		_isObjData = isObjData;
         auto hostAndDevice = StringProc::splitDeviceName(pattern);
         group = new Tango::Group("forws");
         group->add(pattern);
@@ -29,23 +30,23 @@ namespace WebSocketDS_ns
         }
     }
 
-    GroupForWs::GroupForWs(string pattern, std::pair<vector<string>, vector<string> > &attr_pipes)
-        :GroupForWs(pattern)
+	GroupForWs::GroupForWs(string pattern, std::pair<vector<string>, vector<string> > &attr_pipes, bool isObjData)
+        :GroupForWs(pattern, isObjData)
     {
         initAttr(attr_pipes.first);
         initPipe(attr_pipes.second);
     }
 
-    GroupForWs::GroupForWs(string pattern, array<vector<string>,3> &attrCommPipe)
-        :GroupForWs(pattern)
+	GroupForWs::GroupForWs(string pattern, array<vector<string>, 3> &attrCommPipe, bool isObjData)
+		:GroupForWs(pattern, isObjData)
     {
         initAttr(attrCommPipe[0]);
         initComm(attrCommPipe[1]);
         initPipe(attrCommPipe[2]);
     }
 
-    GroupForWs::GroupForWs(string pattern, vector<string> &commands)
-        :GroupForWs(pattern)
+	GroupForWs::GroupForWs(string pattern, vector<string> &commands, bool isObjData)
+		:GroupForWs(pattern, isObjData)
     {
         initComm(commands);
     }
@@ -94,7 +95,7 @@ namespace WebSocketDS_ns
         return deviceList;
     }
 
-    string GroupForWs::generateJsonForUpdate()
+	string GroupForWs::generateJsonForUpdate()
     {
         std::stringstream json;
 
@@ -116,9 +117,18 @@ namespace WebSocketDS_ns
                 continue;
             }
 
-            json << "[";
+			if (_isObjData)
+				json << "{";
+			else
+				json << "[";
+
             generateAttrJson(json, attrList);
-            json << "]";
+
+			if (_isObjData)
+				json << "}";
+			else
+				json << "]";
+
             if (attrList != nullptr) {
                 delete attrList;
             }
@@ -165,7 +175,7 @@ namespace WebSocketDS_ns
         return json.str();
     }
 
-    void GroupForWs::generateJsonForUpdate(stringstream &json)
+	void GroupForWs::generateJsonForUpdate(stringstream &json)
     {
         //  Должен использоваться при запуске update_data со стороны клиента
         // ??? !!! Пока только для девайсов, а не для групп
@@ -213,9 +223,18 @@ namespace WebSocketDS_ns
             }
 
 
-            json << "[";
+			if (_isObjData)
+				json << "{";
+			else
+				json << "[";
+
             generateAttrJson(json, attrList);
-            json << "]";
+			
+			if (_isObjData)
+				json << "}";
+			else
+				json << "]";
+
             if (attrList != nullptr) {
                 delete attrList;
             }

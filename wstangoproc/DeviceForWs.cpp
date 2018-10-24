@@ -5,8 +5,9 @@
 
 namespace WebSocketDS_ns
 {
-    DeviceForWs::DeviceForWs(string deviceName)
+	DeviceForWs::DeviceForWs(string deviceName, bool isObjData)
     {
+		_isObjData = isObjData;
         StringProc::isNameAlias(deviceName);
         getDeviceNameFromAlias(deviceName);
         _deviceName = deviceName;
@@ -16,23 +17,23 @@ namespace WebSocketDS_ns
         device->set_timeout_millis(3000);
     }
 
-    DeviceForWs::DeviceForWs(string deviceName, std::pair<vector<string>, vector<string> > &attr_pipes)
-        :DeviceForWs(deviceName)
+	DeviceForWs::DeviceForWs(string deviceName, std::pair<vector<string>, vector<string> > &attr_pipes, bool isObjData)
+		:DeviceForWs(deviceName, isObjData)
     {
         initAttr(attr_pipes.first);
         initPipe(attr_pipes.second);
     }
 
-    DeviceForWs::DeviceForWs(string deviceName, array<vector<string>, 3> &attrCommPipe)
-        :DeviceForWs(deviceName)
+	DeviceForWs::DeviceForWs(string deviceName, array<vector<string>, 3> &attrCommPipe, bool isObjData)
+		:DeviceForWs(deviceName, isObjData)
     {
         initAttr(attrCommPipe[0]);
         initComm(attrCommPipe[1]);
         initPipe(attrCommPipe[2]);
     }
 
-    DeviceForWs::DeviceForWs(string deviceName, const string& commandOrAttrName, TYPE_WS_REQ type_req)
-        :DeviceForWs(deviceName)
+	DeviceForWs::DeviceForWs(string deviceName, const string& commandOrAttrName, TYPE_WS_REQ type_req, bool isObjData)
+		:DeviceForWs(deviceName, isObjData)
     {
         vector<string> inpVec = { commandOrAttrName + ";wrt" };
         if (type_req == TYPE_WS_REQ::COMMAND_DEV_CLIENT)
@@ -47,12 +48,18 @@ namespace WebSocketDS_ns
             delete device;
     }
 
-    string DeviceForWs::generateJsonForUpdate() {
+	string DeviceForWs::generateJsonForUpdate() {
         device->ping();
 
         std::stringstream json;
 
-        json << "{\"event\": \"read\", \"type_req\": \"attribute\", \"data\":[";
+        json << "{\"event\": \"read\", \"type_req\": \"attribute\", \"data\":";
+		
+		if (_isObjData)
+			json << "{";
+		else
+			json << "[";
+
         forGenerateJsonForUpdate(json);
         json << "}";
 
@@ -60,7 +67,7 @@ namespace WebSocketDS_ns
         return json.str();
     }
 
-    void DeviceForWs::generateJsonForUpdate(stringstream &json)
+	void DeviceForWs::generateJsonForUpdate(stringstream &json)
     {
         forGenerateJsonForUpdate(json);
         iterator++;
@@ -85,7 +92,12 @@ namespace WebSocketDS_ns
         }
 
         json << "\"data\": {";
-        json << "\"attrs\": [";
+        json << "\"attrs\": ";
+
+		if (_isObjData)
+			json << "{";
+		else
+			json << "[";
 
         forGenerateJsonForUpdate(json);
         json << "}";
@@ -264,7 +276,10 @@ namespace WebSocketDS_ns
 
         attrList = device->read_attributes(_attributes);
         generateAttrJson(json, attrList);
-        json << "]";
+		if (_isObjData)
+			json << "}";
+		else
+			json << "]";
 
         if (_pipeAttr.size()) {
             json << ", \"pipe\": ";

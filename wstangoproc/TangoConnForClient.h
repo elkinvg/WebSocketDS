@@ -12,8 +12,8 @@ namespace WebSocketDS_ns
     class TangoConnForClient
     {
     public:
-        TangoConnForClient(const json_arr_map& listDeviceWithAttr);
-        TangoConnForClient(dev_attr_pipe_map& listDeviceWithAttrNPipes);
+		TangoConnForClient(const json_arr_map& listDeviceWithAttr, bool isObjData);
+		TangoConnForClient(dev_attr_pipe_map& listDeviceWithAttrNPipes, bool isObjData);
 
         pair<string, string> addDevicesToUpdateList(dev_attr_pipe_map& listDeviceWithAttrNPipes);
 
@@ -31,6 +31,7 @@ namespace WebSocketDS_ns
 
     private:
         std::unordered_map<string, std::unique_ptr<DeviceForWs>> devices;
+		bool _isObjData;
     };
 
 }
