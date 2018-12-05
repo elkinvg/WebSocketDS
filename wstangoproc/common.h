@@ -55,7 +55,7 @@ namespace WebSocketDS_ns
         CLIENT_ALIAS            // cli_ali          Режим RW
     };
 
-    const std::string NONE = "\"NONE\"";
+    const std::string NONE = "null";
 
 }
 
