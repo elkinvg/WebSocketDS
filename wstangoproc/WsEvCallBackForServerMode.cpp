@@ -36,8 +36,21 @@ namespace WebSocketDS_ns
             json << "\"event_type\": \"" << dt->event << "\", ";
             json << "\"timestamp\": " << dt->get_date().tv_sec << ", ";
             json << "\"attr\": \"" << dt->attr_name << "\", ";
-            tango_proc->devAttrToStr(dt->attr_value, json);
-            json << "}";
+
+			string tmpAttrName = dt->attr_name;
+			std::transform(tmpAttrName.begin(), tmpAttrName.end(), tmpAttrName.begin(), ::tolower);
+
+			if (tmpAttrName.find("json") != std::string::npos) {
+				Tango::DeviceAttribute *attr = dt->attr_value;
+				string data;
+				(*attr) >> data;
+				json << "\"data\":" << data;
+			}
+			else {
+				tango_proc->devAttrToStr(dt->attr_value, json);
+			}
+            
+			json << "}";
             send_mess_all(json.str());
         }
         catch (Tango::DevFailed &e) {
