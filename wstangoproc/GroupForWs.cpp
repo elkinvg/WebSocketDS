@@ -477,9 +477,6 @@ namespace WebSocketDS_ns
 
     string GroupForWs::sendAttrRead(const ParsedInputJson& parsedInput)
     {
-        //TODO
-        // Дописать для девайса из группы. Пока при запросе read_attr_gr и read_attr_dev
-        // присылаетс данные со всей группы
         int it = 0;
         stringstream json;
         json << "{\"event\": \"read\", \"type_req\": \"" << parsedInput.type_req << "\" ,";
@@ -498,8 +495,15 @@ namespace WebSocketDS_ns
 
         json << "\"data\": {";
 
-        string attribute = parsedInput.otherInpStr.at("attr_name");
-        vector<string> attributes{ attribute };
+        vector<string> attributes;
+
+        if (parsedInput.check_key("attr_name") == TYPE_OF_VAL::VALUE) {
+            string attribute = parsedInput.otherInpStr.at("attr_name");
+            attributes.push_back(attribute);
+        }
+        else if (parsedInput.check_key("attr_name") == TYPE_OF_VAL::ARRAY) {
+            attributes = parsedInput.otherInpVec.at("attr_name");
+        }
         
         for (long i = 0; i < group_length; i++)
         {
@@ -521,10 +525,23 @@ namespace WebSocketDS_ns
                 continue;
             }
 
-            // TODO: Пока для одного девайса
-            json << "[";
-            generateAttrJson(json, (*attrList)[0]);
-            json << "]";
+            // Для нового формата, данные объектного типа
+            if (_isObjData) {
+                json << "{";
+            }
+            // Для старого формата, данные типа список объектов
+            else {
+                json << "[";
+            }
+            generateAttrJson(json, attrList);
+            // Для нового формата, данные объектного типа
+            if (_isObjData) {
+                json << "}";
+            }
+            // Для старого формата, данные типа список объектов
+            else {
+                json << "]";
+            }
 
             if (attrList != nullptr) {
                 delete attrList;
@@ -764,7 +781,49 @@ namespace WebSocketDS_ns
         return json.str();
     }
 
-    bool GroupForWs::initAllAttrs() {
-        return false;
+    /*
+    Берётся список атрибутов первого из группы девайса.
+    Поэтому использовать опцию стоит, только если девайсы однородные (одинаковый список атрибутов)
+    */
+    vector<string> GroupForWs::getListOfAllAttributes() {
+        vector<string> _attrs;
+        
+        try {
+            auto dl = group->get_device_list();
+
+            if (!dl.size()) {
+                return _attrs;
+            }
+
+            string devNameFromGroup = dl[0];
+
+            auto attrList = group->get_device(devNameFromGroup)->attribute_list_query();
+            for (const auto& attrFromList : *attrList) {
+                _attrs.push_back(attrFromList.name);
+            }
+        }
+        catch (...) {
+        }
+        return _attrs;
+    }
+
+    vector<string> GroupForWs::getListOfAllCommands(){
+        vector<string> _comms;
+
+        try {
+            auto dl = group->get_device_list();
+
+            if (!dl.size()) {
+                return _comms;
+            }
+
+            string devNameFromGroup = dl[0];
+
+            _comms = *(group->get_device(devNameFromGroup)->get_command_list());
+        }
+        catch (...) {
+        }
+
+        return _comms;
     }
 }

@@ -25,11 +25,6 @@ namespace WebSocketDS_ns
         string tmp_login;
     };
 
-    struct TimingStruct {
-        bool isTimerOn{ false };
-        unsigned long msec;
-        websocketpp::server<websocketpp::config::asio>::timer_ptr m_timer;
-    };
 
     class ConnectionData {
     public:
@@ -40,6 +35,8 @@ namespace WebSocketDS_ns
 
         ConnectionData(ConnectionData&& data) {
             this->tangoConnForClient = std::move(data.tangoConnForClient);
+            this->eventProc = std::move(data.eventProc);
+
             this->login = std::move(data.login);
             this->password = std::move(data.password);
             this->ip_client = std::move(data.ip_client);
@@ -51,6 +48,8 @@ namespace WebSocketDS_ns
         ConnectionData& operator=(ConnectionData&& data)
         {
             this->tangoConnForClient = std::move(data.tangoConnForClient);
+            this->eventProc = std::move(data.eventProc);
+
             this->login = std::move(data.login);
             this->password = std::move(data.password);
             this->ip_client = std::move(data.ip_client);
@@ -72,10 +71,7 @@ namespace WebSocketDS_ns
         ForRandIdent forRandIdent;
         unique_ptr<TangoConnForClient> tangoConnForClient = nullptr;
 
-        unique_ptr<TimingStruct> timing = nullptr;
         unique_ptr<EventProc> eventProc = nullptr;
-
-        unsigned long timerInd{ 0 };
     };
 }
 

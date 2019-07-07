@@ -147,49 +147,6 @@ WebSocketDS_ns::TangoConnForClient::~TangoConnForClient()
 {
 }
 
-string WebSocketDS_ns::TangoConnForClient::getJsonForAttribute(bool &hasDevice)
-{
-    hasDevice = false;
-    if (!devices.size())
-        return StringProc::exceptionStringOut("Valid devices from list not found","from_timer");
-    hasDevice = true;
-    std::stringstream json;
-    json << "{\"event\": \"read\", \"type_req\": \"from_timer\", \"data\":{";
-    bool nfrst = false;
-    for (auto& dev : devices) {
-        //dev.second->
-        if (nfrst) 
-            json << ", ";
-        else
-            nfrst = !nfrst;
-
-        json << "\"" << dev.first << "\": {";
-        string errMess;
-        bool isPng = dev.second->pingDevice(errMess); 
-        if (isPng) {
-            if (!_isObjData)
-                json << "\"attrs\": [";
-
-            dev.second->generateJsonForUpdate(json);
-        }
-        else {
-            json << "\"errors\": " << errMess;
-        }
-
-        if (!_isObjData)
-            json << "}";
-    }
-
-    
-    // for debug
-    // json << " ,\"iter\":" << itt;
-    // itt++;
-    
-    json << "}"; // data
-    json << "}";
-    return json.str();
-}
-
 bool WebSocketDS_ns::TangoConnForClient::removeAllDevices()
 {
     devices.clear();

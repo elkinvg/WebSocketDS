@@ -43,7 +43,8 @@ namespace WebSocketDS_ns
     private:
         virtual Tango::CommandInfo getCommandInfo(const string& command_name) override;
         virtual bool checkIsAttributeWriteble(const string& attr_name) override;
-        virtual bool initAllAttrs() override;
+        virtual vector<string> getListOfAllAttributes() override;
+        virtual vector<string> getListOfAllCommands() override;
         // For Group
         Tango::GroupCmdReplyList tangoCommandInoutForGroup(const ParsedInputJson& dataFromJson, string& errorMessInJson);
         // For device

@@ -61,11 +61,6 @@ namespace WebSocketDS_ns
         virtual void close_from_server(websocketpp::connection_hdl hdl) = 0;
         virtual size_t get_buffered_amount(websocketpp::connection_hdl hdl) = 0;
 
-        virtual void startTimer(websocketpp::connection_hdl hdl) = 0;
-        virtual void runTimer(const error_code & ec, websocketpp::connection_hdl hdl, int timerInd) = 0;
-        
-        bool forRunTimer(websocketpp::connection_hdl hdl, int timerInd);
-
         string parseOfAddress(string addrFromConn); // parsing of get_remote_endpoint-return
         // remoteEndpoint in websocket output formate[::ffff:127.0.0.1 : 11111]
 
@@ -81,10 +76,10 @@ namespace WebSocketDS_ns
         const unsigned long maximumBufferSizeMax = 10000;
         const unsigned long maximumBufferSizeDef = 1000;
 
-        typedef std::map<websocketpp::connection_hdl, ConnectionData, std::owner_less<websocketpp::connection_hdl> > con_list;
+        typedef std::map<websocketpp::connection_hdl, ConnectionData*, std::owner_less<websocketpp::connection_hdl> > con_list;
         con_list m_connections;
 
-        websocketpp::lib::mutex m_connection_lock;
+        std::mutex m_connection_lock;
         
         WSTangoConn* _tc;
 
@@ -92,24 +87,14 @@ namespace WebSocketDS_ns
         ParsingInputJson* parsing = nullptr;
 
     private:
-        void timerProc(const ParsedInputJson &parsedJson, websocketpp::connection_hdl hdl);
-
-        void timerStartMeth(const ParsedInputJson &parsedJson, websocketpp::connection_hdl hdl, dev_attr_pipe_map& devAttrPipeMap);
-        void timerStopMeth(const ParsedInputJson &parsedJson, websocketpp::connection_hdl hdl);
-        void timerChangeMeth(const ParsedInputJson &parsedJson, websocketpp::connection_hdl hdl);
-        void timerAddDevsMeth(const ParsedInputJson &parsedJson, websocketpp::connection_hdl hdl, dev_attr_pipe_map& devAttrPipeMap);
-        void timerRemDevsMeth(const ParsedInputJson &parsedJson, websocketpp::connection_hdl hdl);
-        void timerUpdDevsAddMeth(const ParsedInputJson &parsedJson, websocketpp::connection_hdl hdl, dev_attr_pipe_map& devAttrPipeMap);
-        void timerUpdDevsRemMeth(const ParsedInputJson &parsedJson, websocketpp::connection_hdl hdl, dev_attr_pipe_map& devAttrPipeMap);
-        void timerCheckMeth(const ParsedInputJson &parsedJson, websocketpp::connection_hdl hdl);
 
         vector<string> &split(const string &s, char delim, vector<string> &elems);
         vector<string> split(const string &s, char delim);
 
-        ConnectionData getConnectionData(websocketpp::connection_hdl hdl);
+        ConnectionData* getConnectionData(websocketpp::connection_hdl hdl);
         bool checkKeysFromParsedGet(const unordered_map<string, string>& parsedGet);
         
-        websocketpp::lib::mutex m_action_lock;
+        std::mutex m_action_lock;
         websocketpp::lib::condition_variable m_action_cond;
         bool local_th_exit;
 

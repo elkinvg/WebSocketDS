@@ -81,6 +81,28 @@ $(document).ready(function () {
         send_message_to_ws(argin);
     });
 
+    /**
+     * Read attribute from device.
+     *
+     */
+    $("#read_attr").click(function(){
+        var argin = {};
+        argin.type_req = "read_attr";
+        argin.attr_name = "double_scalar";
+        send_message_to_ws(argin);
+    });
+
+    /**
+     * Read ыщьу attributeы from device.
+     *
+     */
+    $("#read_attr_some").click(function(){
+        var argin = {};
+        argin.type_req = "read_attr";
+        argin.attr_name = ["double_scalar", "float_scalar"];
+        send_message_to_ws(argin);
+    });
+
     // GROUP OF DEVICE
 
     /**
@@ -159,160 +181,54 @@ $(document).ready(function () {
         send_message_to_ws(argin);
     });
 
+    /**
+     * Read attribute from device from group.
+     *
+     */
+    $("#read_attr_dev").click(function(){
+        var argin = {};
+        argin.type_req = "read_attr_dev";
+        argin.device_name = test_device;
+        argin.attr_name = "double_scalar";
+        send_message_to_ws(argin);
+    });
 
+    /**
+     * Read some attributes from device from group.
+     *
+     */
+    $("#read_attr_dev_some").click(function(){
+        var argin = {};
+        argin.type_req = "read_attr_dev";
+        argin.device_name = test_device;
+        argin.attr_name =  ["double_scalar", "float_scalar"];
+        send_message_to_ws(argin);
+    });
+
+    /**
+     * Read attribute from all devices from group.
+     *
+     */
+    $("#read_attr_gr").click(function(){
+        var argin = {};
+        argin.type_req = "read_attr_gr";
+        argin.attr_name = "double_scalar";
+        send_message_to_ws(argin);
+    });
+
+    /**
+     * Read some attributes from all devices from group.
+     *
+     */
+    $("#read_attr_gr_some").click(function(){
+        var argin = {};
+        argin.type_req = "read_attr_gr";
+        argin.attr_name =  ["double_scalar", "float_scalar"];
+        send_message_to_ws(argin);
+    });
 
 
     // Client mode __________________________________________________
-
-    // TIMER
-
-    /**
-     * Start timer
-     */
-
-    $("#timer_start").click(function(){
-        var argin = {};
-        argin.type_req = "timer_start";
-        argin.msec = 1000;
-        argin.devices = {};
-
-        argin.devices[test_device] =
-            {
-                "attr": ["float_scalar", "long_scalar", "double_scalar;prec=2"],
-                "pipe": test_pipe_name
-            };
-        send_message_to_ws(argin);
-    });
-
-    /**
-     * Add device to the timer
-     */
-
-    $("#timer_add_devs").click(function(){
-        var argin = {};
-        argin.type_req = "timer_add_devs";
-        argin.devices = {
-            "sys/tg_test/2": {
-                "attr": ["long64_scalar","Status","double_scalar;precf=4"],
-                "pipe": test_pipe_name
-            }
-        };
-        send_message_to_ws(argin);
-    });
-
-    /**
-     * Delete device from timer
-     */
-    $("#timer_remove_devs").click(function () {
-        var argin = {};
-        argin.type_req = "timer_remove_devs";
-        argin.devices = "sys/tg_test/2";
-        send_message_to_ws(argin);
-    });
-
-    /**
-     * Add attributes in device from timer
-     */
-    $("#timer_upd_devs_add").click(function () {
-        var argin = {};
-        argin.type_req = "timer_upd_devs_add";
-
-        argin.devices = {};
-
-        argin.devices[test_device] =
-            {
-                "attr": ["Status", "State"]
-            };
-        send_message_to_ws(argin);
-    });
-
-    /**
-     * Delete attributes from timer
-     */
-    $("#timer_upd_devs_rem").click(function () {
-        var argin = {};
-        argin.type_req = "timer_upd_devs_rem";
-
-        argin.devices = {};
-
-        argin.devices[test_device] =
-            {
-                "attr": ["long64_scalar","Status","double_scalar"],
-                "pipe": test_pipe_name
-            };
-        send_message_to_ws(argin);
-    });
-
-    /**
-     * Check timer
-     */
-    $("#timer_check").click(function(){
-        var argin = {};
-        argin.type_req = "timer_check";
-        send_message_to_ws(argin);
-    });
-
-    /**
-     * Change the period in the timer
-     */
-    $("#timer_change").click(function(){
-        var argin = {};
-        argin.type_req = "timer_change";
-        argin.msec = 3000;
-        send_message_to_ws(argin);
-    });
-
-    /**
-     * Stop timer
-     */
-    $("#timer_stop").click(function(){
-        var argin = {};
-        argin.type_req = "timer_stop";
-        send_message_to_ws(argin);
-    });
-
-    /**
-     * Start timer with group of device
-     */
-    $("#timer_gr_start").click(function(){
-        var argin = {};
-        argin.type_req = "timer_start";
-        argin.msec = 1000;
-        argin.group = {};
-
-        argin.group[test_group_device] =
-            {
-                "attr": ["float_scalar", "long_scalar", "double_scalar;prec=2"],
-                "pipe": test_pipe_name
-            };
-        send_message_to_ws(argin);
-    });
-
-    /**
-     * Add group of devices in timer
-     */
-    $("#timer_gr_add").click(function(){
-        var argin = {};
-        argin.type_req = "timer_add_devs";
-        argin.group = {};
-
-        argin.group[test_group_device] =
-            {
-                "attr": ["float_scalar", "long_scalar", "double_scalar;prec=2"],
-                "pipe": test_pipe_name
-            };
-        send_message_to_ws(argin);
-    });
-
-    /**
-     * Remove group from timer
-     */
-    $("#timer_gr_rem").click(function () {
-        var argin = {};
-        argin.type_req = "timer_remove_devs";
-        argin.group = test_group_device;
-        send_message_to_ws(argin);
-    });
 
     ////////////////////////////////////////
     // Command, write and read of attributes

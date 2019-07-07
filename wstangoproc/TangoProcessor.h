@@ -73,6 +73,8 @@ namespace WebSocketDS_ns
         std::array<string, 14> tangoState;
         std::array<TYPE_OF_DEVICE_DATA,30> typeOfData;
 
+        std::streamsize defaultStreamSize;
+
     private: // templates
         template <typename T>
         Tango::DeviceData getDeviceDataFromDataType(const std::string& jsonData) {
@@ -376,7 +378,7 @@ namespace WebSocketDS_ns
             auto gettedOpts = getOpts(nameOfAttrOrComm, type_req);
             if (is_floating_point<T>::value) {
                 // default streamsize.
-                std::streamsize srsz = ss.precision();
+                std::streamsize srsz = defaultStreamSize;
 
                 // Лямбда-функция для получения числа для std::setprecision
                 auto get_srsz = [=](string fromOptStr) {
@@ -403,18 +405,16 @@ namespace WebSocketDS_ns
                     ios_opt = TYPE_IOS_OPT::PREC;
                     optStr = gettedOpts["prec"];
                 }
-                else
-                    if (gettedOpts.find("precf") != gettedOpts.end()) {
-                        hasIosOpt = true;
-                        ios_opt = TYPE_IOS_OPT::PRECF;
-                        optStr = gettedOpts["precf"];
-                    }
-                    else
-                        if (gettedOpts.find("precs") != gettedOpts.end()) {
-                            hasIosOpt = true;
-                            ios_opt = TYPE_IOS_OPT::PRECS;
-                            optStr = gettedOpts["precs"];
-                        }
+                else if (gettedOpts.find("precf") != gettedOpts.end()) {
+                    hasIosOpt = true;
+                    ios_opt = TYPE_IOS_OPT::PRECF;
+                    optStr = gettedOpts["precf"];
+                }
+                else if (gettedOpts.find("precs") != gettedOpts.end()) {
+                    hasIosOpt = true;
+                    ios_opt = TYPE_IOS_OPT::PRECS;
+                    optStr = gettedOpts["precs"];
+                }
 
                 if (!hasIosOpt) {
                     ios_opt = TYPE_IOS_OPT::PREC;
@@ -434,16 +434,18 @@ namespace WebSocketDS_ns
         // getting ios options for floating type
         template <typename T>
         void outForFloat(const T &data, stringstream &ss, TYPE_IOS_OPT ios_opt, std::streamsize precIn = 0) {
+            stringstream ss_in;
 
             if (precIn > 20 || precIn < 0)
                 precIn = 0;
 
             if (ios_opt == TYPE_IOS_OPT::PREC)
-                ss << std::setprecision(precIn) << data;
-            if (ios_opt == TYPE_IOS_OPT::PRECF)
-                ss << std::fixed << std::setprecision(precIn) << data;
-            if (ios_opt == TYPE_IOS_OPT::PRECS)
-                ss << std::scientific << std::setprecision(precIn) << data;
+                ss_in << std::setprecision(precIn) << data;
+            else if (ios_opt == TYPE_IOS_OPT::PRECF)
+                ss_in << std::fixed << std::setprecision(precIn) << data;
+            else if (ios_opt == TYPE_IOS_OPT::PRECS)
+                ss_in << std::scientific << std::setprecision(precIn) << data;
+            ss << ss_in.str();
         }
     };
 }    //    End of namespace

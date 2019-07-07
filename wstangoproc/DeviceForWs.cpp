@@ -187,20 +187,15 @@ namespace WebSocketDS_ns
         std::vector<Tango::DeviceAttribute> *attrList = nullptr;
         stringstream json;
 
-        string attribute = parsedInput.otherInpStr.at("attr_name");
+        vector<string> attributes;
 
-        try {
-            device->attribute_query(attribute);
+        if (parsedInput.check_key("attr_name") == TYPE_OF_VAL::VALUE) {
+            string attribute = parsedInput.otherInpStr.at("attr_name");
+            attributes.push_back(attribute);
         }
-        catch (Tango::DevFailed &e) {
-            vector<string> errors;
-            for (int i = 0; i < e.errors.length(); i++) {
-                errors.push_back((string)e.errors[i].desc);
-            }
-            return StringProc::exceptionStringOut(parsedInput.id, attribute, errors, parsedInput.type_req);
+        else if (parsedInput.check_key("attr_name") == TYPE_OF_VAL::ARRAY) {
+            attributes = parsedInput.otherInpVec.at("attr_name");
         }
-
-        vector<string> attributes{ attribute };
 
         json << "{\"event\": \"read\", \"type_req\": \"" << parsedInput.type_req << "\", ";
 
@@ -215,11 +210,34 @@ namespace WebSocketDS_ns
             else
                 json << "\"id_req\": \"" << parsedInput.id << "\", ";
         }
-        json << "\"data\": [";
+        json << "\"data\":";
+
+        // Для нового формата, данные объектного типа
+        if (_isObjData) {
+            json << "{";
+        }
+        // Для старого формата, данные типа список объектов
+        else {
+            json << "[";
+        }
+
         attrList = device->read_attributes(attributes);
         generateAttrJson(json, attrList);
-        json << "]";
+
+        // Для нового формата, данные объектного типа
+        if (_isObjData) {
+            json << "}";
+        }
+        // Для старого формата, данные типа список объектов
+        else {
+            json << "]";
+        }
         json << "}";
+
+        if (attrList != nullptr) {
+            delete attrList;
+        }
+
         return json.str();
     }
 
@@ -302,12 +320,28 @@ namespace WebSocketDS_ns
             delete attrList;
     }
 
-    bool DeviceForWs::initAllAttrs() {
-        auto attrList = device->attribute_list_query();
-        for (auto& attrFromList : *attrList) {
-            _attributes.push_back(attrFromList.name);
+    vector<string> DeviceForWs::getListOfAllAttributes() {
+        vector<string> _attrs;
+        try {
+            auto attrList = device->attribute_list_query();
+            for (auto& attrFromList : *attrList) {
+                _attrs.push_back(attrFromList.name);
+            }
         }
-        return true;
+        catch (...) {
+        }
+        return _attrs;
+    }
+
+    vector<string> DeviceForWs::getListOfAllCommands()
+    {
+        vector<string> _comms;
+        try {
+            _comms = *(device->get_command_list());
+        }
+        catch (...) {
+        }
+        return _comms;
     }
 
     void DeviceForWs::getDeviceNameFromAlias(string& alias) {

@@ -46,10 +46,10 @@ namespace WebSocketDS_ns
         string addat;
         string out;
         for (auto& attr: attrNames) {
-            vector<string> gettedOptions = StringProc::parseInputString(attr, ";");
+            vector<string> gottenOptions = StringProc::parseInputString(attr, ";");
 
             if (std::find(_attributes.begin(),_attributes.end(),attr) == _attributes.end()) {
-                processor->initOptionsForAttrOrComm(attr, gettedOptions, TYPE_WS_REQ::ATTRIBUTE);
+                processor->initOptionsForAttrOrComm(attr, gottenOptions, TYPE_WS_REQ::ATTRIBUTE);
                 _attributes.push_back(attr);
                 addat += (" " + attr);
                 forNiterOpt(attr);
@@ -127,39 +127,31 @@ namespace WebSocketDS_ns
 
     void GroupOrDeviceForWs::initAttr(vector<string> &attributes)
     {
-        //DEBUG_STREAM << "Attributes: " << endl;
         // Method gettingAttrUserConf added for Searhing of additional options for attributes
         // Now it is options "prec", "precf", "precs" for precision
         // And "niter"
 
-        bool isAllAttrs = false;
         auto iterator = std::find(attributes.begin(), attributes.end(), "__all_attrs__");
+
         if (iterator != attributes.end()) {
             attributes.erase(iterator);
-            isAllAttrs = initAllAttrs();
+
+            _ifUsingAllAttrsOpt(attributes);
         }
 
         for (auto& attr : attributes) {
             if (!attr.size())
                 continue;
-            if (!isAllAttrs) {
-                string tmpAttrName = attr;
-                std::transform(tmpAttrName.begin(), tmpAttrName.end(), tmpAttrName.begin(), ::tolower);
-                if (tmpAttrName.find("json") != std::string::npos)
-                    isJsonAttribute.insert(attr);
-            }
 
-            //DEBUG_STREAM << attr << endl;
-
-            vector<string> gettedOptions = StringProc::parseInputString(attr, ";");
+            vector<string> gottenOptions = StringProc::parseInputString(attr, ";");
 
             // checking writable
             {
                 // Search option "onlywrt" for attribuie. It is not included in the outgoing json for updating
-                auto it = find(gettedOptions.begin(), gettedOptions.end(), "onlywrt");
+                auto it = find(gottenOptions.begin(), gottenOptions.end(), "onlywrt");
 
-                if (it != gettedOptions.end()) {
-                    
+                if (it != gottenOptions.end()) {
+
                     if (checkIsAttributeWriteble(attr)) {
                         listWrtAttributes.insert(attr);
                         listOnlyWrtAttribute.insert(attr);
@@ -168,7 +160,7 @@ namespace WebSocketDS_ns
                 }
 
                 // Здесь для запросов ATTRIBUTE_WRITE поиск идёт TYPE_WS_REQ::ATTRIBUTE
-                processor->initOptionsForAttrOrComm(attr, gettedOptions, TYPE_WS_REQ::ATTRIBUTE);
+                processor->initOptionsForAttrOrComm(attr, gottenOptions, TYPE_WS_REQ::ATTRIBUTE);
 
                 // An attribute can be writable only if it has option  "wrt". 
                 if (processor->checkOption(attr, "wrt", TYPE_WS_REQ::ATTRIBUTE).first && checkIsAttributeWriteble(attr)) {
@@ -178,17 +170,8 @@ namespace WebSocketDS_ns
 
             forNiterOpt(attr);
 
-            if (!isAllAttrs) {
-                if (std::find(_attributes.begin(), _attributes.end(), attr) == _attributes.end())
-                    _attributes.push_back(attr);
-            }
-        }
-        if (isAllAttrs) {
-            for (auto& attr : _attributes) {
-                string tmpAttrName = attr;
-                std::transform(tmpAttrName.begin(), tmpAttrName.end(), tmpAttrName.begin(), ::tolower);
-                if (tmpAttrName.find("json") != std::string::npos)
-                    isJsonAttribute.insert(attr);
+            if (std::find(_attributes.begin(), _attributes.end(), attr) == _attributes.end()) {
+                _attributes.push_back(attr);
             }
         }
     }
@@ -200,8 +183,8 @@ namespace WebSocketDS_ns
         if (pipeName.size() > 1) {
             for (unsigned int i = 1; i<pipeName.size(); i++) {
                 string attrName = pipeName[i];
-                vector<string> gettedOptions = StringProc::parseInputString(attrName, ";");
-                processor->initOptionsForAttrOrComm(attrName, gettedOptions, TYPE_WS_REQ::PIPE);
+                vector<string> gottenOptions = StringProc::parseInputString(attrName, ";");
+                processor->initOptionsForAttrOrComm(attrName, gottenOptions, TYPE_WS_REQ::PIPE);
             }
         }
     }
@@ -216,22 +199,32 @@ namespace WebSocketDS_ns
 
         accessibleCommandInfo.clear();
 
+        // All commands Will be included  If will find __all_commands__ in Property "Commands" 
+        auto iterator = std::find(commands.begin(), commands.end(), "__all_commands__");
+        if (iterator != commands.end()) {
+            commands.erase(iterator);
+
+            _ifUsingAllCommandsOpt(commands);
+        }
+
+        // Далее список читается. Это нужно, если указаны опции для команд
+
         for (auto& com : commands) {
             try {
-                vector<string> gettedOptions = StringProc::parseInputString(com, ";");
+                vector<string> gottenOptions = StringProc::parseInputString(com, ";");
 
                 bool isPipeComm = false;
-                for (auto &it: gettedOptions)
+                for (auto &it: gottenOptions)
                     if (it == "pipecomm") {
                         isPipeComm = true;
                         break;
                     }
 
                 if (isPipeComm) {
-                    processor->initOptionsForAttrOrComm(com,gettedOptions, TYPE_WS_REQ::PIPE_COMM);
+                    processor->initOptionsForAttrOrComm(com, gottenOptions, TYPE_WS_REQ::PIPE_COMM);
                 }
                 else {
-                    processor->initOptionsForAttrOrComm(com,gettedOptions, TYPE_WS_REQ::COMMAND);
+                    processor->initOptionsForAttrOrComm(com, gottenOptions, TYPE_WS_REQ::COMMAND);
 
                     // Getting CommandInfo
                     // cmd_name , cmd_tag, in_type, in_type_desc, out_type, out_type_desc
@@ -407,6 +400,50 @@ namespace WebSocketDS_ns
         }
 
         return argout;
+    }
+
+    void GroupOrDeviceForWs::_ifUsingAllAttrsOpt(vector<string>& attributes)
+    {
+        vector<string> all_attributes = getListOfAllAttributes();
+
+        // Если только __all_attrs__ список будет пуст
+        // Остальной список, например атрибуты с опциями
+        // Далее список читается. Это нужно, если указаны опции для атрибутов
+        if (attributes.size()) {
+            for (auto& attr : attributes) {
+                auto cp_attr = attr;
+                auto opts = StringProc::parseInputString(attr, ";", true);
+                if (opts.size() == 1) {
+                    continue;
+                }
+                auto iterator_attr = std::find(all_attributes.begin(), all_attributes.end(), opts[0]);
+                (*iterator_attr) = cp_attr;
+            }
+        }
+        
+        attributes = all_attributes;
+    }
+
+    void GroupOrDeviceForWs::_ifUsingAllCommandsOpt(vector<string>& commands)
+    {
+        vector<string> all_commands = getListOfAllCommands();
+
+        // Если только __all_commands__ список будет пуст
+        // Остальной список, например команды с опциями
+        // Далее список читается. Это нужно, если указаны опции для команд
+        if (commands.size()) {
+            for (auto& comm : commands) {
+                auto cp_comm = comm;
+                auto opts = StringProc::parseInputString(comm, ";", true);
+                if (opts.size() == 1) {
+                    continue;
+                }
+                auto iterator_comm = std::find(all_commands.begin(), all_commands.end(), opts[0]);
+                (*iterator_comm) = cp_comm;
+            }
+        }
+
+        commands = all_commands;
     }
 
     void GroupOrDeviceForWs::forNiterOpt(string attrName)
