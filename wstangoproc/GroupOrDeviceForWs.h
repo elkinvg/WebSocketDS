@@ -61,13 +61,17 @@ namespace WebSocketDS_ns
 
         string sendCommandBinForDevice(Tango::DeviceProxy *deviceProxy, const ParsedInputJson& parsedInput, bool& statusComm);
 
-        virtual bool initAllAttrs() = 0;
+        virtual vector<string> getListOfAllAttributes() = 0;
+        virtual vector<string> getListOfAllCommands() = 0;
 
         void initAttr(vector<string> &attributes);
         void initPipe(vector<string> &pipeName);
         void initComm(vector<string> &commands);
 
     private:
+        void _ifUsingAllAttrsOpt(vector<string> &attributes);
+        void _ifUsingAllCommandsOpt(vector<string> &commands);
+
         void forNiterOpt(string attrName);
         void _tangoCommandInoutForDevice(Tango::DeviceData &outDeviceData, Tango::DeviceProxy *deviceProxy, const ParsedInputJson& dataFromJson, string& commandName, string& errorMessInJson, int type);
 

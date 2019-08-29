@@ -11,6 +11,7 @@ namespace WebSocketDS_ns
 {
     TangoProcessor::TangoProcessor() {
         initQualityNState();
+        defaultStreamSize = std::stringstream().precision();
     }
 
     bool TangoProcessor::isMassive(int inType) {
@@ -553,37 +554,37 @@ namespace WebSocketDS_ns
                 break;
             case Tango::DEV_BOOLEAN: // ??? not boolean?
             {
-                deviceData = getDeviceData<bool>(inpStr);
+                deviceData = getDeviceData<Tango::DevBoolean>(inpStr);
             }
             break;
             case Tango::DEV_SHORT:
             {
-                deviceData = getDeviceData<short>(inpStr);
+                deviceData = getDeviceData<Tango::DevShort>(inpStr);
             }
             break;
             case Tango::DEV_LONG:
             {
-                deviceData = getDeviceData<long>(inpStr);
+                deviceData = getDeviceData<Tango::DevLong>(inpStr);
             }
             break;
             case Tango::DEV_FLOAT:
             {
-                deviceData = getDeviceData<float>(inpStr);
+                deviceData = getDeviceData<Tango::DevFloat>(inpStr);
             }
             break;
             case Tango::DEV_DOUBLE:
             {
-                deviceData = getDeviceData<double>(inpStr);
+                deviceData = getDeviceData<Tango::DevDouble>(inpStr);
             }
             break;
             case Tango::DEV_USHORT:
             {
-                deviceData = getDeviceData<unsigned short>(inpStr);
+                deviceData = getDeviceData<Tango::DevUShort>(inpStr);
             }
             break;
             case Tango::DEV_ULONG:
             {
-                deviceData = getDeviceData<unsigned long>(inpStr);
+                deviceData = getDeviceData<Tango::DevULong>(inpStr);
             }
             break;
             case Tango::DEV_STRING:
@@ -600,32 +601,32 @@ namespace WebSocketDS_ns
             break;
             case Tango::DEVVAR_SHORTARRAY:
             {
-                deviceData = getDeviceData<short>(inpVecStr);
+                deviceData = getDeviceData<Tango::DevShort>(inpVecStr);
             }
             break;
             case Tango::DEVVAR_LONGARRAY:
             {
-                deviceData = getDeviceData<long>(inpVecStr);
+                deviceData = getDeviceData<Tango::DevLong>(inpVecStr);
             }
             break;
             case Tango::DEVVAR_FLOATARRAY:
             {
-                deviceData = getDeviceData<float>(inpVecStr);
+                deviceData = getDeviceData<Tango::DevFloat>(inpVecStr);
             }
             break;
             case Tango::DEVVAR_DOUBLEARRAY:
             {
-                deviceData = getDeviceData<double>(inpVecStr);
+                deviceData = getDeviceData<Tango::DevDouble>(inpVecStr);
             }
             break;
             case Tango::DEVVAR_USHORTARRAY:
             {
-                deviceData = getDeviceData<unsigned short>(inpVecStr);
+                deviceData = getDeviceData<Tango::DevUShort>(inpVecStr);
             }
             break;
             case Tango::DEVVAR_ULONGARRAY:
             {
-                deviceData = getDeviceData<unsigned long>(inpVecStr);
+                deviceData = getDeviceData<Tango::DevULong>(inpVecStr);
             }
             break;
             case Tango::DEVVAR_STRINGARRAY:
@@ -747,57 +748,57 @@ namespace WebSocketDS_ns
             case Tango::DEV_BOOLEAN:
             {
                 if (data_format == Tango::AttrDataFormat::SCALAR)
-                    getDeviceAttribute<bool>(argin, outDevAttr);
+                    getDeviceAttribute<Tango::DevBoolean>(argin, outDevAttr);
                 if (data_format == Tango::AttrDataFormat::IMAGE || data_format == Tango::AttrDataFormat::SPECTRUM)
-                    getDeviceAttributeImageOrSpectr<bool>(arginArray, outDevAttr, dimX, dimY);
+                    getDeviceAttributeImageOrSpectr<Tango::DevBoolean>(arginArray, outDevAttr, dimX, dimY);
             }
             break;
             case Tango::DEV_SHORT:
             {
                 if (data_format == Tango::AttrDataFormat::SCALAR)
-                    getDeviceAttribute<short>(argin, outDevAttr);
+                    getDeviceAttribute<Tango::DevShort>(argin, outDevAttr);
                 if (data_format == Tango::AttrDataFormat::IMAGE || data_format == Tango::AttrDataFormat::SPECTRUM)
-                    getDeviceAttributeImageOrSpectr<short>(arginArray, outDevAttr, dimX, dimY);
+                    getDeviceAttributeImageOrSpectr<Tango::DevShort>(arginArray, outDevAttr, dimX, dimY);
             }
             break;
             case Tango::DEV_LONG:
             {
                 if (data_format == Tango::AttrDataFormat::SCALAR)
-                    getDeviceAttribute<long>(argin, outDevAttr);
+                    getDeviceAttribute<Tango::DevLong>(argin, outDevAttr);
                 if (data_format == Tango::AttrDataFormat::IMAGE || data_format == Tango::AttrDataFormat::SPECTRUM)
-                    getDeviceAttributeImageOrSpectr<long>(arginArray, outDevAttr, dimX, dimY);
+                    getDeviceAttributeImageOrSpectr<Tango::DevLong>(arginArray, outDevAttr, dimX, dimY);
             }
             break;
             case Tango::DEV_FLOAT:
             {
                 if (data_format == Tango::AttrDataFormat::SCALAR)
-                    getDeviceAttribute<float>(argin, outDevAttr);
+                    getDeviceAttribute<Tango::DevFloat>(argin, outDevAttr);
                 if (data_format == Tango::AttrDataFormat::IMAGE || data_format == Tango::AttrDataFormat::SPECTRUM)
-                    getDeviceAttributeImageOrSpectr<float>(arginArray, outDevAttr, dimX, dimY);
+                    getDeviceAttributeImageOrSpectr<Tango::DevFloat>(arginArray, outDevAttr, dimX, dimY);
             }
             break;
             case Tango::DEV_DOUBLE:
             {
                 if (data_format == Tango::AttrDataFormat::SCALAR)
-                    getDeviceAttribute<double>(argin, outDevAttr);
+                    getDeviceAttribute<Tango::DevDouble>(argin, outDevAttr);
                 if (data_format == Tango::AttrDataFormat::IMAGE || data_format == Tango::AttrDataFormat::SPECTRUM)
-                    getDeviceAttributeImageOrSpectr<double>(arginArray, outDevAttr, dimX, dimY);
+                    getDeviceAttributeImageOrSpectr<Tango::DevDouble>(arginArray, outDevAttr, dimX, dimY);
             }
             break;
             case Tango::DEV_USHORT:
             {
                 if (data_format == Tango::AttrDataFormat::SCALAR)
-                    getDeviceAttribute<unsigned short>(argin, outDevAttr);
+                    getDeviceAttribute<Tango::DevUShort>(argin, outDevAttr);
                 if (data_format == Tango::AttrDataFormat::IMAGE || data_format == Tango::AttrDataFormat::SPECTRUM)
-                    getDeviceAttributeImageOrSpectr<unsigned short>(arginArray, outDevAttr, dimX, dimY);
+                    getDeviceAttributeImageOrSpectr<Tango::DevUShort>(arginArray, outDevAttr, dimX, dimY);
             }
             break;
             case Tango::DEV_ULONG:
             {
                 if (data_format == Tango::AttrDataFormat::SCALAR)
-                    getDeviceAttribute<unsigned long>(argin, outDevAttr);
+                    getDeviceAttribute<Tango::DevULong>(argin, outDevAttr);
                 if (data_format == Tango::AttrDataFormat::IMAGE || data_format == Tango::AttrDataFormat::SPECTRUM)
-                    getDeviceAttributeImageOrSpectr<unsigned long>(arginArray, outDevAttr, dimX, dimY);
+                    getDeviceAttributeImageOrSpectr<Tango::DevULong>(arginArray, outDevAttr, dimX, dimY);
             }
             break;
             case Tango::DEV_STRING:
@@ -820,10 +821,10 @@ namespace WebSocketDS_ns
                 if (data_format == Tango::AttrDataFormat::SCALAR) {
                     if (argin.size() != 1)
                         throw std::runtime_error("DEV_UCHAR Must be 1 char");
-                    getDeviceAttribute<unsigned char>(argin, outDevAttr);
+                    getDeviceAttribute<Tango::DevUChar>(argin, outDevAttr);
                 }
                 if (data_format == Tango::AttrDataFormat::IMAGE || data_format == Tango::AttrDataFormat::SPECTRUM)
-                    getDeviceAttributeImageOrSpectr<unsigned char>(arginArray, outDevAttr, dimX, dimY);
+                    getDeviceAttributeImageOrSpectr<Tango::DevUChar>(arginArray, outDevAttr, dimX, dimY);
             }
             break;
             case Tango::DEV_LONG64:
@@ -1025,9 +1026,9 @@ namespace WebSocketDS_ns
             json << NONE;
         }
         break;
-        case Tango::DEV_BOOLEAN: // ??? not boolean?
+        case Tango::DEV_BOOLEAN:
         {
-            forExtractingFromPipe<bool>(pipe, json, nameOfAttrAndTypeWsReq, false);
+            forExtractingFromPipe<Tango::DevBoolean>(pipe, json, nameOfAttrAndTypeWsReq, false);
         }
         break;
         case Tango::DEV_SHORT:
@@ -1072,7 +1073,7 @@ namespace WebSocketDS_ns
         break;
         case Tango::DEVVAR_SHORTARRAY:
         {
-            forExtractingFromPipe<short>(pipe, json, nameOfAttrAndTypeWsReq, true);
+            forExtractingFromPipe<Tango::DevShort>(pipe, json, nameOfAttrAndTypeWsReq, true);
         }
         break;
         case Tango::DEVVAR_LONGARRAY:
@@ -1082,17 +1083,17 @@ namespace WebSocketDS_ns
         break;
         case Tango::DEVVAR_FLOATARRAY:
         {
-            forExtractingFromPipe<float>(pipe, json, nameOfAttrAndTypeWsReq, true);
+            forExtractingFromPipe<Tango::DevFloat>(pipe, json, nameOfAttrAndTypeWsReq, true);
         }
         break;
         case Tango::DEVVAR_DOUBLEARRAY:
         {
-            forExtractingFromPipe<double>(pipe, json, nameOfAttrAndTypeWsReq, true);
+            forExtractingFromPipe<Tango::DevDouble>(pipe, json, nameOfAttrAndTypeWsReq, true);
         }
         break;
         case Tango::DEVVAR_USHORTARRAY:
         {
-            forExtractingFromPipe<unsigned short>(pipe, json, nameOfAttrAndTypeWsReq, true);
+            forExtractingFromPipe<Tango::DevUShort>(pipe, json, nameOfAttrAndTypeWsReq, true);
         }
         break;
         case Tango::DEVVAR_ULONGARRAY:
@@ -1124,7 +1125,7 @@ namespace WebSocketDS_ns
         break;
         case Tango::DEVVAR_BOOLEANARRAY:
         {
-            forExtractingFromPipe<bool>(pipe, json, nameOfAttrAndTypeWsReq, true);
+            forExtractingFromPipe<Tango::DevBoolean>(pipe, json, nameOfAttrAndTypeWsReq, true);
         }
         break;
         case Tango::DEV_UCHAR:

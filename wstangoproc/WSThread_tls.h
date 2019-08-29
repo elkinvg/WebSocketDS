@@ -23,9 +23,6 @@ namespace WebSocketDS_ns
         virtual std::unordered_map<string, string> getRemoteConf(websocketpp::connection_hdl hdl) override;
         virtual void close_from_server(websocketpp::connection_hdl hdl) override;
         virtual size_t get_buffered_amount(websocketpp::connection_hdl hdl) override;
-        
-        virtual void startTimer(websocketpp::connection_hdl hdl) override;
-        virtual void runTimer(const error_code & ec, websocketpp::connection_hdl hdl, int timerInd) override;
 
         server_tls m_server;
 

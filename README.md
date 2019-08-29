@@ -9,6 +9,7 @@ WebSocketDS
     - **[Reading data from pipe](#reading-data-from-pipe)**
     - **[Running commands](#running-commands)**
     - **[Write attribute](#write-attribute)**
+    - **[Read attributes](#read-attributes)**
     
 - **[Client mode](#client-mode)**
     - **[Reading data from attributes and pipe](#reading-data-from-attributes-and-pipe)**
@@ -292,6 +293,37 @@ Request types:
 ```
  
  `"resp"` Can contain devices for which the write operation is not successful (If using the group mode)
+
+#### Read attributes
+
+Input JSON:
+
+For one device (if uses single device mode):
+
+```json
+{
+	"type_req" : "read_attr",
+	"attr_name": "name of attribute or array of names"
+}
+```
+
+For one device (if uses mode with group of devices):
+
+```json
+{
+	"type_req" : "read_attr_dev",
+	"attr_name": "name of attribute or array of names"
+}
+```
+
+```json
+{
+	"type_req" : "read_attr_gr",
+	"attr_name": "name of attribute or array of names"
+}
+```
+
+For all devices from group (if uses mode with group of devices):
   
 ## Client mode
 
@@ -792,9 +824,9 @@ Example output for 1476379200 (type double with precision  by default)
 
 #### Setting the periodicity of the output of values for attributes
 
-Used in server mode or for timer
+Used in server mode
 
-For individual attributes, you can set the frequency of the output. To set the periodicity for the attribute name in the property (or in input message for timer), add `;niter=N/M` or `;niter=N`
+For individual attributes, you can set the frequency of the output. To set the periodicity for the attribute name in the property, add `;niter=N/M` or `;niter=N`
 
  - **N** - Output once in N iterations.  (unsigned short)
  - **M** - The iteration number at which the value is displayed.
@@ -830,8 +862,8 @@ Other Requests:
   - **Mode** — Device operating mode. [Device operating mode](#device-operating-mode); (string)  
   - **Port** — Listening port at connection; (DevShort)
   - **DeviceServer** - tango id of the used device. As template parameter may serve simple name of a device or name pattern for group (e.g., `domain_*/family/member_*`). `Used only if any server mode is selected.` ; (string)
-  - **Attributes** — — a list of device attributes you want to read, if reading all attributes is required, add __all_attrs__ (not operational in group mode) `Used only if any server mode is selected.` ; (array of string)
-  - **Commands** — a list of device commands you want to execute through WS. `Used only if any server mode is selected.` ; (array of string)
+  - **Attributes** — — a list of device attributes you want to read, if reading all attributes is required, add `__all_attrs__` (not operational in group mode) `Used only if any server mode is selected.`.; (array of string)
+  - **Commands** — a list of device commands you want to execute through WS. `Used only if any server mode is selected.`. To include all commands, add `__all_commands__`  ; (array of string)
   - **PipeName** - Name of DevicePipe for reading. [0]
 When using GROUP, the DevicePipe name must be the same for all devices.
 If you want to set properties for specific attributes, add them in the format `NameAttr;property`

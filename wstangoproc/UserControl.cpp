@@ -10,10 +10,10 @@ WebSocketDS_ns::UserControl::UserControl(string authDS, TYPE_OF_IDENT toi, bool 
     _command_name_for_check_permission = "check_permissions";
 }
 
-bool WebSocketDS_ns::UserControl::check_permission(const ParsedInputJson& parsedInputJson, const ConnectionData &connectionData, string deviceName, bool isGroup, string &mess, TYPE_WS_REQ typeWsReq) {
+bool WebSocketDS_ns::UserControl::check_permission(const ParsedInputJson& parsedInputJson, const ConnectionData *connData, string deviceName, bool isGroup, string &mess, TYPE_WS_REQ typeWsReq) {
     bool isAuth = false;
 
-    vector <string> permission_data = getPermissionData(parsedInputJson, connectionData, deviceName, typeWsReq);
+    vector <string> permission_data = getPermissionData(parsedInputJson, connData, deviceName, typeWsReq);
 
     Tango::DeviceData argin, argout;
     Tango::DeviceProxy *authProxy = nullptr;
@@ -152,12 +152,12 @@ pair<bool, string> WebSocketDS_ns::UserControl::check_user_rident(string login, 
     return authStatus;
 }
 
-bool WebSocketDS_ns::UserControl::sendLogCommand(const WebSocketDS_ns::ParsedInputJson &parsedInputJson, const ConnectionData &connectionData, string deviceName, bool isGroup, bool status, TYPE_WS_REQ typeWsReq)
+bool WebSocketDS_ns::UserControl::sendLogCommand(const WebSocketDS_ns::ParsedInputJson &parsedInputJson, const ConnectionData *connData, string deviceName, bool isGroup, bool status, TYPE_WS_REQ typeWsReq)
 {
     if (!_isLogActive)
         return false;
 
-    vector <string> permission_data = getPermissionData(parsedInputJson, connectionData, deviceName, typeWsReq);
+    vector <string> permission_data = getPermissionData(parsedInputJson, connData, deviceName, typeWsReq);
     Tango::DeviceProxy *authProxy = nullptr;
     try {
         authProxy = new Tango::DeviceProxy(_authDS);
@@ -225,7 +225,7 @@ bool WebSocketDS_ns::UserControl::sendLog(Tango::DeviceProxy *authProxy, const v
     return isSuccess;
 }
 
-vector<string> WebSocketDS_ns::UserControl::getPermissionData(const ParsedInputJson &parsedInputJson, const ConnectionData &connectionData, const string &deviceName, TYPE_WS_REQ typeWsReq)
+vector<string> WebSocketDS_ns::UserControl::getPermissionData(const ParsedInputJson &parsedInputJson, const ConnectionData *connData, const string &deviceName, TYPE_WS_REQ typeWsReq)
 {
     // Проверка ключей из remoteConf проводится checkKeysFromParsedGet
     vector <string> permission_data;
@@ -240,13 +240,13 @@ vector<string> WebSocketDS_ns::UserControl::getPermissionData(const ParsedInputJ
             permission_data[1] = parsedInputJson.otherInpStr.at("attr_name"); // commandName
         else
             throw std::runtime_error("check getPermissionData");
-        permission_data[2] = connectionData.ip_client;
-        permission_data[3] = connectionData.login;
+        permission_data[2] = connData->ip_client;
+        permission_data[3] = connData->login;
     }
     else { // Для аутентификации в Егоровом AuthDS в check_permissions_www
         permission_data.resize(5);
-        permission_data[0] = connectionData.login;
-        permission_data[1] = connectionData.password;
+        permission_data[0] = connData->login;
+        permission_data[1] = connData->password;
         permission_data[2] = deviceName;
 
         if (typeWsReq == TYPE_WS_REQ::COMMAND || typeWsReq == TYPE_WS_REQ::COMMAND_DEV_CLIENT)
@@ -254,7 +254,7 @@ vector<string> WebSocketDS_ns::UserControl::getPermissionData(const ParsedInputJ
         else if (typeWsReq == TYPE_WS_REQ::ATTRIBUTE_WRITE || typeWsReq == TYPE_WS_REQ::ATTR_DEV_CLIENT_WR)
             permission_data[3] = parsedInputJson.otherInpStr.at("attr_name") + "/write"; // commandName
 
-        permission_data[4] = connectionData.ip_client;
+        permission_data[4] = connData->ip_client;
     }
     
     return permission_data;

@@ -33,7 +33,6 @@ namespace WebSocketDS_ns
             return false;
         
         return true;
-        //return  forValidate(conf);
     }
 
     void *WSThread_plain::run_undetached(void *ptr)
@@ -75,7 +74,7 @@ namespace WebSocketDS_ns
 
         vector<websocketpp::connection_hdl> for_close;
 
-        websocketpp::lib::unique_lock<websocketpp::lib::mutex> con_lock(m_connection_lock);
+        std::unique_lock<std::mutex> con_lock(m_connection_lock);
 
         for (const auto& conn : m_connections) {
             try {
@@ -123,6 +122,9 @@ namespace WebSocketDS_ns
 
 
     void WSThread_plain::send(websocketpp::connection_hdl hdl, std::string msg) {
+        if (hdl.expired()) {
+            return;
+        }
         StringProc::removeSymbolsForString(msg);
         try {
             unsigned int maxBuffSize = _tc->getMaxBuffSize();
@@ -194,61 +196,6 @@ namespace WebSocketDS_ns
         return parsedGet;
     }
 
-    void WSThread_plain::startTimer(websocketpp::connection_hdl hdl)
-    {
-        if (hdl.expired())
-            return;
-        
-        try {
-            
-            bool hasDevice;
-            string resp = m_connections[hdl].tangoConnForClient->getJsonForAttribute(hasDevice);
-            if (hdl.expired())
-                return;
-            send(hdl, resp);
-            
-            if (!hasDevice) {
-                m_connections[hdl].timing.reset(nullptr);
-                return;
-            }
-            
-            m_connections[hdl].timerInd++;
-            m_connections[hdl].timing->m_timer = m_server.set_timer(m_connections[hdl].timing->msec, bind(&WSThread_plain::runTimer, this, placeholders::_1, hdl, m_connections[hdl].timerInd));
-        }
-        catch (...) {
-            // This exception is not thrown out in normal operation
-            ERROR_STREAM_F << "START EXCEPTION!!!!!!!";
-        }
-    }
-    
-    void WSThread_plain::runTimer(const error_code & ec, websocketpp::connection_hdl hdl, int timerInd)
-    {
-        // Все данные в m_connections[hdl]
-        if (hdl.expired())
-            return;
-
-        if (m_connections[hdl].timing == nullptr)
-            return;
-        if (!m_connections[hdl].timing->isTimerOn)
-            return;
-
-        if (ec.value() !=0 ) {
-            ERROR_STREAM_F << " Error code: " << ec.value() << " Mess: " << ec.message();
-        }
-
-        try {
-            if (!forRunTimer(hdl, timerInd))
-                return;
-            
-            m_connections[hdl].timing->m_timer = m_server.set_timer(m_connections[hdl].timing->msec, bind(&WSThread_plain::runTimer
-                , this, placeholders::_1, hdl, timerInd));
-        }
-        catch (...) {
-            // This exception is not thrown out in normal operation
-            ERROR_STREAM_F << "RUN EXCEPTION!!!!!!!";
-        }
-    }
-
     void WSThread_plain::close_from_server(websocketpp::connection_hdl hdl) {
         try {
             websocketpp::server<websocketpp::config::asio>::connection_ptr con = m_server.get_con_from_hdl(hdl);
@@ -263,13 +210,6 @@ namespace WebSocketDS_ns
         return con->get_buffered_amount();
     }
 
-    WSThread_plain::~WSThread_plain() {
-        // Выскакивал access violation reading location, если таймер запущен
-        for (auto &cn : m_connections) {
-            if (cn.second.timing != nullptr) {
-                cn.second.timing.reset(nullptr);
-            }
-        }
-    }
+    WSThread_plain::~WSThread_plain() {}
 
 }

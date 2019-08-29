@@ -34,7 +34,9 @@ namespace WebSocketDS_ns
         virtual Tango::CommandInfo getCommandInfo(const string& command_name) override;
         virtual bool checkIsAttributeWriteble(const string& attr_name) override;
 
-        virtual bool initAllAttrs() override;
+        virtual vector<string> getListOfAllAttributes() override;
+        virtual vector<string> getListOfAllCommands() override;
+
 		void forGenerateJsonForUpdate(stringstream &json);
         void getDeviceNameFromAlias(string& alias);
 

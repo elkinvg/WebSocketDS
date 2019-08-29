@@ -24,7 +24,6 @@ namespace WebSocketDS_ns
         string removeDevicesFromUpdateList(vector<string> devs);
         
         ~TangoConnForClient();
-        string getJsonForAttribute(bool &hasDevice);
         bool removeAllDevices();
         int numOfListeningDevices();
 

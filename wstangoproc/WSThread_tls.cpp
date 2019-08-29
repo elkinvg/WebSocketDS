@@ -36,7 +36,6 @@ namespace WebSocketDS_ns
             return false;
 
         return true;
-        //return  forValidate(conf);;
     }
 
     void *WSThread_tls::run_undetached(void *ptr)
@@ -66,12 +65,6 @@ namespace WebSocketDS_ns
     }
 
     WSThread_tls::~WSThread_tls() {
-        for (auto &cn : m_connections) {
-            // Выскакивал access violation reading location, если таймер запущен
-            if (cn.second.timing != nullptr) {
-                cn.second.timing.reset(nullptr);
-            }
-        }
     }
 
     std::string WSThread_tls::get_password() {
@@ -91,7 +84,7 @@ namespace WebSocketDS_ns
 
         vector<websocketpp::connection_hdl> for_close;
 
-        websocketpp::lib::unique_lock<websocketpp::lib::mutex> con_lock(m_connection_lock);
+        std::unique_lock<std::mutex> con_lock(m_connection_lock);
 
         for (const auto& conn : m_connections) {
             try {
@@ -136,6 +129,9 @@ namespace WebSocketDS_ns
     }
 
     void WSThread_tls::send(websocketpp::connection_hdl hdl, std::string msg) {
+        if (hdl.expired()) {
+            return;
+        }
         StringProc::removeSymbolsForString(msg);
         try {
             size_t buffered_amount = get_buffered_amount(hdl);
@@ -243,61 +239,5 @@ namespace WebSocketDS_ns
         websocketpp::server<websocketpp::config::asio_tls>::connection_ptr con = m_server.get_con_from_hdl(hdl);
         return con->get_buffered_amount();
     }
-
-    void WSThread_tls::startTimer(websocketpp::connection_hdl hdl)
-    {
-        if (hdl.expired())
-            return;
-        
-        try {
-            bool hasDevice;
-            string resp = m_connections[hdl].tangoConnForClient->getJsonForAttribute(hasDevice);
-            
-            if (hdl.expired())
-                return;
-            
-            send(hdl, resp);
-
-            if (!hasDevice) {
-                m_connections[hdl].timing.reset(nullptr);
-                return;
-            }
-            m_connections[hdl].timerInd++;
-            m_connections[hdl].timing->m_timer = m_server.set_timer(m_connections[hdl].timing->msec, bind(&WSThread_tls::runTimer
-                                                                                                          , this, placeholders::_1, hdl, m_connections[hdl].timerInd));
-        }
-        catch (...) {
-            // This exception is not thrown out in normal operation
-            ERROR_STREAM_F << "START EXCEPTION!!!!!!!";
-        }
-    }
-    
-    void WSThread_tls::runTimer(const error_code & ec, websocketpp::connection_hdl hdl, int timerInd)
-    {
-        // Все данные в m_connections[hdl]
-        if (hdl.expired())
-            return;
-
-        if (m_connections[hdl].timing == nullptr)
-            return;
-        if (!m_connections[hdl].timing->isTimerOn)
-            return;
-
-        if (ec.value() !=0 ) {
-            ERROR_STREAM_F << " Error code: " << ec.value() << " Mess: " << ec.message();
-        }
-
-        try {
-            if (forRunTimer(hdl, timerInd))
-                return;
-            m_connections[hdl].timing->m_timer = m_server.set_timer(m_connections[hdl].timing->msec, bind(&WSThread_tls::runTimer
-                , this, placeholders::_1, hdl, timerInd));
-        }
-        catch (...) {
-            // This exception is not thrown out in normal operation
-            ERROR_STREAM_F << "RUN EXCEPTION!!!!!!!";
-        }
-    }
-
 }
 
