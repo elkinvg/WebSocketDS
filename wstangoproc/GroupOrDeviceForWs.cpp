@@ -170,6 +170,11 @@ namespace WebSocketDS_ns
 
             forNiterOpt(attr);
 
+            string tmpAttrName = attr;
+            std::transform(tmpAttrName.begin(), tmpAttrName.end(), tmpAttrName.begin(), ::tolower);
+            if (tmpAttrName.find("json") != std::string::npos)
+                isJsonAttribute.insert(attr);
+
             if (std::find(_attributes.begin(), _attributes.end(), attr) == _attributes.end()) {
                 _attributes.push_back(attr);
             }
