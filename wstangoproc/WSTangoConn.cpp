@@ -537,16 +537,6 @@ namespace WebSocketDS_ns
 
     void WSTangoConn::sendRequest_Command(const ParsedInputJson &inputReq, ConnectionData* connData, bool &isBinary, string& resp_json)
     {
-        string commandName;
-        TYPE_WS_REQ typeWsReq = getTypeWsReq(inputReq.type_req);
-
-        string errorMessage = checkPermissionForRequest(inputReq, connData, commandName, _wsds->deviceServer, typeWsReq);
-
-        if (errorMessage.size()) {
-            resp_json = errorMessage;
-            return;
-        }
-
         if (_isGroup) {
             if (inputReq.type_req != "command_device" && inputReq.type_req != "command_group") {
                 resp_json = StringProc::exceptionStringOut(inputReq.id, inputReq.otherInpStr.at("command_name"), "type_req must be command_device or command_group", "command");
@@ -560,6 +550,24 @@ namespace WebSocketDS_ns
             }
         }
 
+        string devicename;
+        string commandName;
+        TYPE_WS_REQ typeWsReq = getTypeWsReq(inputReq.type_req);
+
+        if (_isGroup && inputReq.type_req == "command_device") {
+            devicename = inputReq.otherInpStr.at("device_name");
+        }
+        else {
+            devicename = _wsds->deviceServer;
+        }
+
+        string errorMessage = checkPermissionForRequest(inputReq, connData, commandName, devicename, typeWsReq);
+
+        if (errorMessage.size()) {
+            resp_json = errorMessage;
+            return;
+        }
+
         bool statusComm;
         OUTPUT_DATA_TYPE odt = groupOrDevice->checkDataType(commandName);
         if (odt == OUTPUT_DATA_TYPE::JSON)
@@ -568,7 +576,7 @@ namespace WebSocketDS_ns
             resp_json = groupOrDevice->sendCommandBin(inputReq,statusComm);
             isBinary = true;
         }
-        bool isSent = uc->sendLogCommand(inputReq, connData, _wsds->deviceServer, _isGroup, statusComm, typeWsReq);
+        bool isSent = uc->sendLogCommand(inputReq, connData, devicename, _isGroup, statusComm, typeWsReq);
         if (isSent)
             INFO_STREAM << "Command. Information was sent to the log" << endl;
     }
@@ -912,20 +920,6 @@ namespace WebSocketDS_ns
 
     void WSTangoConn::sendRequest_AttrWrite(const ParsedInputJson& inputReq, ConnectionData* connData, string& resp_json)
     {
-        string attrName;
-
-
-        TYPE_WS_REQ typeWsReq = getTypeWsReq(inputReq.type_req);
-
-        // checking key attr_name in checkPermissionForRequest
-        string errorMessage = checkPermissionForRequest(inputReq, connData, attrName, _wsds->deviceServer, typeWsReq);
-
-        bool statusAttr;
-
-        if (errorMessage.size()) {
-            resp_json = errorMessage;
-            return;
-        }
         if (_isGroup) {
             if (inputReq.type_req != "write_attr_dev" && inputReq.type_req != "write_attr_gr") {
                 resp_json = StringProc::exceptionStringOut(inputReq.id, inputReq.otherInpStr.at("attr_name"), "type_req must be write_attr_dev or write_attr_gr", "command");
@@ -939,9 +933,31 @@ namespace WebSocketDS_ns
             }
         }
 
+        string devicename;
+        string attrName;
+
+        if (_isGroup && inputReq.type_req == "write_attr_dev") {
+            devicename = inputReq.otherInpStr.at("device_name");
+        }
+        else {
+            devicename = _wsds->deviceServer;
+        }
+
+        TYPE_WS_REQ typeWsReq = getTypeWsReq(inputReq.type_req);
+
+        // checking key attr_name in checkPermissionForRequest
+        string errorMessage = checkPermissionForRequest(inputReq, connData, attrName, devicename, typeWsReq);
+
+        bool statusAttr;
+
+        if (errorMessage.size()) {
+            resp_json = errorMessage;
+            return;
+        }
+
         resp_json = groupOrDevice->sendAttrWr(inputReq, statusAttr);
 
-        bool isSent = uc->sendLogCommand(inputReq, connData, _wsds->deviceServer, _isGroup, statusAttr, typeWsReq);
+        bool isSent = uc->sendLogCommand(inputReq, connData, devicename, _isGroup, statusAttr, typeWsReq);
         if (isSent)
             INFO_STREAM << "Write attribute. Information was sent to the log" << endl;
     }
