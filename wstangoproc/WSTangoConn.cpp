@@ -915,7 +915,16 @@ namespace WebSocketDS_ns
                 return;
             }
         }
-        resp_json = groupOrDevice->sendAttrRead(inputReq);
+        try {
+            resp_json = groupOrDevice->sendAttrRead(inputReq);
+        }
+        catch (Tango::DevFailed &e) {
+            vector<string> errors;
+            for (int i = 0; i < e.errors.length(); i++) {
+                errors.push_back((string)e.errors[i].desc);
+            }
+            resp_json = StringProc::exceptionStringOut(inputReq.id, NONE, errors, inputReq.type_req);
+        }
     }
 
     void WSTangoConn::sendRequest_AttrWrite(const ParsedInputJson& inputReq, ConnectionData* connData, string& resp_json)
