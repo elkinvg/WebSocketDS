@@ -22,4 +22,12 @@ vc12_proj/*.opensdf
 .idea/*
 *.autosave
 
-scripts_for_test/js/my_sett.js
+#my
+my_sett.js
+scripts_for_test
+scripts_for_test/.*
+
+# nodejs script
+
+node_modules
+conf.json
