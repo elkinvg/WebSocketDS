@@ -561,6 +561,9 @@ namespace WebSocketDS_ns
         vector<Tango::DeviceAttribute> *devAttrs = dp->read_attributes_reply(idInfo.first);
         _generateHeadForJson(json, reqInfo, useOldVersion);
         _generateJsonForAttrList(json, devAttrs, reqInfo.precisions);
+        if (useOldVersion) {
+            json << "}";
+        }
         json << "}";
         delete devAttrs;
         return json.str();
@@ -1523,6 +1526,10 @@ namespace WebSocketDS_ns
                     json << "{";
                     json << "\"" << reqInfo.deviceName << "\": ";
                 }
+            }
+            if (reqInfo.typeAsynqReq == TYPE_WS_REQ::ATTRIBUTE_READ) {
+                json << "{";
+                json << "\"" << reqInfo.deviceName << "\":";
             }
         }
     }
