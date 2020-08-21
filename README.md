@@ -29,23 +29,23 @@ The property `Options` (array of strings) for the TANGO device has the format `o
 
 List of possible options:
 
-- **group** - No value. Использование групп девайс серверов. Свойство `DeviceServer` должно быть задано в соответствующем для групп формате.
+- **group** - No value. Use a Tango Group. The `DeviceServer` property must be set in a group-appropriate format
 
-- **uselog** - No value. Использование записи в журнал при выполении команд. [Подробнее ниже](#использование-записи-в-журнал-при-выполении-команд)
+- **uselog** - No value. Using logging when executing commands. [For more details](#logging)
 
-- **useoldjson**- No value. Если добавлен этот ключ, Для команд и чтения атрибутов будут ответы старого типа
+- **useoldjson**- No value. Old type answers (Previous verions)
 
-- **tident**- С дополнительным значением. Используемый тип авторизации. Используются два типа , `permission_www` ([подробности ниже](#авторизация-методом-permission_www)), а также `smpl` - SIMPLE (он же используется по умолчанию)
+- **tident**- With value. The type of authorization used. Two types are used , `permission_www` ([For more details](#permission_www)), and `smpl` - SIMPLE (by default)
 
-- **command_name_for_check_user**- С дополнительным значением. Использование иного имени команды для аутентификации. По умолчанию `check_user`. Пример: `command_name_for_check_user=НОВОЕ_ИМЯ_МЕТОДА`
+- **command_name_for_check_user**- With value. Other command name for check user. By default `check_user`. Example: `command_name_for_check_user=NEW_COMMAND_NAME`
 
-- **command_name_for_check_permission**- С дополнительным значением. Использование иного имени команды для авторизации. По умолчанию `check_permissions`. Пример: `command_name_for_check_permission=НОВОЕ_ИМЯ_МЕТОДА`
+- **command_name_for_check_permission**- With value. Other command name for check permissions. By default `check_permissions`. Example: `command_name_for_check_permission=NEW_COMMAND_NAME`
 
-- **command_name_for_log**- С дополнительным значением. Использование иного имени команды для записи логов. По умолчанию `send_log_command_ex`. Пример: `command_name_for_log=НОВОЕ_ИМЯ_МЕТОДА`
+- **command_name_for_log**- With value. Other command name for logging. По умолчанию `send_log_command_ex`. Example: `command_name_for_log=NEW_COMMAND_NAME`
 
-- **maxnconn**- Максимальное число соединений. Если будет достигнут предел, последующие соединения будут прерваны ошибкой `400 Bad Request`. Если задано значение 0, количество соединений не будет ограничено.
+- **maxnconn**- The maximum number of connections. If the limit is reached, subsequent connections will be aborted with a 400 Bad Request error. If set to 0, the number of connections will not be limited.
 
-- **maxbuffsize**- Максимальный размер буфера для каждого соединения в КиБ. Значение по умолчанию 1000. Возможные значения от 1 до 10000 (если указать значения не входящие в заданный диапазон будет выставлено значение по умолчанию). При превышении заданного максимального размера буфера, соединение будет прервано со стороны сервера;
+- **maxbuffsize**-The maximum buffer size for each connection in KiB. By default 1000. Possible values from 1 to 10000
 
 ## Authorization and authentication
 
@@ -81,9 +81,24 @@ If you want to change the name of method, you need to define `command_name_for_c
 - **argin[2]** — Ip
 - **argin[3]** — login
 
+## permission_www
+
+Property `Options` must contain `tident=permission_www`.
+
+When using this method, only authorization is performed. Authentication takes place automatically when sending any `" login "` and `" password "`
+
+Data is sent to `authProxy->command_inout("check_permissions_www", argin);`
+5 values are passed to `check_permissions_www`:
+
+- **argin[0]** - login
+- **argin[1]** - password
+- **argin[2]** - device name 
+- **argin[3]** - command name + `"/write"`, for example `command_name/write`
+- **argin[4]** - IP
+
 ## Logging
 
-o activate this feature, you need to define `uselog` in Property "Options"
+For activate this feature, you need to define `uselog` in Property "Options"
 
 Device `AuthDS` must contain method `send_log_command_ex(const Tango::DevVarStringArray *argin)`
 
@@ -99,13 +114,13 @@ Device `AuthDS` must contain method `send_log_command_ex(const Tango::DevVarStri
 
 ## precision options
 
-Precision options выставляются по разному, в зависимости от адресата.
+Precision options are set in different ways, depending on the recipient.
 
-Для запросов, выставлением дополнительного ключа `precision`, формат которого зависит от типа запроса. Это либо объект, либо значение.
+For requests, setting the additional key `precision`, the format of which depends on the type of request. It is either an object or a value.
 
-Для выставления значений точности атрибутов из `Property`, к имени атрибута в свойстве следует добавить `;prec=N`, где N - это требуемая точность. Пример: `AttrDevDouble;prec=10`
+To set the precision values of attributes from `Property`, add `; prec = N` to the attribute name in the property, where N is the required precision. Example: `AttrDevDouble; prec = 10`
 
-Следует учитывать максимально возможную точность. Подробнее про double можно посмотреть [здесь](https://en.wikipedia.org/wiki/Double-precision_floating-point_format), про float [здесь](https://en.wikipedia.org/wiki/Floating-point_arithmetic).
+More details about double can be found [here](https://en.wikipedia.org/wiki/Double-precision_floating-point_format), about float [here](https://en.wikipedia.org/wiki/Floating-point_arithmetic).
 
 It is also possible to set additional formatting flags:
 
@@ -139,22 +154,22 @@ Example output for 1476379200 (type double with precision by default)
 
 ### types of errors
 
-- **init_failed** - Ошибка инициализации прослушиваемого девайса
-- **auth_check** - Ошибка аутентификации. Неверный логин или пароль
-- **auth_perm** - Ошибка аутентификации. Нет доступа
-- **auth_server_err** - Ошибка аутентификации. Сервер недоступен
-- **is_not_valid** - Неправильный запрос
-- **not_supp** - Нет поддержки. Например для команды с данным типом аргумента
-- **not_supp_in_curr** - Нет поддержки в текущем режиме
-- **unknown_req_type** - Неизвестный типа запроса
-- **check_request** - Проверить запрос. Неправильный формат, или не найден необходимый ключ
+- **init_failed** - Listening device initialization error
+- **auth_check** - Authentication error. wrong login or password
+- **auth_perm** - Authentication error. No access
+- **auth_server_err** - Authentication error. Server is not available
+- **is_not_valid** - Invalid request
+- **not_supp** - No support. For example, for a command with a given type of argument
+- **not_supp_in_curr** - No support in the current mode
+- **unknown_req_type** - Unknown request type
+- **check_request** - Check the request. Invalid format or required key not found
 - **tango_exc** - TANGO exception
 - **unavailable_devs** - All device unavailable
-- **event_err** - Исключение из событийных данных
-- **check_code** - Данный тип ошибки не должен выдаваться при нормальной работе
-- **subscr_not_found** - Не найдена подписка с данным id. Может возникнуть при отписке от событий
+- **event_err** - Exception from TANGO events data
+- **check_code** - This type of error should not be reported during normal operation.
+- **subscr_not_found** - No subscription found with the given id. May occur when unsubscribing from events
 - **commun_failed** - Tango::CommunicationFailed
 - **conn_failed** - Tango::ConnectionFailed
-- **unknown_exc** - Исключение неизвестного типа
-- **not_subscr_yet** - Ещё нет подписчиков. Возникает при командах по управлению подписками, если подписок ещё не было.
-- **from_event_sub** - Ошибка возникшая при подписке на события в серверном режиме
+- **unknown_exc** - Unknown type exception
+- **not_subscr_yet** - No subscribers yet. Occurs with commands for managing subscriptions, if there were no subscriptions yet.
+- **from_event_sub** - An error occurred when subscribing to events in server mode

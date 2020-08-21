@@ -2,6 +2,8 @@
 
 Translation is not finished yet
 
+If you find errors, write to me
+
 Перевод ещё не закончен Русская версия [здесь](./README_RUS.md)
 
 ## Property list for defining Tango device
@@ -122,7 +124,7 @@ TODO: translate
 
 ---
 
-**Ключ `precision` указывается, только если требуется форматировать выводимые данные (float double). Если несколько атрибутов, указывается либо один для всех, либо массив с отдельным форматом для каждого  ["precf=10","precs=3"] [Подробнее про precision опции](../README.md#precision-options)**
+**The `precision` key is specified only if you want to format the output data (float double). If there are several attributes, either one is indicated for all, or an array with a separate format for each ["precf=10","precs=3"] [For more detail about precision options read here](../README.md#precision-options)**
 
 ---
 
@@ -163,11 +165,9 @@ Input message:
 
 ---
 
-TODO: translate
-
 ---
 
-**Ключ `precision` указывается, только если требуется форматировать выводимые данные (float double). [Подробнее про precision опции](../README.md#precision-options)**
+**The `precision` key is specified only if you want to format the output data (float double). [For more detail about precision options read here](../README.md#precision-options)**
 
 ---
 
@@ -200,9 +200,7 @@ Input JSON:
 }
 ```
 
-TODO: translate
-
-Здесь `"dimX"` и `"dimY"` используются только для массивов типа `Image`. Для `Spectrum` `"dimX"` выставляется автоматически, исходя из присланных данных.
+`" dimX "` and `" dimY "` are only used for arrays of type `Image`. For `Spectrum` `"dimX"` is set automatically based on the sent data.
 
 Output message (if succesfull):
 
@@ -240,11 +238,9 @@ Input message:
 
 ---
 
-TODO: translate
-
 ---
 
-**Ключ `precision` указывается, только если требуется форматировать выводимые данные (float double). Здесь используется формат объекта, где ключ - это имя атрибута, значение - формат вывода. [Подробнее про precision опции](../README.md#precision-options)**
+**The `precision` key is specified only if you want to format the output data (float double). It uses the object format, where key is the name of the attribute, value is the output format. [For more detail about precision options read here](../README.md#precision-options)**
 
 ---
 
