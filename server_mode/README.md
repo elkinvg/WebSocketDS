@@ -259,6 +259,7 @@ Output message for group:
     "name/tango/other_device_from_group": "Возможное сообщение об ошибке, либо [массив сообщений]"
   }
 }
+```
 
 Output message for device:
 

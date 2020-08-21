@@ -333,6 +333,7 @@ Output message for group:
     "name/tango/other_device_from_group": "Possible error message, or [array of messages]"
   }
 }
+```
 
 Output message for device:
 
