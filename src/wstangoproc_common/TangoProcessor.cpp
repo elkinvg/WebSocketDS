@@ -117,6 +117,11 @@ namespace WebSocketDS_ns
                 Tango::DeviceProxy *dp;
                 try {
                     dp = groupForWs->get_device(deviceName);
+                    if (dp == NULL) {
+                        string mess = "Device: " + deviceName + " not in group";
+                        string errorMessInJson = StringProc::exceptionStringOut(ERROR_TYPE::DEVICE_NOT_IN_GROUP, parsedInput.id, mess, parsedInput.type_req_str);
+                        throw std::runtime_error(errorMessInJson);
+                    }
                 }
                 catch (Tango::DevFailed &e) {
                     vector<string> tangoErrors;
@@ -547,6 +552,9 @@ namespace WebSocketDS_ns
         vector<Tango::DeviceAttribute> *devAttrs = dp->read_attributes_reply(idInfo.first);
         _generateHeadForJson(json, reqInfo, useOldVersion);
         _generateJsonForAttrList(json, devAttrs, reqInfo.precisions);
+        if (useOldVersion) {
+            json << "}";
+        }
         json << "}";
         delete devAttrs;
         return json.str();

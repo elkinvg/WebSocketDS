@@ -73,7 +73,8 @@ namespace WebSocketDS_ns
                 {ERROR_TYPE::CONNECTION_FAILED, "conn_failed"},
                 {ERROR_TYPE::UNKNOWN_EXC, "unknown_exc"},
                 {ERROR_TYPE::NOT_SUBSCR_YET, "not_subscr_yet"},
-                {ERROR_TYPE::FROM_EVENT_SUBSCR, "from_event_sub"}
+                {ERROR_TYPE::FROM_EVENT_SUBSCR, "from_event_sub"},
+                {ERROR_TYPE::DEVICE_NOT_IN_GROUP, "device_not_in_group"}
             };
 
             auto it = errTypeMap.find(errorType);

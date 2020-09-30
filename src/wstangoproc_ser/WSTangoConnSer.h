@@ -52,7 +52,7 @@ namespace WebSocketDS_ns
     private:
         WebSocketDS *_wsds;
         WSThread *wsThread;
-        log4tango::Logger *logger;
+        log4tango::Logger *logger = nullptr;
         std::thread *updTh = nullptr;
         GroupForWs* groupForWs = nullptr;
         DeviceForWs* deviceForWs = nullptr;

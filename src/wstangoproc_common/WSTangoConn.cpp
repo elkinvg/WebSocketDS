@@ -220,7 +220,11 @@ namespace WebSocketDS_ns
         for (unsigned int i = 0; i < lnh; i++) {
             if (i)
                 outErrMess += " ";
-            get_logger()->error_stream() << " From " + func + ": " << e.errors[i].desc;
+            auto logger = get_logger();
+            if (logger != nullptr) {
+                logger->error_stream() << " From " + func + ": " << e.errors[i].desc;
+            }
+            
             outErrMess += e.errors[i].desc;
         }
         return outErrMess;

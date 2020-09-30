@@ -173,3 +173,4 @@ Example output for 1476379200 (type double with precision by default)
 - **unknown_exc** - Unknown type exception
 - **not_subscr_yet** - No subscribers yet. Occurs with commands for managing subscriptions, if there were no subscriptions yet.
 - **from_event_sub** - An error occurred when subscribing to events in server mode
+- **device_not_in_group** - Request to a device not from the group
