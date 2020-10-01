@@ -170,6 +170,14 @@ namespace WebSocketDS_ns
         }
     }
 
+    void WSTangoConnSer::setFalsedConnectionStatus()
+    {
+        string status = "Port: " + to_string(_wsds->port) + "  already in use";
+        _wsds->set_state(Tango::FAULT);
+        _wsds->set_status(status);
+        _connectionStatus = false;
+    }
+
     void WSTangoConnSer::update()
     {
         if (!_hasAttrsForUpdate) {

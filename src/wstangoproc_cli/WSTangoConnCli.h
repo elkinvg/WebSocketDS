@@ -30,6 +30,7 @@ namespace WebSocketDS_ns
         virtual string checkResponse(const std::pair<long, TaskInfo>& idInfo) override;
 
         virtual void setNumOfConnections(unsigned long num) override;
+        virtual void setFalsedConnectionStatus() override;
 
         string sendRequest_Event(websocketpp::connection_hdl hdl, const ParsedInputJson& parsedInput);
 

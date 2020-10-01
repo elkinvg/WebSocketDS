@@ -89,7 +89,7 @@ class WebSocketDS_cli : public TANGO_BASE_CLASS
 
 /*----- PROTECTED REGION ID(WebSocketDS_cli::Data Members) ENABLED START -----*/
 
-    std::unique_ptr<WSTangoConnCli> wsTangoConn;
+    WSTangoConnCli* wsTangoConn;
 
 /*----- PROTECTED REGION END -----*/	//	WebSocketDS_cli::Data Members
 

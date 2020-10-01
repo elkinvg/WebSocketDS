@@ -72,6 +72,14 @@ namespace WebSocketDS_ns
         return eventProc->request(parsedInput, hdl);
     }
 
+    void WSTangoConnCli::setFalsedConnectionStatus()
+    {
+        string status = "Port: " + to_string(_wsds->port) + "  already in use";
+        _wsds->set_state(Tango::FAULT);
+        _wsds->set_status(status);
+        _connectionStatus = false;
+    }
+
     void WSTangoConnCli::clientDisconnected(websocketpp::connection_hdl hdl)
     {
         if (eventProc == nullptr) {

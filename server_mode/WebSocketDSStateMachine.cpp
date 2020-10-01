@@ -67,7 +67,9 @@ bool WebSocketDS::is_UpdateData_allowed(TANGO_UNUSED(const CORBA::Any &any))
 {
 	//	Not any excluded states for UpdateData command.
 	/*----- PROTECTED REGION ID(WebSocketDS::UpdateDataStateAllowed) ENABLED START -----*/
-	
+    if (wsTangoConn == nullptr) {
+        return false;
+    }
 	/*----- PROTECTED REGION END -----*/	//	WebSocketDS::UpdateDataStateAllowed
 	return true;
 }
