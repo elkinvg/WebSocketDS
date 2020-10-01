@@ -97,10 +97,7 @@ class WebSocketDS : public TANGO_BASE_CLASS
 /*----- PROTECTED REGION ID(WebSocketDS::Data Members) ENABLED START -----*/
 
 private:
-    //WSThread *wsThread;
-    //std::unique_ptr<GroupOrDeviceForWs_bck> groupOrDevice;
-    // TODO: WSTangoConn
-    std::unique_ptr<WSTangoConnSer> wsTangoConn;
+    WSTangoConnSer* wsTangoConn;
 
     // TODO: DELETE
     //std::chrono::seconds timeFromUpdateData;
@@ -240,9 +237,6 @@ public:
 	void add_dynamic_commands();
 
 /*----- PROTECTED REGION ID(WebSocketDS::Additional Method prototypes) ENABLED START -----*/
-
-private:
-    void reInitDevice();
 
 
     /*----- PROTECTED REGION END -----*/	//	WebSocketDS::Additional Method prototypes

@@ -33,6 +33,7 @@ namespace WebSocketDS_ns
         virtual string checkResponse(const std::pair<long, TaskInfo>& idInfo) override;
 
         virtual void setNumOfConnections(unsigned long num) override;
+        virtual void setFalsedConnectionStatus() override;
 
         void update();
 
@@ -56,7 +57,7 @@ namespace WebSocketDS_ns
         std::thread *updTh = nullptr;
         GroupForWs* groupForWs = nullptr;
         DeviceForWs* deviceForWs = nullptr;
-        
+
         EventProcSer* eventSubscr = nullptr;
         bool _hasEventSubscr{ false };
         array<vector<string>, 4> list_of_event_subcr;

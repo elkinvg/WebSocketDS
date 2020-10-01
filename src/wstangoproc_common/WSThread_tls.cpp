@@ -50,27 +50,32 @@ namespace WebSocketDS_ns
 
     void *WSThread_tls::run_undetached(void *ptr)
     {
-        DEBUG_STREAM << "The upload thread (TLS) starts..." << endl;
-        m_server.set_open_handler(websocketpp::lib::bind(&WSThread_tls::on_open,this,websocketpp::lib::placeholders::_1));
-        m_server.set_close_handler(websocketpp::lib::bind(&WSThread_tls::on_close,this,websocketpp::lib::placeholders::_1));
-        m_server.set_message_handler(websocketpp::lib::bind(&WSThread_tls::on_message,this,websocketpp::lib::placeholders::_1,websocketpp::lib::placeholders::_2));
-        m_server.set_validate_handler(bind(&WSThread_tls::on_validate, this, websocketpp::lib::placeholders::_1));
-        m_server.set_fail_handler(bind(&WSThread_tls::on_fail, this, websocketpp::lib::placeholders::_1));
+        try {
+            DEBUG_STREAM << "The upload thread (TLS) starts..." << endl;
+            m_server.set_open_handler(websocketpp::lib::bind(&WSThread_tls::on_open, this, websocketpp::lib::placeholders::_1));
+            m_server.set_close_handler(websocketpp::lib::bind(&WSThread_tls::on_close, this, websocketpp::lib::placeholders::_1));
+            m_server.set_message_handler(websocketpp::lib::bind(&WSThread_tls::on_message, this, websocketpp::lib::placeholders::_1, websocketpp::lib::placeholders::_2));
+            m_server.set_validate_handler(bind(&WSThread_tls::on_validate, this, websocketpp::lib::placeholders::_1));
+            m_server.set_fail_handler(bind(&WSThread_tls::on_fail, this, websocketpp::lib::placeholders::_1));
 
-        // this will turn off console output for frame header and payload
-        m_server.clear_access_channels(websocketpp::log::alevel::frame_header | websocketpp::log::alevel::frame_payload);
-        m_server.set_tls_init_handler(websocketpp::lib::bind(&WSThread_tls::on_tls_init,this,websocketpp::lib::placeholders::_1));
+            // this will turn off console output for frame header and payload
+            m_server.clear_access_channels(websocketpp::log::alevel::frame_header | websocketpp::log::alevel::frame_payload);
+            m_server.set_tls_init_handler(websocketpp::lib::bind(&WSThread_tls::on_tls_init, this, websocketpp::lib::placeholders::_1));
 
-        // this will turn off everything in console output
-        //m_server.clear_access_channels(websocketpp::log::alevel::all);
+            // this will turn off everything in console output
+            //m_server.clear_access_channels(websocketpp::log::alevel::all);
 
-        m_server.init_asio();
+            m_server.init_asio();
 
-        m_server.set_reuse_addr(true); // for LINUX
-        m_server.listen(port);
-        m_server.start_accept();
-        m_server.run();
-        DEBUG_STREAM << "WS stopped.." << endl;
+            m_server.set_reuse_addr(true); // for LINUX
+            m_server.listen(port);
+            m_server.start_accept();
+            m_server.run();
+            DEBUG_STREAM << "WS stopped.." << endl;
+        }
+        catch (...) {
+            _tc->setFalsedConnectionStatus();
+        }
         return 0;
     }
 

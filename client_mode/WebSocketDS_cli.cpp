@@ -144,6 +144,7 @@ void WebSocketDS_cli::delete_device()
 {
 	DEBUG_STREAM << "WebSocketDS_cli::delete_device() " << device_name << endl;
 	/*----- PROTECTED REGION ID(WebSocketDS_cli::delete_device) ENABLED START -----*/
+    delete wsTangoConn;
 	/*----- PROTECTED REGION END -----*/	//	WebSocketDS_cli::delete_device
 }
 
@@ -168,7 +169,7 @@ void WebSocketDS_cli::init_device()
     set_state(Tango::ON);
     set_status("Device is On");
 
-    wsTangoConn = unique_ptr<WSTangoConnCli>(new WSTangoConnCli(this));
+    wsTangoConn = new WSTangoConnCli(this);
 	
 	/*----- PROTECTED REGION END -----*/	//	WebSocketDS_cli::init_device
 }

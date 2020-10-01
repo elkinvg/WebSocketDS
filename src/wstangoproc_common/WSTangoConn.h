@@ -34,8 +34,11 @@ namespace WebSocketDS_ns
         virtual string checkResponse(const std::pair<long, TaskInfo>& idInfo) = 0;
 
         virtual void setNumOfConnections(unsigned long num) = 0;
+        virtual void setFalsedConnectionStatus() = 0;
 
         string commonRequsts(const ParsedInputJson& parsedInput, ConnectionData* connData);
+
+        bool getConnectionStatus() { return _connectionStatus; };
 
         virtual ~WSTangoConn();
     protected:
@@ -54,10 +57,11 @@ namespace WebSocketDS_ns
         string sendRequest_UserStatus(const ParsedInputJson& parsedInput, ConnectionData* connData);
 
         void initOptions();
-    
+
     protected:
 
         unsigned long _numOfConnections{ 0 };
+        bool _connectionStatus{ true };
 #ifdef SERVER_MODE
         bool _isGroup{ false };
 #endif

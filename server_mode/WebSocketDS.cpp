@@ -146,7 +146,9 @@ void WebSocketDS::delete_device()
 {
 	DEBUG_STREAM << "WebSocketDS::delete_device() " << device_name << endl;
 	/*----- PROTECTED REGION ID(WebSocketDS::delete_device) ENABLED START -----*/
-
+    if (wsTangoConn != nullptr) {
+        delete wsTangoConn;
+    }
     /*----- PROTECTED REGION END -----*/	//	WebSocketDS::delete_device
 }
 
@@ -181,7 +183,7 @@ void WebSocketDS::init_device()
 
         list_subscr_event_archive.erase(std::remove(list_subscr_event_archive.begin(), list_subscr_event_archive.end(), ""), list_subscr_event_archive.end());
 
-        wsTangoConn = unique_ptr<WSTangoConnSer>(new WSTangoConnSer(this));
+        wsTangoConn = new WSTangoConnSer(this);
     }
     catch (Tango::DevFailed &e) {
         set_state(Tango::FAULT);
@@ -455,6 +457,11 @@ void WebSocketDS::update_data()
 {
 	DEBUG_STREAM << "WebSocketDS::UpdateData()  - " << device_name << endl;
 	/*----- PROTECTED REGION ID(WebSocketDS::update_data) ENABLED START -----*/
+    if (!wsTangoConn->getConnectionStatus()) {
+        delete wsTangoConn;
+        wsTangoConn = nullptr;
+        return;
+    }
 	
     wsTangoConn->update();
 	
@@ -477,11 +484,6 @@ void WebSocketDS::add_dynamic_commands()
 }
 
 /*----- PROTECTED REGION ID(WebSocketDS::namespace_ending) ENABLED START -----*/
-
-void WebSocketDS::reInitDevice() {
-    delete_device();
-    init_device();
-}
 
 /*----- PROTECTED REGION END -----*/	//	WebSocketDS::namespace_ending
 } //	namespace
