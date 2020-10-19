@@ -10,8 +10,20 @@ namespace WebSocketDS_ns
     }
 
     void WsEvCallBackSer::push_event(Tango::EventData *dt) {
+        // Во избежание отправления повторных сообщений об исключениях
+        if (_wasException && dt->err) {
+            return;
+        }
+
         string message = TangoProcessor::processEvent(dt, _precOpt);
         send_mess(message);
+
+        if (!_wasException && dt->err) {
+            _wasException = true;
+        }
+        if (_wasException && !dt->err) {
+            _wasException = false;
+        }
     }
 
     WsEvCallBackSer::~WsEvCallBackSer()

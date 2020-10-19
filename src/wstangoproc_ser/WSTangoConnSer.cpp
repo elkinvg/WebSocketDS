@@ -182,6 +182,13 @@ namespace WebSocketDS_ns
 
     void WSTangoConnSer::update()
     {
+        if (_numOfConnections) {
+            DEBUG_STREAM << _numOfConnections << " CONNECTIONS";
+        }
+        else {
+            DEBUG_STREAM << "NO CONNECTIONS";
+        }
+
         if (!_hasAttrsForUpdate) {
             return;
         }
@@ -303,11 +310,8 @@ namespace WebSocketDS_ns
             lock.unlock();
 
             if (_numOfConnections) {
-                DEBUG_STREAM << _numOfConnections << " CONNECTIONS";
+                DEBUG_STREAM << "Update data";
                 for_update_data();
-            }
-            else {
-                DEBUG_STREAM << "NO CONNECTIONS";
             }
             do_update = false;
         }

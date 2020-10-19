@@ -15,6 +15,7 @@ namespace WebSocketDS_ns
         void send_mess(const std::string& mess);
 
     private:
+        bool _wasException{ false };
         WSThread* _wsThread;
         string _precOpt;
     };

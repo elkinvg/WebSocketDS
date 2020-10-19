@@ -384,6 +384,7 @@ namespace WebSocketDS_ns
                 errResp.errorMessages = errors;
                 errResp.eventTypeStr = dt->event;
 
+
                 return StringProc::exceptionStringOutForEvent(ERROR_TYPE::EVENT_ERR, vector<ResponseFromEventReq>({ errResp }));
             }
 
