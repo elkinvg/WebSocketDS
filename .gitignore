@@ -22,6 +22,10 @@ vc12_proj/*.opensdf
 .idea/*
 *.autosave
 
+#tmp
+vc141_proj
+vc141_proj/*
+
 #my
 my_sett.js
 scripts_for_test

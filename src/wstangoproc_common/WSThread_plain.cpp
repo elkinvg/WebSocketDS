@@ -131,13 +131,18 @@ namespace WebSocketDS_ns
                 }
             }
 
+            // Закрытие соединения со стороны сервера при переполнении буфера, или при ошибках возникших на сервере
             for (auto& cls : for_close) {
-                if (!cls.second.size()) {
-                    close_from_server(cls.first, websocketpp::close::status::going_away, "buffer overloaded", true);
+                try {
+                    if (!cls.second.size()) {
+                        close_from_server(cls.first, websocketpp::close::status::going_away, "buffer overloaded");
+                    }
+                    else {
+                        close_from_server(cls.first, websocketpp::close::status::internal_endpoint_error, cls.second);
+                    }
                 }
-                else {
-                    close_from_server(cls.first, websocketpp::close::status::internal_endpoint_error, cls.second, true);
-                }
+                catch(...) {}
+                _deleteClosedConnections(cls.first);
             }
 
 
@@ -145,15 +150,13 @@ namespace WebSocketDS_ns
         }
     }
 
-
-    // TODO: Добавить bool isLocked default = false
-    // Либо добавить в actions close and open
-    // проверять так же m_active_connections
-    void WSThread_plain::send(websocketpp::connection_hdl hdl, std::string msg, bool isLocked) {
+    void WSThread_plain::send(websocketpp::connection_hdl hdl, std::string msg) {
         if (hdl.expired()) {
             return;
         }
         StringProc::removeSymbolsForString(msg);
+        bool closed = false;
+
         try {
             unsigned int maxBuffSize = _tc->getMaxBuffSize();
 
@@ -167,57 +170,54 @@ namespace WebSocketDS_ns
             if (buffered_amount < maxBuffSize)
                 m_server.send(hdl, msg, websocketpp::frame::opcode::text);
             else
-                close_from_server(hdl, websocketpp::close::status::going_away, "buffer overloaded", isLocked);
+                closed = true;
         }
         catch (websocketpp::exception const & e) {
-            // DONE: Закрывается c std::unique_lock. Выводится сообщение и выставляется статус
             string exc = "exception from send: " + string(e.what());
             DEBUG_STREAM << exc;
-            // TODO: CHECK
-            // Дважды lock если при async responses
-            close_from_server(hdl, websocketpp::close::status::internal_endpoint_error, exc, isLocked);
+            close_from_server(hdl, websocketpp::close::status::internal_endpoint_error, exc);
         }
         catch (std::exception& e) {
-            // DONE: Закрывается c std::unique_lock. Выводится сообщение и выставляется статус
             string exc = "exception from send: " + string(e.what());
             DEBUG_STREAM << exc;
-            // TODO: CHECK
-            close_from_server(hdl, websocketpp::close::status::internal_endpoint_error, exc, isLocked);
+            close_from_server(hdl, websocketpp::close::status::internal_endpoint_error, exc);
         }
         catch (...) {
-            // DONE: Закрывается c std::unique_lock. Выводится сообщение и выставляется статус
             string exc = "unknown error from send";
-            // TODO: CHECK
             DEBUG_STREAM << exc;
-            close_from_server(hdl, websocketpp::close::status::internal_endpoint_error, exc, isLocked);
+            close_from_server(hdl, websocketpp::close::status::internal_endpoint_error, exc);
+        }
+        if (closed) {
+            close_from_server(hdl, websocketpp::close::status::going_away, "buffer overloaded");
         }
     }
 
-    void WSThread_plain::send(websocketpp::connection_hdl hdl, const void *data, size_t len)
-    {
-        // DONE: Помещён в try catch блок
-        try {
-            m_server.send(hdl, data, len, websocketpp::frame::opcode::binary);
-        }
-        catch (websocketpp::exception const & e) {
-            // DONE: Закрывается c std::unique_lock. Выводится сообщение и выставляется статус
-            string exc = "exception from send: " + string(e.what());
-            DEBUG_STREAM << exc;
-            close_from_server(hdl, websocketpp::close::status::internal_endpoint_error, exc, true);
-        }
-        catch (std::exception& e) {
-            // DONE: Закрывается c std::unique_lock. Выводится сообщение и выставляется статус
-            string exc = "exception from send: " + string(e.what());
-            DEBUG_STREAM << exc;
-            close_from_server(hdl, websocketpp::close::status::internal_endpoint_error, exc, true);
-        }
-        catch (...) {
-            // DONE: Закрывается c std::unique_lock. Выводится сообщение и выставляется статус
-            string exc = "unknown error from send";
-            DEBUG_STREAM << exc;
-            close_from_server(hdl, websocketpp::close::status::internal_endpoint_error, exc, true);
-        }
-    }
+    // TODO: NOT USED 
+    //void WSThread_plain::send(websocketpp::connection_hdl hdl, const void *data, size_t len)
+    //{
+    //    // DONE: Помещён в try catch блок
+    //    try {
+    //        m_server.send(hdl, data, len, websocketpp::frame::opcode::binary);
+    //    }
+    //    catch (websocketpp::exception const & e) {
+    //        // DONE: Закрывается c std::unique_lock. Выводится сообщение и выставляется статус
+    //        string exc = "exception from send: " + string(e.what());
+    //        DEBUG_STREAM << exc;
+    //        close_from_server(hdl, websocketpp::close::status::internal_endpoint_error, exc, true);
+    //    }
+    //    catch (std::exception& e) {
+    //        // DONE: Закрывается c std::unique_lock. Выводится сообщение и выставляется статус
+    //        string exc = "exception from send: " + string(e.what());
+    //        DEBUG_STREAM << exc;
+    //        close_from_server(hdl, websocketpp::close::status::internal_endpoint_error, exc, true);
+    //    }
+    //    catch (...) {
+    //        // DONE: Закрывается c std::unique_lock. Выводится сообщение и выставляется статус
+    //        string exc = "unknown error from send";
+    //        DEBUG_STREAM << exc;
+    //        close_from_server(hdl, websocketpp::close::status::internal_endpoint_error, exc, true);
+    //    }
+    //}
 
     void WSThread_plain::stop()
     {
@@ -261,24 +261,14 @@ namespace WebSocketDS_ns
         return parsedGet;
     }
 
-    // DONE: Закрытие со стороны сервера.
-    // Исправлено выставление семафоров, в зависимости от места вызова.
-    
-    // TODO: Проверить 
-    void WSThread_plain::close_from_server(websocketpp::connection_hdl hdl, websocketpp::close::status::value const code, std::string const & reason, bool isLocked) {
+    void WSThread_plain::close_from_server(websocketpp::connection_hdl hdl, websocketpp::close::status::value const code, std::string const & reason) {
         try {
             websocketpp::server<websocketpp::config::asio>::connection_ptr con = m_server.get_con_from_hdl(hdl);
             con->close(code, reason);
         }
         catch (...){}
 
-        if (!isLocked) {
-            std::unique_lock<std::mutex> con_lock(m_connection_lock);
-            _close_from_server(hdl);
-        }
-        else {
-            _close_from_server(hdl);
-        }
+        throw ConnectionClosedException();
     }
 
     size_t WSThread_plain::get_buffered_amount(websocketpp::connection_hdl hdl) {

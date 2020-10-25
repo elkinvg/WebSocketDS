@@ -48,10 +48,17 @@ namespace WebSocketDS_ns
             else
                 // if (!parsedInput.isValid) Должен быть текст ошибки 
                 errorMess = StringProc::exceptionStringOut(ERROR_TYPE::IS_NOT_VALID, NONE, "Unknown message from parsing", parsedInput.type_req_str);
-            send(hdl, errorMess, false);
+            // Закрытие соединения со стороны сервера при возникновении ошибок
+            try {
+                send(hdl, errorMess);
+            }
+            catch (ConnectionClosedException& e) {
+                std::unique_lock<std::mutex> con_lock(m_connection_lock);
+                _deleteClosedConnections(hdl);
+            }
             return;
         }
-        
+
         string resp;
         // TODO: BUG Если девайс не активен. Поместить в try
         TYPE_WS_REQ typeWsReq = parsedInput.type_req;
@@ -61,8 +68,15 @@ namespace WebSocketDS_ns
             || typeWsReq == TYPE_WS_REQ::CHANGE_USER
             ) {
             resp = _tc->commonRequsts(parsedInput, m_connections[hdl]);
-            // TODO: check EXCEPTIONS
-            send(hdl, resp, false);
+
+            // Закрытие соединения со стороны сервера при возникновении ошибок
+            try {
+                send(hdl, resp);
+            }
+            catch (ConnectionClosedException& e) {
+                std::unique_lock<std::mutex> con_lock(m_connection_lock);
+                _deleteClosedConnections(hdl);
+            }
             return;
         }
 
@@ -79,9 +93,15 @@ namespace WebSocketDS_ns
                 m_action_cond.notify_one();
                 if (errorsFromGroupReq.size()) {
                     for (auto& err : errorsFromGroupReq) {
-                        send(hdl, err, false);
+                        send(hdl, err);
                     }
                 }
+                return;
+            }
+            // Закрытие соединения со стороны сервера при возникновении ошибок
+            catch (ConnectionClosedException& e) {
+                std::unique_lock<std::mutex> con_lock(m_connection_lock);
+                _deleteClosedConnections(hdl);
                 return;
             }
             // TODO: Проверить, что везде std::runtime_error
@@ -91,20 +111,33 @@ namespace WebSocketDS_ns
             }
         }
         else {
+            try {
 #ifdef CLIENT_MODE
-            if (parsedInput.type_req_str.find("eventreq") != string::npos) {
-                resp = _tc->sendRequest_Event(hdl, parsedInput);
-            }
-            else {
+                if (parsedInput.type_req_str.find("eventreq") != string::npos) {
+                    resp = _tc->sendRequest_Event(hdl, parsedInput);
+                }
+                else {
 #endif // CLIENT_MODE
-                resp = _tc->sendRequest(parsedInput, m_connections[hdl]);
+                    resp = _tc->sendRequest(parsedInput, m_connections[hdl]);
 #ifdef CLIENT_MODE
-            }
+                }
 #endif
+            }
+            // Для Pipe. Выбрасывается исключения, если например устройство не найдено
+            catch (std::runtime_error &re) {
+                resp = re.what();
+            }
         }
-
         if (resp.size()) {
-            send(hdl, resp, false);
+            try {
+                send(hdl, resp);
+            }
+            // Закрытие соединения со стороны сервера при возникновении ошибок
+            catch (ConnectionClosedException& e) {
+                std::unique_lock<std::mutex> con_lock(m_connection_lock);
+                _deleteClosedConnections(hdl);
+                return;
+            }
         }
     }
 
@@ -113,11 +146,24 @@ namespace WebSocketDS_ns
         m_connections[hdl] = getConnectionData(hdl);
         m_connections[hdl]->sessionId = m_next_sessionid++;
 
+        string runtimeErrorWhat = "";
+
         try {
             _tc->checkUser(m_connections[hdl]);
         }
         catch (std::runtime_error &re) {
-            send(hdl, string(re.what()), false);
+            runtimeErrorWhat = string(re.what());
+        }
+
+        try {
+            if (runtimeErrorWhat.size()) {
+                send(hdl, string(runtimeErrorWhat));
+            }
+        }
+        // Закрытие соединения со стороны сервера при возникновении ошибок
+        catch (...) {
+            _deleteClosedConnections(hdl);
+            return;
         }
 
         _tc->setNumOfConnections(m_connections.size());
@@ -159,9 +205,8 @@ namespace WebSocketDS_ns
         }
     }
 
-    void WSThread::_close_from_server(websocketpp::connection_hdl hdl)
+    void WSThread::_deleteClosedConnections(websocketpp::connection_hdl hdl)
     {
-        // TODO: EVENTS FOR CLIENT MODE
         delete m_connections[hdl];
         m_connections.erase(hdl);
         if (m_active_connections.find(hdl) != m_active_connections.end()) {
@@ -172,19 +217,27 @@ namespace WebSocketDS_ns
 
     void WSThread::_forCheckActions()
     {
+        vector<websocketpp::connection_hdl> _del_active_conn;
         vector<websocketpp::connection_hdl> _del_conn;
 
         for (auto& _hdl : m_active_connections) {
-            bool _delete = _checkRequests(_hdl, m_connections[_hdl]->idCommandInfo);
+            try {
+                bool _delete = _checkRequests(_hdl, m_connections[_hdl]->idCommandInfo);
 
-            if (_delete) {
+                if (_delete) {
+                    _del_active_conn.push_back(_hdl);
+                }
+            }
+            catch (ConnectionClosedException& e) {
                 _del_conn.push_back(_hdl);
             }
         }
 
-        for (auto & _hdl : _del_conn) {
+        for (auto & _hdl : _del_active_conn) {
             m_active_connections.erase(_hdl);
         }
+
+        closeConnections(_del_conn);
     }
 
     bool WSThread::_checkRequests(websocketpp::connection_hdl hdl, std::unordered_map<long, TaskInfo>& task)
@@ -199,7 +252,7 @@ namespace WebSocketDS_ns
 
             try {
                 string resp = _tc->checkResponse(_idInfo);
-                send(hdl, resp, true);
+                send(hdl, resp);
                 _del.push_back(_id);
             }
             catch (Tango::AsynReplyNotArrived) {}
@@ -209,7 +262,7 @@ namespace WebSocketDS_ns
                     errs.push_back((string)e.errors[i].desc);
                 }
                 string resp = StringProc::exceptionStringOut(ERROR_TYPE::TANGO_EXCEPTION, _idInfo.second.idReq, errs, _idInfo.second.typeReqStr);
-                send(hdl, resp, true);
+                send(hdl, resp);
                 _del.push_back(_id);
             }
         }
@@ -290,6 +343,13 @@ namespace WebSocketDS_ns
                 lock.unlock();
                 std::this_thread::sleep_for(std::chrono::milliseconds(10));
             }
+        }
+    }
+
+    void WSThread::closeConnections(vector<websocketpp::connection_hdl>& _del_conn)
+    {
+        for (auto & _hdl : _del_conn) {
+            _deleteClosedConnections(_hdl);
         }
     }
 }

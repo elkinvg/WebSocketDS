@@ -18,6 +18,7 @@
 #include "TaskInfo.h"
 
 #include "CurrentMode.h"
+#include <stdexcept>
 
 typedef websocketpp::lib::shared_ptr<websocketpp::lib::asio::ssl::context> context_ptr;
 typedef websocketpp::server<websocketpp::config::asio> server;
@@ -25,6 +26,11 @@ typedef websocketpp::server<websocketpp::config::asio_tls> server_tls;
 
 namespace WebSocketDS_ns
 {
+    class ConnectionClosedException : public std::runtime_error {
+    public:
+        ConnectionClosedException() : std::runtime_error("Connection was closed") { }
+    };
+
 #ifdef SERVER_MODE
     class WSTangoConnSer;
 #endif
@@ -49,10 +55,11 @@ namespace WebSocketDS_ns
         virtual log4tango::Logger *get_logger(void);
         virtual void stop() = 0;
         virtual void send_all(std::string msg) = 0;
-        virtual void send(websocketpp::connection_hdl hdl, std::string msg, bool isLocked) = 0;
-        // Для бинарных данных. Пока не используется.
-        virtual void send(websocketpp::connection_hdl hdl, const void *data, size_t len) = 0;
+        virtual void send(websocketpp::connection_hdl hdl, std::string msg) = 0;
+        // Р”Р»СЏ Р±РёРЅР°СЂРЅС‹С… РґР°РЅРЅС‹С…. РџРѕРєР° РЅРµ РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ.
+        // TODO: NOT USED virtual void send(websocketpp::connection_hdl hdl, const void *data, size_t len) = 0;
         void checkActions();
+        void closeConnections(vector<websocketpp::connection_hdl>& _del_conn);
 
     protected:
         // TODO: MB WAS WITHOUT NULL
@@ -65,8 +72,8 @@ namespace WebSocketDS_ns
 
         void addActive(websocketpp::connection_hdl hdl, const vector<pair<long, TaskInfo>>& listforIdInfo);
 
-        virtual void close_from_server(websocketpp::connection_hdl hdl, websocketpp::close::status::value const code, std::string const & reason, bool isLocked) = 0;
-        void _close_from_server(websocketpp::connection_hdl hdl);
+        virtual void close_from_server(websocketpp::connection_hdl hdl, websocketpp::close::status::value const code, std::string const & reason) = 0;
+        void _deleteClosedConnections(websocketpp::connection_hdl hdl);
         // TODO: MB WAS WITHOUT NULL
         virtual size_t get_buffered_amount(websocketpp::connection_hdl hdl) = 0;
 

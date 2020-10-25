@@ -17,8 +17,6 @@ namespace WebSocketDS_ns
     typedef unordered_map<string, vector<string>> json_arr_map;
     typedef unordered_map<string, string> json_val_map;
     typedef unordered_map<string, ptree> json_obj_map;
-    //typedef unordered_map< string, pair<vector<string>, vector<string>>> dev_attr_pipe_map; // TODO: DELETE OR IN CLIENT MODE
-    // TODO: OR DELETE OR array
     // тип запроса. 
     enum class TYPE_WS_REQ 
     {

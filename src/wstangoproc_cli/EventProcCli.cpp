@@ -47,10 +47,22 @@ namespace WebSocketDS_ns {
         if (con_lock.try_lock()) {
             map < websocketpp::connection_hdl, string, std::owner_less < websocketpp::connection_hdl>> connAddrList = eventSubs[deviceName][attrName].connList;
 
+            vector<websocketpp::connection_hdl> _del_conn;
+
             for (pair<websocketpp::connection_hdl, string> hdlnopt : connAddrList) {
                 string precOpt = hdlnopt.second;
                 string message = TangoProcessor::processEvent(dt, precOpt);
-                _wsThread->send(hdlnopt.first, message, true);
+                try {
+                    _wsThread->send(hdlnopt.first, message);
+                }
+                catch (...) {
+                    _del_conn.push_back(hdlnopt.first);
+                }
+            }
+
+            // Если выкинуто исключение, закрыть соединение со стороны сервера
+            if (_del_conn.size()) {
+                _wsThread->closeConnections(_del_conn);
             }
         }
         // TODO: Пока просто игнорируется

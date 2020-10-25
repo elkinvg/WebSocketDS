@@ -9,12 +9,6 @@
 #include <tango.h>
 #include <omnithread.h>
 #include <log4tango.h>
-// TODO: DELETE
-//#include <cmath>
-//
-//#include <locale.h>
-//#include <boost/lexical_cast.hpp>
-//#include <boost/asio.hpp>
 
 #include "StringProc.h"
 
@@ -146,23 +140,31 @@ namespace WebSocketDS_ns
             }
         }
 
+        // Закрытие соединения со стороны сервера при переполнении буфера, или при ошибках возникших на сервере
         for (auto& cls : for_close) {
-            if (!cls.second.size()) {
-                close_from_server(cls.first, websocketpp::close::status::going_away, "buffer overloaded", false);
+            try {
+                if (!cls.second.size()) {
+                    close_from_server(cls.first, websocketpp::close::status::going_away, "buffer overloaded");
+                }
+                else {
+                    close_from_server(cls.first, websocketpp::close::status::internal_endpoint_error, cls.second);
+                }
             }
-            else {
-                close_from_server(cls.first, websocketpp::close::status::internal_endpoint_error, cls.second, false);
-            }
+            catch (...) {}
+            _deleteClosedConnections(cls.first);
         }
+
 
         DEBUG_STREAM << std::fixed << "total bufersize: " << total << " | " << std::setprecision(3) << (total / (1024.*1024.)) << "  Mb: " << endl;
     }
 
-    void WSThread_tls::send(websocketpp::connection_hdl hdl, std::string msg, bool isLocked) {
+    void WSThread_tls::send(websocketpp::connection_hdl hdl, std::string msg) {
         if (hdl.expired()) {
             return;
         }
         StringProc::removeSymbolsForString(msg);
+        bool closed = false;
+
         try {
             size_t buffered_amount = get_buffered_amount(hdl);
 
@@ -176,33 +178,33 @@ namespace WebSocketDS_ns
             if (buffered_amount < maxBuffSize)
                 m_server.send(hdl, msg, websocketpp::frame::opcode::text);
             else
-                close_from_server(hdl, websocketpp::close::status::going_away, "buffer overloaded", isLocked);
-
+                closed = true;
         }
         catch (websocketpp::exception const & e) {
-            // DONE: Закрывается c std::unique_lock. Выводится сообщение и выставляется статус
             string exc = "exception from send: " + string(e.what());
             DEBUG_STREAM << exc;
-            close_from_server(hdl, websocketpp::close::status::internal_endpoint_error, exc, isLocked);
+            close_from_server(hdl, websocketpp::close::status::internal_endpoint_error, exc);
         }
         catch (std::exception& e) {
-            // DONE: Закрывается c std::unique_lock. Выводится сообщение и выставляется статус
             string exc = "exception from send: " + string(e.what());
             DEBUG_STREAM << exc;
-            close_from_server(hdl, websocketpp::close::status::internal_endpoint_error, exc, isLocked);
+            close_from_server(hdl, websocketpp::close::status::internal_endpoint_error, exc);
         }
         catch (...) {
-            // DONE: Закрывается c std::unique_lock. Выводится сообщение и выставляется статус
             string exc = "unknown error from send";
             DEBUG_STREAM << exc;
-            close_from_server(hdl, websocketpp::close::status::internal_endpoint_error, exc, isLocked);
+            close_from_server(hdl, websocketpp::close::status::internal_endpoint_error, exc);
         }
+        if (closed) {
+            close_from_server(hdl, websocketpp::close::status::going_away, "buffer overloaded");
+         }
     }
 
-    void WSThread_tls::send(websocketpp::connection_hdl hdl, const void *data, size_t len)
-    {
-        m_server.send(hdl, data, len, websocketpp::frame::opcode::binary);
-    }
+    // TODO: NOT USED 
+    //void WSThread_tls::send(websocketpp::connection_hdl hdl, const void *data, size_t len)
+    //{
+    //    m_server.send(hdl, data, len, websocketpp::frame::opcode::binary);
+    //}
 
     void WSThread_tls::stop()
     {
@@ -267,20 +269,14 @@ namespace WebSocketDS_ns
         return ctx;
     }
 
-    void WSThread_tls::close_from_server(websocketpp::connection_hdl hdl, websocketpp::close::status::value const code, std::string const & reason, bool isLocked) {
+    void WSThread_tls::close_from_server(websocketpp::connection_hdl hdl, websocketpp::close::status::value const code, std::string const & reason) {
         try {
             websocketpp::server<websocketpp::config::asio_tls>::connection_ptr con = m_server.get_con_from_hdl(hdl);
             con->close(code, reason);
         }
         catch (...) {}
 
-        if (isLocked) {
-            std::unique_lock<std::mutex> con_lock(m_connection_lock);
-            _close_from_server(hdl);
-        }
-        else {
-            _close_from_server(hdl);
-        }
+        throw ConnectionClosedException();
     }
 
     size_t WSThread_tls::get_buffered_amount(websocketpp::connection_hdl hdl) {
