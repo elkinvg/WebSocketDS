@@ -3,7 +3,6 @@
 
 #include "StringProc.h"
 #include "GroupForWs.h"
-#include "DeviceForWs.h"
 #include "UserControl.h"
 
 #include "WSThread_plain.h"
@@ -205,7 +204,7 @@ namespace WebSocketDS_ns
 
     GroupForWs * WSTangoConnCli::_genGroupForWs(string devicePatt, const ParsedInputJson& parsedInput)
     {
-        GroupForWs *group;
+        GroupForWs *group = nullptr;
         try {
             group = new GroupForWs(devicePatt);
         }
@@ -251,14 +250,14 @@ namespace WebSocketDS_ns
 
         string deviceName = parsedInput.otherInpStr.at("device_name");
         if (isGroupReq) {
-            // TODO: CHECK EXCEPTION
+            // Если группа не создаётся, выбрасывается runtime_error
             GroupForWs* group = _genGroupForWs(deviceName, parsedInput);
             resp = TangoProcessor::processPipeRead(group, parsedInput);
             delete group;
             return resp;
         }
         else {
-            // TODO: CHECK EXCEPTION
+            // Если device не создаётся, выбрасывается runtime_error
             Tango::DeviceProxy* device = _genDeviceForWs(deviceName, parsedInput);
             string pipeName = parsedInput.otherInpStr.at("pipe_name");
             Tango::DevicePipe pipe = device->read_pipe(pipeName);

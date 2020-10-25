@@ -1,6 +1,10 @@
 #include "TangoProcessor.h"
 #include "GroupForWs.h"
+
+#ifdef SERVER_MODE
 #include "DeviceForWs.h"
+#endif
+
 #include <sstream>
 #include <string>
 #include "common.h"
