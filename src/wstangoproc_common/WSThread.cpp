@@ -198,6 +198,11 @@ namespace WebSocketDS_ns
     {
         std::unique_lock<std::mutex> con_lock(m_connection_lock);
         if (m_active_connections.find(hdl) == m_active_connections.end()) {
+            // DONE: В параллельном потоке, при возникновении исключений, в момент пока mutex занят, закрывается соединение
+            // здесь добавлялось hdl в m_active_connections
+            if (m_connections.find(hdl) == m_connections.end()) {
+                return;
+            }
             m_active_connections.insert(hdl);
         }
         for (auto &forIdInfo : listforIdInfo) {
@@ -228,6 +233,8 @@ namespace WebSocketDS_ns
                     _del_active_conn.push_back(_hdl);
                 }
             }
+            // Пока соединения закрываются при любых исключениях от WebSocket.
+            // TODO: Рассмотреть исключения, при которых соединения можно не закрывать.
             catch (ConnectionClosedException& e) {
                 _del_conn.push_back(_hdl);
             }
@@ -341,7 +348,7 @@ namespace WebSocketDS_ns
                 lock.lock();
                 _forCheckActions();
                 lock.unlock();
-                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
             }
         }
     }
