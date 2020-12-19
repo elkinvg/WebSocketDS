@@ -22,11 +22,13 @@ namespace WebSocketDS_ns
         : _wsds(dev)
     {
         uc = unique_ptr<UserControl>(new UserControl(dev->authDS));
+        try {
+            logger = dev->get_logger();
+        } catch (...){}
+
         initOptions();
         initDeviceServer();
         try {
-
-            logger = dev->get_logger();
 
             if (dev->secure) {
                 wsThread = new WSThread_tls(this, dev->port, dev->certificate, dev->key);
@@ -180,6 +182,13 @@ namespace WebSocketDS_ns
 
     void WSTangoConnSer::update()
     {
+        if (_numOfConnections) {
+            DEBUG_STREAM << _numOfConnections << " CONNECTIONS";
+        }
+        else {
+            DEBUG_STREAM << "NO CONNECTIONS";
+        }
+
         if (!_hasAttrsForUpdate) {
             return;
         }
@@ -205,6 +214,12 @@ namespace WebSocketDS_ns
                     string deviceName = parsedInput.otherInpStr.at("device_name");
                     string pipeName = parsedInput.otherInpStr.at("pipe_name");
                     Tango::DeviceProxy *dp = groupForWs->get_device(deviceName);
+
+                    if (dp == NULL) {
+                        string mess = "Device: " + deviceName + " not in group";
+                        string errorMessInJson = StringProc::exceptionStringOut(ERROR_TYPE::DEVICE_NOT_IN_GROUP, parsedInput.id, mess, parsedInput.type_req_str);
+                        return errorMessInJson;
+                    }
                     Tango::DevicePipe pipe = dp->read_pipe(pipeName);
                     return TangoProcessor::processPipeRead(pipe, parsedInput);
                 }
@@ -295,11 +310,8 @@ namespace WebSocketDS_ns
             lock.unlock();
 
             if (_numOfConnections) {
-                DEBUG_STREAM << _numOfConnections << " CONNECTIONS";
+                DEBUG_STREAM << "Update data";
                 for_update_data();
-            }
-            else {
-                DEBUG_STREAM << "NO CONNECTIONS";
             }
             do_update = false;
         }

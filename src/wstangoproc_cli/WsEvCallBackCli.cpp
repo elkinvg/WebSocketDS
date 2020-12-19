@@ -16,6 +16,11 @@ namespace WebSocketDS_ns
 
     void WsEvCallBackCli::push_event(Tango::EventData * dt)
     {
+        // Во избежание отправления повторных сообщений об исключениях
+        if (_wasException && dt->err) {
+            return;
+        }
+
         try
         {
             _evProc->sendMessage(
@@ -25,5 +30,12 @@ namespace WebSocketDS_ns
             );
         }
         catch (...) {}
+
+        if (!_wasException && dt->err) {
+            _wasException = true;
+        }
+        if (_wasException && !dt->err) {
+            _wasException = false;
+        }
     }
 }

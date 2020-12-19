@@ -13,6 +13,7 @@ namespace WebSocketDS_ns
         virtual void push_event(Tango::EventData *dt) override;
 
     private:
+        bool _wasException{ false };
         EventProcCli* _evProc;
         string _deviceName;
         string _attrName;

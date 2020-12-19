@@ -174,6 +174,13 @@ void WebSocketDS::init_device()
 	/*----- PROTECTED REGION ID(WebSocketDS::init_device) ENABLED START -----*/
 
     try {
+        // Эта опция используется в старой версии
+        // Атрибут удаляется из списка
+        auto newEnd = std::remove_if(attributes.begin(), attributes.end(), [](const string& attr) {
+            return (attr.find(";onlywrt") != string::npos);
+        });
+
+        attributes.erase(newEnd, attributes.end());
 
         list_subscr_event_change.erase(std::remove(list_subscr_event_change.begin(), list_subscr_event_change.end(), ""), list_subscr_event_change.end());
 

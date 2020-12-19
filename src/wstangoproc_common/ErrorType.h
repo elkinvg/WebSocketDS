@@ -22,7 +22,8 @@ namespace WebSocketDS_ns
         CONNECTION_FAILED,      // Tango::ConnectionFailed
         UNKNOWN_EXC,            // Исключение неизвестного типа
         NOT_SUBSCR_YET,         // Ещё нет подписчиков
-        FROM_EVENT_SUBSCR       // Ошибка возникшая при подписке на события в серверном режиме
+        FROM_EVENT_SUBSCR,      // Ошибка возникшая при подписке на события в серверном режиме
+        DEVICE_NOT_IN_GROUP     // Этого девайса нет в группе
     };
 }
 
