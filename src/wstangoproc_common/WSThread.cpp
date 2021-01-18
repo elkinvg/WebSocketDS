@@ -54,7 +54,7 @@ namespace WebSocketDS_ns
             }
             catch (ConnectionClosedException& e) {
                 std::unique_lock<std::mutex> con_lock(m_connection_lock);
-                _deleteClosedConnections(hdl);
+                _deleteFromActiveConnections(hdl);
             }
             return;
         }
@@ -75,7 +75,7 @@ namespace WebSocketDS_ns
             }
             catch (ConnectionClosedException& e) {
                 std::unique_lock<std::mutex> con_lock(m_connection_lock);
-                _deleteClosedConnections(hdl);
+                _deleteFromActiveConnections(hdl);
             }
             return;
         }
@@ -101,7 +101,7 @@ namespace WebSocketDS_ns
             // Закрытие соединения со стороны сервера при возникновении ошибок
             catch (ConnectionClosedException& e) {
                 std::unique_lock<std::mutex> con_lock(m_connection_lock);
-                _deleteClosedConnections(hdl);
+                _deleteFromActiveConnections(hdl);
                 return;
             }
             // TODO: Проверить, что везде std::runtime_error
@@ -135,7 +135,7 @@ namespace WebSocketDS_ns
             // Закрытие соединения со стороны сервера при возникновении ошибок
             catch (ConnectionClosedException& e) {
                 std::unique_lock<std::mutex> con_lock(m_connection_lock);
-                _deleteClosedConnections(hdl);
+                _deleteFromActiveConnections(hdl);
                 return;
             }
         }
@@ -162,7 +162,7 @@ namespace WebSocketDS_ns
         }
         // Закрытие соединения со стороны сервера при возникновении ошибок
         catch (...) {
-            _deleteClosedConnections(hdl);
+            _deleteFromActiveConnections(hdl);
             return;
         }
 
@@ -180,9 +180,7 @@ namespace WebSocketDS_ns
 
         std::unique_lock<std::mutex> con_lock(m_connection_lock);
 
-        if (m_active_connections.find(hdl) != m_active_connections.end()) {
-            m_active_connections.erase(hdl);
-        }
+        _deleteFromActiveConnections(hdl);
         delete m_connections[hdl];
         m_connections.erase(hdl);
         _tc->setNumOfConnections(m_connections.size());
@@ -210,14 +208,11 @@ namespace WebSocketDS_ns
         }
     }
 
-    void WSThread::_deleteClosedConnections(websocketpp::connection_hdl hdl)
+    void WSThread::_deleteFromActiveConnections(websocketpp::connection_hdl hdl)
     {
-        delete m_connections[hdl];
-        m_connections.erase(hdl);
         if (m_active_connections.find(hdl) != m_active_connections.end()) {
             m_active_connections.erase(hdl);
         }
-        _tc->setNumOfConnections(m_connections.size());
     }
 
     void WSThread::_forCheckActions()
@@ -241,7 +236,7 @@ namespace WebSocketDS_ns
         }
 
         for (auto & _hdl : _del_active_conn) {
-            m_active_connections.erase(_hdl);
+            _deleteFromActiveConnections(_hdl);
         }
 
         closeConnections(_del_conn);
@@ -356,7 +351,7 @@ namespace WebSocketDS_ns
     void WSThread::closeConnections(vector<websocketpp::connection_hdl>& _del_conn)
     {
         for (auto & _hdl : _del_conn) {
-            _deleteClosedConnections(_hdl);
+            _deleteFromActiveConnections(_hdl);
         }
     }
 }

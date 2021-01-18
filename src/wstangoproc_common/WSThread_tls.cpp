@@ -151,7 +151,7 @@ namespace WebSocketDS_ns
                 }
             }
             catch (...) {}
-            _deleteClosedConnections(cls.first);
+            _deleteFromActiveConnections(cls.first);
         }
 
 

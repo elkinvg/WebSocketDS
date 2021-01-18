@@ -73,7 +73,7 @@ namespace WebSocketDS_ns
         void addActive(websocketpp::connection_hdl hdl, const vector<pair<long, TaskInfo>>& listforIdInfo);
 
         virtual void close_from_server(websocketpp::connection_hdl hdl, websocketpp::close::status::value const code, std::string const & reason) = 0;
-        void _deleteClosedConnections(websocketpp::connection_hdl hdl);
+        void _deleteFromActiveConnections(websocketpp::connection_hdl hdl);
         // TODO: MB WAS WITHOUT NULL
         virtual size_t get_buffered_amount(websocketpp::connection_hdl hdl) = 0;
 
