@@ -297,8 +297,7 @@ namespace WebSocketDS_ns
 #ifdef CLIENT_MODE
             // device_name - должен быть для всех запросов клиентного режима
             if (
-               typeWsReq == TYPE_WS_REQ::COMMAND_DEV
-                && parsedInput.check_key("device_name") != TYPE_OF_VAL::VALUE
+                parsedInput.check_key("device_name") != TYPE_OF_VAL::VALUE
                 ) {
                 parsedInput.errMess = StringProc::exceptionStringOut(ERROR_TYPE::CHECK_REQUEST, parsedInput.id, "Not found key device_name or device_name is not value", parsedInput.type_req_str);
                 return;
@@ -323,8 +322,7 @@ namespace WebSocketDS_ns
 #ifdef CLIENT_MODE
             // device_name - должен быть для всех запросов клиентного режима
             if (
-                typeWsReq == TYPE_WS_REQ::PIPE_COMM_DEV
-                && parsedInput.check_key("device_name") != TYPE_OF_VAL::VALUE
+                parsedInput.check_key("device_name") != TYPE_OF_VAL::VALUE
                 ) {
                 parsedInput.errMess = StringProc::exceptionStringOut(ERROR_TYPE::CHECK_REQUEST, parsedInput.id, "Not found key device_name or device_name is not value", parsedInput.type_req_str);
                 return;
@@ -350,8 +348,7 @@ namespace WebSocketDS_ns
 #ifdef CLIENT_MODE
             // device_name - должен быть для всех запросов клиентного режима
             if (
-                typeWsReq == TYPE_WS_REQ::ATTRIBUTE_WRITE_DEV
-                && parsedInput.check_key("device_name") != TYPE_OF_VAL::VALUE
+                parsedInput.check_key("device_name") != TYPE_OF_VAL::VALUE
                 ) {
                 parsedInput.errMess = StringProc::exceptionStringOut(ERROR_TYPE::CHECK_REQUEST, parsedInput.id, "Not found key device_name or device_name is not value", parsedInput.type_req_str);
                 return;
@@ -377,8 +374,7 @@ namespace WebSocketDS_ns
 #ifdef CLIENT_MODE
             // device_name - должен быть для всех запросов клиентного режима
             if (
-                typeWsReq == TYPE_WS_REQ::ATTRIBUTE_READ_DEV
-                && parsedInput.check_key("device_name") != TYPE_OF_VAL::VALUE
+                parsedInput.check_key("device_name") != TYPE_OF_VAL::VALUE
                 ) {
                 parsedInput.errMess = StringProc::exceptionStringOut(ERROR_TYPE::CHECK_REQUEST, parsedInput.id, "Not found key device_name or device_name is not value", parsedInput.type_req_str);
                 return;
