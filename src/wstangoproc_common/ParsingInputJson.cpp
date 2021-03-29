@@ -7,6 +7,8 @@
 #include "CurrentMode.h"
 #include "EnumConverter.h"
 
+#include "ErrorInfo.h"
+
 namespace WebSocketDS_ns
 {
     ParsedInputJson ParsingInputJson::parseInputJson(const string &json)
@@ -124,7 +126,13 @@ namespace WebSocketDS_ns
             if (errType != ERROR_TYPE::IS_NOT_VALID) {
                 errType = ERROR_TYPE::UNKNOWN_REQ_TYPE;
             }
-            parsedInput.errMess = StringProc::exceptionStringOut(errType, parsedInput.id, errMess, parsedInput.type_req_str);
+            ErrorInfo err;
+            err.typeofError = errType;
+            err.id = parsedInput.id;
+            err.typeofReq = parsedInput.type_req_str;
+            err.errorMessage = errMess;
+
+            parsedInput.errMess = StringProc::exceptionStringOut(err);
             return parsedInput;
         }
 
@@ -200,12 +208,23 @@ namespace WebSocketDS_ns
     */
     void ParsingInputJson::_checkValidity(ParsedInputJson &parsedInput)
     {
-        TYPE_WS_REQ typeWsReq = parsedInput.type_req;
         // TODO: Переделывать типы
+        TYPE_WS_REQ typeWsReq = parsedInput.type_req;
+
+        ErrorInfo err;
+        err.id = parsedInput.id;
+        err.typeofReq = parsedInput.type_req_str;
+        if (parsedInput.check_key("device_name") == TYPE_OF_VAL::VALUE) {
+            err.device_name = parsedInput.otherInpStr.at("device_name");
+        }
 
 #ifdef SERVER_MODE
         if (parsedInput.type_req_str.find("eventreq") != string::npos) {
-            parsedInput.errMess = StringProc::exceptionStringOut(ERROR_TYPE::NOT_SUPP_IN_CURR, parsedInput.id, "Subscribing to events is not supported in the current mode", parsedInput.type_req_str);
+
+            err.typeofError = ERROR_TYPE::NOT_SUPP_IN_CURR;
+            err.errorMessage = "Subscribing to events is not supported in the current mode";
+
+            parsedInput.errMess = StringProc::exceptionStringOut(err);
             return;
         }
 #endif // SERVER_MODE
@@ -244,7 +263,10 @@ namespace WebSocketDS_ns
             }
 
             if (!parsedInput.isValid) {
-                parsedInput.errMess = StringProc::exceptionStringOut(ERROR_TYPE::CHECK_REQUEST, parsedInput.id, "No attribute found for event subscription", parsedInput.type_req_str);
+                err.typeofError = ERROR_TYPE::CHECK_REQUEST;
+                err.errorMessage = "No attribute found for event subscription";
+
+                parsedInput.errMess = StringProc::exceptionStringOut(err);
             }
 
             return;
@@ -252,7 +274,9 @@ namespace WebSocketDS_ns
 
         if (parsedInput.type_req_str.find("eventreq_rem_dev") != string::npos) {
             if (parsedInput.check_key("event_sub_id") != TYPE_OF_VAL::VALUE) {
-                parsedInput.errMess = StringProc::exceptionStringOut(ERROR_TYPE::CHECK_REQUEST, parsedInput.id, "key event_sub_id not found or must be value", parsedInput.type_req_str);
+                err.typeofError = ERROR_TYPE::CHECK_REQUEST;
+                err.errorMessage = "key event_sub_id not found or must be value";
+                parsedInput.errMess = StringProc::exceptionStringOut(err);
                 return;
             }
             parsedInput.isValid = true;
@@ -261,7 +285,9 @@ namespace WebSocketDS_ns
 
         if (parsedInput.type_req_str.find("eventreq_check_dev") != string::npos) {
             if (parsedInput.check_keys({ "event_type", "device", "attribute" }) != TYPE_OF_VAL::VALUE) {
-                parsedInput.errMess = StringProc::exceptionStringOut(ERROR_TYPE::CHECK_REQUEST, parsedInput.id, "check keys for request", parsedInput.type_req_str);
+                err.typeofError = ERROR_TYPE::CHECK_REQUEST;
+                err.errorMessage = "check keys for request";
+                parsedInput.errMess = StringProc::exceptionStringOut(err);
                 return;
             }
             parsedInput.isValid = true;
@@ -282,7 +308,10 @@ namespace WebSocketDS_ns
             ) {
             // command_name - должен быть для всех командных запросов
             if (parsedInput.check_key("command_name") != TYPE_OF_VAL::VALUE) {
-                parsedInput.errMess = StringProc::exceptionStringOut(ERROR_TYPE::CHECK_REQUEST, parsedInput.id, "Not found key command_name or command_name is not value ", parsedInput.type_req_str);
+                err.typeofError = ERROR_TYPE::CHECK_REQUEST;
+                err.errorMessage = "Not found key command_name or command_name is not value ";
+
+                parsedInput.errMess = StringProc::exceptionStringOut(err);
                 return;
             }
 
@@ -290,7 +319,10 @@ namespace WebSocketDS_ns
             if (
                 typeWsReq == TYPE_WS_REQ::COMMAND_DEV_CLIENT
                 ) {
-                parsedInput.errMess = StringProc::exceptionStringOut(ERROR_TYPE::NOT_SUPP_IN_CURR, parsedInput.id, "type_req must be command", parsedInput.type_req_str);
+
+                err.typeofError = ERROR_TYPE::NOT_SUPP_IN_CURR;
+                err.errorMessage = "type_req must be command";
+                parsedInput.errMess = StringProc::exceptionStringOut(err);
                 return;
             }
 #endif
@@ -299,7 +331,10 @@ namespace WebSocketDS_ns
             if (
                 parsedInput.check_key("device_name") != TYPE_OF_VAL::VALUE
                 ) {
-                parsedInput.errMess = StringProc::exceptionStringOut(ERROR_TYPE::CHECK_REQUEST, parsedInput.id, "Not found key device_name or device_name is not value", parsedInput.type_req_str);
+
+                err.typeofError = ERROR_TYPE::NOT_SUPP_IN_CURR;
+                err.errorMessage = "Not found key device_name or device_name is not value";
+                parsedInput.errMess = StringProc::exceptionStringOut(err);
                 return;
             }
 #endif
@@ -316,7 +351,10 @@ namespace WebSocketDS_ns
             || typeWsReq == TYPE_WS_REQ::PIPE_COMM_GR
             ) {
             if (parsedInput.check_key("pipe_name") != TYPE_OF_VAL::VALUE) {
-                parsedInput.errMess = StringProc::exceptionStringOut(ERROR_TYPE::CHECK_REQUEST, parsedInput.id, "Not found key pipe_name or pipe_name is not value", parsedInput.type_req_str);
+
+                err.typeofError = ERROR_TYPE::CHECK_REQUEST;
+                err.errorMessage = "Not found key pipe_name or pipe_name is not value";
+                    parsedInput.errMess = StringProc::exceptionStringOut(err);
                 return;
             }
 #ifdef CLIENT_MODE
@@ -324,7 +362,9 @@ namespace WebSocketDS_ns
             if (
                 parsedInput.check_key("device_name") != TYPE_OF_VAL::VALUE
                 ) {
-                parsedInput.errMess = StringProc::exceptionStringOut(ERROR_TYPE::CHECK_REQUEST, parsedInput.id, "Not found key device_name or device_name is not value", parsedInput.type_req_str);
+                err.typeofError = ERROR_TYPE::CHECK_REQUEST;
+                err.errorMessage = "Not found key device_name or device_name is not value";
+                parsedInput.errMess = StringProc::exceptionStringOut(err);
                 return;
             }
 #endif
@@ -341,7 +381,9 @@ namespace WebSocketDS_ns
             || typeWsReq == TYPE_WS_REQ::ATTR_DEV_CLIENT_WR
             ) {
             if (parsedInput.check_key("attr_name") != TYPE_OF_VAL::VALUE) {
-                parsedInput.errMess = StringProc::exceptionStringOut(ERROR_TYPE::CHECK_REQUEST, parsedInput.id, "Not found key attr_name or attr_name is not value", parsedInput.type_req_str);
+                err.typeofError = ERROR_TYPE::CHECK_REQUEST;
+                err.errorMessage = "Not found key attr_name or attr_name is not value";
+                parsedInput.errMess = StringProc::exceptionStringOut(err);
                 return;
             }
 
@@ -350,7 +392,9 @@ namespace WebSocketDS_ns
             if (
                 parsedInput.check_key("device_name") != TYPE_OF_VAL::VALUE
                 ) {
-                parsedInput.errMess = StringProc::exceptionStringOut(ERROR_TYPE::CHECK_REQUEST, parsedInput.id, "Not found key device_name or device_name is not value", parsedInput.type_req_str);
+                err.typeofError = ERROR_TYPE::CHECK_REQUEST;
+                err.errorMessage = "Not found key device_name or device_name is not value";
+                parsedInput.errMess = StringProc::exceptionStringOut(err);
                 return;
             }
 #endif
@@ -367,7 +411,9 @@ namespace WebSocketDS_ns
             || typeWsReq == TYPE_WS_REQ::ATTR_GR_CLIENT
             ) {
             if (parsedInput.check_key("attr_name") != TYPE_OF_VAL::VALUE && parsedInput.check_key("attr_name") != TYPE_OF_VAL::ARRAY) {
-                parsedInput.errMess = StringProc::exceptionStringOut(ERROR_TYPE::CHECK_REQUEST, parsedInput.id, "Not found key attr_name or attr_name is not value or array", parsedInput.type_req_str);
+                err.typeofError = ERROR_TYPE::CHECK_REQUEST;
+                err.errorMessage = "Not found key attr_name or attr_name is not value or array";
+                parsedInput.errMess = StringProc::exceptionStringOut(err);
                 return;
             }
 
@@ -376,7 +422,9 @@ namespace WebSocketDS_ns
             if (
                 parsedInput.check_key("device_name") != TYPE_OF_VAL::VALUE
                 ) {
-                parsedInput.errMess = StringProc::exceptionStringOut(ERROR_TYPE::CHECK_REQUEST, parsedInput.id, "Not found key device_name or device_name is not value", parsedInput.type_req_str);
+                err.typeofError = ERROR_TYPE::CHECK_REQUEST;
+                err.errorMessage = "Not found key device_name or device_name is not value";
+                parsedInput.errMess = StringProc::exceptionStringOut(err);
                 return;
             }
 #endif
@@ -390,7 +438,9 @@ namespace WebSocketDS_ns
             typeWsReq == TYPE_WS_REQ::CHANGE_USER
             ) {
             if (parsedInput.check_keys({ "login", "password" }) != TYPE_OF_VAL::VALUE) {
-                parsedInput.errMess = StringProc::exceptionStringOut(ERROR_TYPE::CHECK_REQUEST, parsedInput.id, "keys login or password not found", parsedInput.type_req_str);
+                err.typeofError = ERROR_TYPE::CHECK_REQUEST;
+                err.errorMessage = "keys login or password not found";
+                parsedInput.errMess = StringProc::exceptionStringOut(err);
                 return;
             }
             parsedInput.isValid = true;
@@ -406,7 +456,11 @@ namespace WebSocketDS_ns
 
         parsedInput.isValid = false;
         parsedInput.type_req = TYPE_WS_REQ::UNKNOWN;
-        parsedInput.errMess = StringProc::exceptionStringOut(ERROR_TYPE::UNKNOWN_REQ_TYPE, parsedInput.id, "Unknown Request", "unknown_req");
+
+        err.typeofError = ERROR_TYPE::UNKNOWN_REQ_TYPE;
+        err.errorMessage = "Unknown Request";
+        err.typeofReq = "unknown_req";
+        parsedInput.errMess = StringProc::exceptionStringOut(err);
     }
 
 }

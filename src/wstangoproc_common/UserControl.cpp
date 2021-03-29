@@ -3,6 +3,7 @@
 #include "ConnectionData.h"
 #include "ParsingInputJson.h"
 #include "StringProc.h"
+#include "ErrorInfo.h"
 
 WebSocketDS_ns::UserControl::UserControl(string authDS):
     _authDS(authDS),
@@ -21,6 +22,11 @@ string WebSocketDS_ns::UserControl::check_permission(const ParsedInputJson& pars
 
     Tango::DeviceData argin, argout;
     Tango::DeviceProxy *authProxy = nullptr;
+
+    ErrorInfo err;
+    err.typeofReq = parsedInput.type_req_str;
+    err.device_name = deviceName;
+    err.id = parsedInput.id;
 
     try {
         argin << permission_data;
@@ -69,13 +75,11 @@ string WebSocketDS_ns::UserControl::check_permission(const ParsedInputJson& pars
             sendLog(authProxy, permission_data, parsedInput.inputJson, isAuth, isGroup);
         }
 
-        throw std::runtime_error(
-            StringProc::exceptionStringOut(
-                ERROR_TYPE::AUTH_SERVER_ERR,
-                parsedInput.id,
-                errMess,
-                parsedInput.type_req_str
-            ));
+
+        err.errorMessages = errMess;
+        err.typeofError = ERROR_TYPE::AUTH_SERVER_ERR;
+
+        throw std::runtime_error(StringProc::exceptionStringOut(err));
     }
     catch (std::exception &e)
     {
@@ -86,24 +90,26 @@ string WebSocketDS_ns::UserControl::check_permission(const ParsedInputJson& pars
         if (authProxy != nullptr)
             delete authProxy;
 
+        err.typeofError = ERROR_TYPE::AUTH_PERM;
+        err.errorMessage = mess;
+        if (parsedInput.check_key("device_name") == TYPE_OF_VAL::VALUE) {
+            err.device_name = parsedInput.otherInpStr.at("device_name");
+        }
+
         throw std::runtime_error(
-            StringProc::exceptionStringOut(
-                ERROR_TYPE::AUTH_PERM,
-                parsedInput.id,
-                mess,
-                parsedInput.type_req_str
-            ));
+            StringProc::exceptionStringOut(err));
     }
 
 
     if (!isAuth) {
+        err.typeofError = ERROR_TYPE::AUTH_PERM;
+        err.errorMessage = mess;
+        if (parsedInput.check_key("device_name") == TYPE_OF_VAL::VALUE) {
+            err.device_name = parsedInput.otherInpStr.at("device_name");
+        }
+
         throw std::runtime_error(
-            StringProc::exceptionStringOut(
-                ERROR_TYPE::AUTH_PERM,
-                parsedInput.id,
-                mess,
-                parsedInput.type_req_str
-            ));
+            StringProc::exceptionStringOut(err));
     }
 
     return mess;
@@ -152,11 +158,11 @@ void WebSocketDS_ns::UserControl::check_user(const string& login, const string& 
 
         if (!status) {
             string errMess = "Incorrect password for " + login + " or user is not registered";
-            throw std::runtime_error(StringProc::exceptionStringOut(
-                ERROR_TYPE::AUTH_CHECK,
-                errMess,
-                "authentification"
-            ));
+            ErrorInfo err;
+            err.typeofError = ERROR_TYPE::AUTH_CHECK;
+            err.errorMessage = errMess;
+            err.typeofReq = "authentification";
+            throw std::runtime_error(StringProc::exceptionStringOut(err));
         }
     }
     catch (Tango::DevFailed &e) {
@@ -167,11 +173,12 @@ void WebSocketDS_ns::UserControl::check_user(const string& login, const string& 
         }
         if (authProxy != nullptr)
             delete authProxy;
-        throw std::runtime_error(StringProc::exceptionStringOut(
-            ERROR_TYPE::AUTH_SERVER_ERR,
-            errMess,
-            "authentification"
-        ));
+        ErrorInfo err;
+        err.typeofError = ERROR_TYPE::AUTH_SERVER_ERR;
+        err.errorMessages = errMess;
+        err.typeofReq = "authentification";
+
+        throw std::runtime_error(StringProc::exceptionStringOut(err));
     }
 }
 
@@ -251,13 +258,14 @@ vector<string> WebSocketDS_ns::UserControl::getPermissionData(const ParsedInputJ
             
         // TODO: По опции также проводить авторизацию для всех остальных readonly запросов
         else {
+            ErrorInfo err;
+            err.id = parsedInput.id;
+            err.typeofReq = parsedInput.type_req_str;
+            err.typeofError = ERROR_TYPE::CHECK_CODE;
+            err.errorMessage = "check getPermissionData";
+
             throw std::runtime_error(
-                StringProc::exceptionStringOut(
-                    ERROR_TYPE::CHECK_CODE,
-                    parsedInput.id,
-                    "check getPermissionData",
-                    parsedInput.type_req_str
-                ));
+                StringProc::exceptionStringOut(err));
         }
         permission_data[2] = connData->ip_client;
         permission_data[3] = connData->login;

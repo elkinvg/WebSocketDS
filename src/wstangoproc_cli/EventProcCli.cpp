@@ -8,6 +8,9 @@
 #include "ResponseFromEvent.h"
 #include "EnumConverter.h"
 
+#include "ErrorInfo.h"
+#include "EventReqException.h"
+
 namespace WebSocketDS_ns {
     EventProcCli::EventProcCli(WSThread* wsThread, bool isOldVersionOfJson)
         :_wsThread(wsThread), _isOldVersionOfJson(isOldVersionOfJson)
@@ -37,7 +40,14 @@ namespace WebSocketDS_ns {
             return _remDevReq(parsedInput, hdl);
         }
 
-        return StringProc::exceptionStringOut(ERROR_TYPE::CHECK_CODE, parsedInput.id, "Check code EventProcCli::request()", parsedInput.type_req_str);
+        ErrorInfo err;
+        err.typeofError = ERROR_TYPE::CHECK_CODE;
+        err.errorMessage = "Check code. EventProcCli::request()";
+        err.typeofReq = parsedInput.type_req_str;
+        err.id = parsedInput.id;
+
+        // Р’ РѕР±С‹С‡РЅРѕРј СЃР»СѓС‡Р°Рµ РЅРµ РІРѕР·РІСЂР°С‰Р°РµС‚СЃСЏ РЅРёРєРѕРіРґР°
+        return StringProc::exceptionStringOut(err);
     }
 
     void EventProcCli::sendMessage(const string & deviceName, const string & attrName, Tango::EventData * dt)
@@ -60,12 +70,12 @@ namespace WebSocketDS_ns {
                 }
             }
 
-            // Если выкинуто исключение, закрыть соединение со стороны сервера
+            // Р•СЃР»Рё РІС‹РєРёРЅСѓС‚Рѕ РёСЃРєР»СЋС‡РµРЅРёРµ, Р·Р°РєСЂС‹С‚СЊ СЃРѕРµРґРёРЅРµРЅРёРµ СЃРѕ СЃС‚РѕСЂРѕРЅС‹ СЃРµСЂРІРµСЂР°
             if (_del_conn.size()) {
                 _wsThread->closeConnections(_del_conn);
             }
         }
-        // TODO: Пока просто игнорируется
+        // TODO: РџРѕРєР° РїСЂРѕСЃС‚Рѕ РёРіРЅРѕСЂРёСЂСѓРµС‚СЃСЏ
     }
 
     string EventProcCli::_addDevReq(const ParsedInputJson & parsedInput, websocketpp::connection_hdl hdl)
@@ -117,21 +127,37 @@ namespace WebSocketDS_ns {
             );
         }
 
-        if (errorResponses.size() && !successResponses.size()) {
-            return StringProc::exceptionStringOutForEvent(
-                ERROR_TYPE::FROM_EVENT_SUBSCR
-                , errorResponses
-                , parsedInput.id
+        string messFromErrorResponses, messFromSuccResponses;
+
+        if (successResponses.size()) {
+            messFromSuccResponses = StringProc::responseStringOutForEventSub(
+                parsedInput.id
                 , parsedInput.type_req_str
+                , successResponses
             );
         }
 
-        return StringProc::responseStringOutForEventSub(
-            parsedInput.id
-            , parsedInput.type_req_str
-            , successResponses
-            , errorResponses
-        );
+        if (errorResponses.size()) {
+            ErrorInfo err;
+            err.typeofReq = parsedInput.type_req_str;
+            err.typeofError = ERROR_TYPE::FROM_EVENT_SUBSCR;
+            err.id = parsedInput.id;
+            err.errorResponses = errorResponses;
+            messFromErrorResponses = StringProc::exceptionStringOut(err);
+
+            throw EventReqException(messFromErrorResponses, messFromSuccResponses);
+        }
+
+        //if (errorResponses.size() && !successResponses.size()) {
+        //    return StringProc::exceptionStringOutForEvent(
+        //        ERROR_TYPE::FROM_EVENT_SUBSCR
+        //        , errorResponses
+        //        , parsedInput.id
+        //        , parsedInput.type_req_str
+        //    );
+        //}
+
+        return messFromSuccResponses;
     }
 
     string EventProcCli::_checkEventReq(const ParsedInputJson & parsedInput, websocketpp::connection_hdl hdl)
@@ -153,7 +179,13 @@ namespace WebSocketDS_ns {
             eventType = Tango::EventType::ARCHIVE_EVENT;
         }
         else {
-            return StringProc::exceptionStringOut(ERROR_TYPE::IS_NOT_VALID, parsedInput.id, "Check type of event in request", parsedInput.type_req_str);
+            ErrorInfo err;
+            err.typeofError = ERROR_TYPE::IS_NOT_VALID;
+            err.errorMessage = "Check type of event in request";
+            err.typeofReq = parsedInput.type_req_str;
+            err.id = parsedInput.id;
+
+            return StringProc::exceptionStringOut(err);
         }
 
         const string& deviceName = parsedInput.otherInpStr.at("device");
@@ -167,7 +199,14 @@ namespace WebSocketDS_ns {
             eventId = _getIdOfEventSubscription(hdl, deviceName, attribute, eventType);
         }
         catch (const std::out_of_range& oor) {
-            return StringProc::exceptionStringOut(ERROR_TYPE::SUBSCR_NOT_FOUND, parsedInput.id, "No subscription found with this id", parsedInput.type_req_str);
+            ErrorInfo err;
+            err.typeofError = ERROR_TYPE::SUBSCR_NOT_FOUND;
+            err.errorMessage = "No subscription found with this id";
+            err.typeofReq = parsedInput.type_req_str;
+            err.device_name = deviceName;
+            err.id = parsedInput.id;
+
+            return StringProc::exceptionStringOut(err);
         }
 
         string resp;
@@ -184,7 +223,7 @@ namespace WebSocketDS_ns {
         }
         catch (...) {}
         ss << "\"data\": {";
-        // TODO: Надо ли вводить short version
+        // TODO: РќР°РґРѕ Р»Рё РІРІРѕРґРёС‚СЊ short version
         // {data: eventId}
         //if (_isOldVersionOfJson) {
 
@@ -209,7 +248,13 @@ namespace WebSocketDS_ns {
             eventId = stoi(parsedInput.otherInpStr.at("event_sub_id"));
         }
         catch (...) {
-            return StringProc::exceptionStringOut(ERROR_TYPE::SUBSCR_NOT_FOUND, parsedInput.id, "Key event_sub_id must be a number", parsedInput.type_req_str);
+            ErrorInfo err;
+            err.typeofError = ERROR_TYPE::SUBSCR_NOT_FOUND;
+            err.errorMessage = "Key event_sub_id must be a number";
+            err.typeofReq = parsedInput.type_req_str;
+            err.id = parsedInput.id;
+
+            return StringProc::exceptionStringOut(err);
         }
 
         std::unique_lock<std::mutex> con_lock(m_eventproc_lock);
@@ -235,7 +280,13 @@ namespace WebSocketDS_ns {
         }
         catch (...)
         {
-            return StringProc::exceptionStringOut(ERROR_TYPE::SUBSCR_NOT_FOUND, parsedInput.id, "Event subscriber with this identifier not found", parsedInput.type_req_str);
+            ErrorInfo err;
+            err.typeofError = ERROR_TYPE::SUBSCR_NOT_FOUND;
+            err.errorMessage = "Event subscriber with this identifier not found";
+            err.typeofReq = parsedInput.type_req_str;
+            err.id = parsedInput.id;
+
+            return StringProc::exceptionStringOut(err);
         }
 
         return StringProc::successRespOut(parsedInput);
@@ -258,14 +309,14 @@ namespace WebSocketDS_ns {
     {
         UsedEventSubscr& usedEvSub = eventSubs[evInfo.deviceName][evInfo.attrName];
         usedEvSub.connList.erase(hdl);
-        // Удаление, если не осталось подписчиков
+        // РЈРґР°Р»РµРЅРёРµ, РµСЃР»Рё РЅРµ РѕСЃС‚Р°Р»РѕСЃСЊ РїРѕРґРїРёСЃС‡РёРєРѕРІ
         if (!usedEvSub.connList.size()) {
             try {
                 usedDevices[usedEvSub.eventAttrCh.deviceName]->unsubscribe_event(usedEvSub.eventSubId);
             }
             catch (...) {}
 
-            // Удаление из списка по ID
+            // РЈРґР°Р»РµРЅРёРµ РёР· СЃРїРёСЃРєР° РїРѕ ID
             listOfId.erase(usedEvSub.eventSubId);
 
             delete usedEvSub.evCallback;
@@ -316,7 +367,7 @@ namespace WebSocketDS_ns {
             }
         }
 
-        // Удаление, если нет слушателей для конкретного типа события
+        // РЈРґР°Р»РµРЅРёРµ, РµСЃР»Рё РЅРµС‚ СЃР»СѓС€Р°С‚РµР»РµР№ РґР»СЏ РєРѕРЅРєСЂРµС‚РЅРѕРіРѕ С‚РёРїР° СЃРѕР±С‹С‚РёСЏ
         vector<string> rDevs;
 
         for (const auto &fd : forDel) {
@@ -336,7 +387,7 @@ namespace WebSocketDS_ns {
         return true;
     }
 
-    // TODO: Может давать в аргументах по ссылке вместо 
+    // TODO: РњРѕР¶РµС‚ РґР°РІР°С‚СЊ РІ Р°СЂРіСѓРјРµРЅС‚Р°С… РїРѕ СЃСЃС‹Р»РєРµ РІРјРµСЃС‚Рѕ 
     //      const string & deviceName, const string & attrName,
     //      const string & precOpt, Tango::EventType eventType
     ResponseFromEventReq EventProcCli::_addCallback(websocketpp::connection_hdl hdl, const string & deviceName, const string & attrName, const string & precOpt, Tango::EventType eventType)
@@ -349,12 +400,12 @@ namespace WebSocketDS_ns {
 
         UsedEventSubscr& evSubInfo = eventSubs[deviceName][attrName];
 
-        // Если нет Callback, значит используется впервые
+        // Р•СЃР»Рё РЅРµС‚ Callback, Р·РЅР°С‡РёС‚ РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РІРїРµСЂРІС‹Рµ
         if (evSubInfo.evCallback == nullptr) {
             bool wasFailed = false;
             try
             {
-                // TODO: Правильно удалить
+                // TODO: РџСЂР°РІРёР»СЊРЅРѕ СѓРґР°Р»РёС‚СЊ
                 evSubInfo.evCallback = new WsEvCallBackCli(
                     this
                     , deviceName
@@ -400,8 +451,8 @@ namespace WebSocketDS_ns {
                 return resp;
             }
         }
-        // Иначе проверка на существование подписки для данного hdl,
-        //    на данный тип и с данными precOpt
+        // РРЅР°С‡Рµ РїСЂРѕРІРµСЂРєР° РЅР° СЃСѓС‰РµСЃС‚РІРѕРІР°РЅРёРµ РїРѕРґРїРёСЃРєРё РґР»СЏ РґР°РЅРЅРѕРіРѕ hdl,
+        //    РЅР° РґР°РЅРЅС‹Р№ С‚РёРї Рё СЃ РґР°РЅРЅС‹РјРё precOpt
         else {
             if (evSubInfo.connList.find(hdl) != evSubInfo.connList.end()) {
                 // TODO: ERROR
@@ -411,7 +462,7 @@ namespace WebSocketDS_ns {
             }
         }
         evSubInfo.connList[hdl] = precOpt;
-        // TODO: CHECK правильное удаление
+        // TODO: CHECK РїСЂР°РІРёР»СЊРЅРѕРµ СѓРґР°Р»РµРЅРёРµ
         eventTypes[hdl][deviceName][attrName] = eventType;
         resp.respType = RESPONSE_TYPE::SUCCESS;
         return resp;
@@ -443,7 +494,7 @@ namespace WebSocketDS_ns {
                 continue;
             }
             auto attrList = devNattr.second;
-            // Проверка и Удаление девайса если ни на один из атрибутов не подписался
+            // РџСЂРѕРІРµСЂРєР° Рё РЈРґР°Р»РµРЅРёРµ РґРµРІР°Р№СЃР° РµСЃР»Рё РЅРё РЅР° РѕРґРёРЅ РёР· Р°С‚СЂРёР±СѓС‚РѕРІ РЅРµ РїРѕРґРїРёСЃР°Р»СЃСЏ
             bool isAnythingSub = false;
             for (auto& attrName : attrList) {
                 string opt = StringProc::checkPrecisionOptions(attrName, parsedInput);

@@ -5,6 +5,7 @@
 #include "WsEvCallBackSer.h"
 #include "ResponseFromEvent.h"
 
+#include "ErrorInfo.h"
 
 namespace WebSocketDS_ns
 {
@@ -70,23 +71,23 @@ namespace WebSocketDS_ns
                     for (int i = 0; i < e.errors.length(); i++) {
                         errs.push_back((string)e.errors[i].desc);
                     }
-                    isExcFromSubscr = true;
-                    ResponseFromEventReq tmp;
-                    tmp.deviceName = device->name();
-                    tmp.attrName = attr;
-                    tmp.eventType = et;
-                    tmp.respType = RESPONSE_TYPE::ERROR_M;
-                    tmp.errorMessages = errs;
-                    exceptions.push_back(tmp);
+
+                    try {
+                        ErrorInfo err;
+                        err.typeofError = ERROR_TYPE::FROM_EVENT_SUBSCR;
+                        err.device_name = device->dev_name();
+                        err.attr_name = attr;
+                        err.errorMessages = errs;
+                        // DONE:
+                        // Сообщение отправляется отдельно для каждой ошибочной подписки
+                        // Раньше отправлялось вместе с ответами об успешной подписке
+                        string errMess = StringProc::exceptionStringOut(err);
+                        _wsThread->send_all(errMess);
+                    } catch(...){}
                 }
             }
         }
 
-        try {
-            if (isExcFromSubscr)
-                _wsThread->send_all(StringProc::exceptionStringOutForEvent(ERROR_TYPE::FROM_EVENT_SUBSCR, exceptions));
-        }
-        catch (...) {}
         return _eventSubscrs;
     }
 

@@ -44,6 +44,7 @@
     <ClInclude Include="..\src\wstangoproc_common\ConnectionData.h" />
     <ClInclude Include="..\src\wstangoproc_common\DeviceForWs.h" />
     <ClInclude Include="..\src\wstangoproc_common\EnumConverter.h" />
+    <ClInclude Include="..\src\wstangoproc_common\ErrorInfo.h" />
     <ClInclude Include="..\src\wstangoproc_common\ErrorType.h" />
     <ClInclude Include="..\src\wstangoproc_common\GroupForWs.h" />
     <ClInclude Include="..\src\wstangoproc_common\GroupOrDeviceForWs.h" />

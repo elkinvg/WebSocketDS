@@ -15,6 +15,8 @@
 #include "ConnectionData.h"
 #include "ResponseFromEvent.h"
 
+#include "ErrorInfo.h"
+
 namespace WebSocketDS_ns
 {
 #ifdef SERVER_MODE
@@ -113,6 +115,10 @@ namespace WebSocketDS_ns
 
     vector<pair<long, TaskInfo>> TangoProcessor::processAsyncReq(GroupForWs * groupForWs, const ParsedInputJson & parsedInput, vector<string>& errorsFromGroupReq)
     {
+        ErrorInfo err;
+        err.typeofReq = parsedInput.type_req_str;
+        err.id = parsedInput.id;
+
         vector<pair<long, TaskInfo>> taskReqList;
 #ifdef SERVER_MODE
         if (parsedInput.check_key("device_name") == TYPE_OF_VAL::VALUE) {
@@ -122,9 +128,9 @@ namespace WebSocketDS_ns
                 try {
                     dp = groupForWs->get_device(deviceName);
                     if (dp == NULL) {
-                        string mess = "Device: " + deviceName + " not in group";
-                        string errorMessInJson = StringProc::exceptionStringOut(ERROR_TYPE::DEVICE_NOT_IN_GROUP, parsedInput.id, mess, parsedInput.type_req_str);
-                        throw std::runtime_error(errorMessInJson);
+                        err.errorMessage = "Device: " + deviceName + " not in group";
+                        err.typeofError = ERROR_TYPE::DEVICE_NOT_IN_GROUP;
+                        throw std::runtime_error(StringProc::exceptionStringOut(err));
                     }
                 }
                 catch (Tango::DevFailed &e) {
@@ -134,8 +140,10 @@ namespace WebSocketDS_ns
                         tangoErrors.push_back((string)e.errors[i].desc);
                     }
 
-                    string errorMessInJson = StringProc::exceptionStringOut(ERROR_TYPE::TANGO_EXCEPTION, parsedInput.id, tangoErrors, parsedInput.type_req_str);
-                    throw std::runtime_error(errorMessInJson);
+                    err.errorMessages = tangoErrors;
+                    err.typeofError = ERROR_TYPE::TANGO_EXCEPTION;
+                    err.device_name = deviceName;
+                    throw std::runtime_error(StringProc::exceptionStringOut(err));
                 }
 
                 // DONE: Для девайсов из группы сделано SINGLE_OR_GROUP::SINGLE_FROM_GROUP
@@ -163,8 +171,11 @@ namespace WebSocketDS_ns
                 for (unsigned int i = 0; i < e.errors.length(); i++) {
                     tangoErrors.push_back((string)e.errors[i].desc);
                 }
+                err.errorMessages = tangoErrors;
+                err.typeofError = ERROR_TYPE::TANGO_EXCEPTION;
+                err.device_name = dev;
 
-                string errorMessInJson = StringProc::exceptionStringOut(ERROR_TYPE::TANGO_EXCEPTION, parsedInput.id, tangoErrors, parsedInput.type_req_str);
+                string errorMessInJson = StringProc::exceptionStringOut(err);
                 errorsFromGroupReq.push_back(errorMessInJson);
                 continue;
             }
@@ -206,6 +217,13 @@ namespace WebSocketDS_ns
         pair<long, TaskInfo > procId;
         string errorMessInJson;
 
+        ErrorInfo err;
+        err.typeofReq = parsedInput.type_req_str;
+        err.id = parsedInput.id;
+        if (parsedInput.check_key("device_name") == TYPE_OF_VAL::VALUE) {
+            err.device_name = parsedInput.otherInpStr.at("device_name");
+        }
+
         // В режимах SERVER* дополнительные параметры команд 
         // прописываются в property
         // Здесь, при отправлении команды от клиента дополнительные выставляются
@@ -223,13 +241,17 @@ namespace WebSocketDS_ns
             }
             else {
                 if (parsedInput.check_key("argin") == TYPE_OF_VAL::NONE) {
-                    errorMessInJson = StringProc::exceptionStringOut(ERROR_TYPE::CHECK_REQUEST, parsedInput.id, "argin not found", parsedInput.type_req_str);
+                    err.typeofError = ERROR_TYPE::CHECK_REQUEST;
+                    err.errorMessage = "argin not found";                    
+                    errorMessInJson = StringProc::exceptionStringOut(err);
                 }
 
                 // если argin - массив
                 // и если требуемый type не является массивом
                 else if (parsedInput.check_key("argin") == TYPE_OF_VAL::ARRAY && !isMassive(type)) {
-                    errorMessInJson = StringProc::exceptionStringOut(ERROR_TYPE::CHECK_REQUEST, parsedInput.id, "The input data should not be an array", parsedInput.type_req_str);
+                    err.typeofError = ERROR_TYPE::CHECK_REQUEST;
+                    err.errorMessage = "The input data should not be an array";
+                    errorMessInJson = StringProc::exceptionStringOut(err);
                 }
                 else {
                     Tango::DeviceData inDeviceData;
@@ -265,7 +287,9 @@ namespace WebSocketDS_ns
                 tangoErrors.push_back((string)e.errors[i].desc);
             }
 
-            errorMessInJson = StringProc::exceptionStringOut(ERROR_TYPE::TANGO_EXCEPTION, parsedInput.id, tangoErrors, parsedInput.type_req_str);
+            err.typeofError = ERROR_TYPE::TANGO_EXCEPTION;
+            err.errorMessages = tangoErrors;
+            errorMessInJson = StringProc::exceptionStringOut(err);
         }
 
         if (errorMessInJson.size()) {
@@ -317,7 +341,16 @@ namespace WebSocketDS_ns
                 tangoErrors.push_back((string)e.errors[i].desc);
             }
 
-            string errorMessInJson = StringProc::exceptionStringOut(ERROR_TYPE::TANGO_EXCEPTION, parsedInput.id, tangoErrors, parsedInput.type_req_str);
+            ErrorInfo err;
+            err.typeofReq = parsedInput.type_req_str;
+            err.id = parsedInput.id;
+            err.typeofError = ERROR_TYPE::TANGO_EXCEPTION;
+            err.errorMessages = tangoErrors;
+            if (parsedInput.check_key("device_name") == TYPE_OF_VAL::VALUE) {
+                err.device_name = parsedInput.otherInpStr.at("device_name");
+            }
+
+            string errorMessInJson = StringProc::exceptionStringOut(err);
             throw std::runtime_error(errorMessInJson);
         }
 
@@ -357,13 +390,39 @@ namespace WebSocketDS_ns
                 tangoErrors.push_back((string)e.errors[i].desc);
             }
 
-            string errorMessInJson = StringProc::exceptionStringOut(ERROR_TYPE::TANGO_EXCEPTION, parsedInput.id, tangoErrors, parsedInput.type_req_str);
-            throw std::runtime_error(errorMessInJson);
+            ErrorInfo err;
+            err.typeofReq = parsedInput.type_req_str;
+            err.id = parsedInput.id;
+            err.typeofError = ERROR_TYPE::TANGO_EXCEPTION;
+            err.errorMessages = tangoErrors;
+            if (parsedInput.check_key("device_name") == TYPE_OF_VAL::VALUE) {
+                err.device_name = parsedInput.otherInpStr.at("device_name");
+            }
+            err.attr_name = attr_name;
+
+            throw std::runtime_error(StringProc::exceptionStringOut(err));
         }
     }
 
     string TangoProcessor::processEvent(Tango::EventData * dt, const  std::string& precOpt)
     {
+        ErrorInfo err;
+        string attrName;
+        string deviceName;
+
+        try {
+            auto splt = StringProc::split(dt->attr_name, '/');
+
+            if (splt.size() == 7) {
+                attrName = splt[6];
+            }
+            else {
+                attrName = dt->attr_name;
+            }
+
+            deviceName = dt->device->dev_name();
+        } catch(...) {}
+
         try {
             if (dt->err) {
                 vector<string> errors;
@@ -372,24 +431,14 @@ namespace WebSocketDS_ns
                     errors.push_back((string)dt->errors[i].desc);
                 }
 
-                ResponseFromEventReq errResp;
-
-                auto splt = StringProc::split(dt->attr_name, '/');
-
-                if (splt.size() == 7) {
-                    errResp.attrName = splt[6];
-                }
-                else {
-                    errResp.attrName = dt->attr_name;
-                }
-
-                errResp.deviceName = dt->device->name();
-                errResp.respType = RESPONSE_TYPE::ERROR_M;
-                errResp.errorMessages = errors;
-                errResp.eventTypeStr = dt->event;
+                err.typeofError = ERROR_TYPE::EVENT_ERR;
+                err.device_name = deviceName;
+                err.errorMessages = errors;
+                err.attr_name = attrName;
+                err.event_type = dt->event;
 
 
-                return StringProc::exceptionStringOutForEvent(ERROR_TYPE::EVENT_ERR, vector<ResponseFromEventReq>({ errResp }));
+                return StringProc::exceptionStringOut(err);
             }
 
             stringstream json;
@@ -420,11 +469,24 @@ namespace WebSocketDS_ns
             for (int i = 0; i < e.errors.length(); i++) {
                 errors.push_back((string)e.errors[i].desc);
             }
-            return StringProc::exceptionStringOut(ERROR_TYPE::TANGO_EXCEPTION, errors, "exc_from_event_dev");
+
+            ErrorInfo err;
+            err.typeofReq = "from_event";
+            err.errorMessages = errors;
+            err.device_name = deviceName;
+            err.attr_name = attrName;
+            err.typeofError = ERROR_TYPE::EXC_FROM_EVENT_DEV;
+
+            return StringProc::exceptionStringOut(err);
         }
 
         catch (...) {
-            return StringProc::exceptionStringOut(ERROR_TYPE::UNKNOWN_EXC, "Unknown exception from event", "exc_from_event_dev");
+            err.typeofError = ERROR_TYPE::EXC_FROM_EVENT_DEV;
+            err.errorMessage = "Unknown exception from event";
+            err.typeofReq = "from_event";
+            err.device_name = deviceName;
+            err.attr_name = attrName;
+            return StringProc::exceptionStringOut(err);
         }
     }
 
@@ -440,7 +502,12 @@ namespace WebSocketDS_ns
             device_list = groupForWs->get_device_list(true);
         }
         catch (Tango::DevFailed &e) {
-            return StringProc::exceptionStringOut(ERROR_TYPE::TANGO_EXCEPTION, parsedInput.id, "Device list not received", parsedInput.type_req_str);
+            ErrorInfo err;
+            err.typeofError = ERROR_TYPE::TANGO_EXCEPTION;
+            err.id = parsedInput.id;
+            err.errorMessage = "Device list not received";
+            err.typeofReq = parsedInput.type_req_str;
+            return StringProc::exceptionStringOut(err);
         }
 
         unordered_map<string, string> optStr = StringProc::checkPrecisionOptions(parsedInput);
@@ -491,11 +558,26 @@ namespace WebSocketDS_ns
         if (hasActDev && hasPipe)
             return json.str();
 
-        if (!hasActDev)
-            return StringProc::exceptionStringOut(ERROR_TYPE::UNAVAILABLE_DEVS, parsedInput.id, "All device unavailable. Check the status of corresponding tango-server", parsedInput.type_req_str);
+        if (!hasActDev) {
+            ErrorInfo err;
+            err.typeofError = ERROR_TYPE::UNAVAILABLE_DEVS;
+            err.id = parsedInput.id;
+            err.errorMessage = "All device unavailable. Check the status of corresponding tango-server";
+            err.typeofReq = parsedInput.type_req_str;
+            return StringProc::exceptionStringOut(err);
+        }
+
+        ErrorInfo err;
+        err.typeofReq = parsedInput.type_req_str;
+        err.id = parsedInput.id;
+        err.typeofError = ERROR_TYPE::TANGO_EXCEPTION;
+        err.errorMessages = errorsMess;
+        if (parsedInput.check_key("device_name") == TYPE_OF_VAL::VALUE) {
+            err.device_name = parsedInput.otherInpStr.at("device_name");
+        }
 
         // TODO: CHECK. Проверить, при каких случаях вызывается здесь
-        return StringProc::exceptionStringOut(ERROR_TYPE::TANGO_EXCEPTION, parsedInput.id, errorsMess, parsedInput.type_req_str);
+        return StringProc::exceptionStringOut(err);
     }
 
     string TangoProcessor::processPipeRead(Tango::DevicePipe& pipe, const ParsedInputJson & parsedInput)
@@ -962,6 +1044,11 @@ namespace WebSocketDS_ns
         if (typeOfVaArgin == TYPE_OF_VAL::ARRAY)
             inpVecStr = parsedInput.otherInpVec.at("argin");
 
+        ErrorInfo err;
+        err.typeofReq = parsedInput.type_req_str;
+        err.typeofError = ERROR_TYPE::NOT_SUPP;
+        err.id = parsedInput.id;
+
         try {
             switch (typeForDeviceData)
             {
@@ -1051,32 +1138,38 @@ namespace WebSocketDS_ns
             break;
             case Tango::DEVVAR_LONGSTRINGARRAY:
             {
-                string errorMessInJson = StringProc::exceptionStringOut(ERROR_TYPE::NOT_SUPP, parsedInput.id, "DEVVAR_LONGSTRINGARRAY This format is not supported", parsedInput.type_req_str);
+                err.errorMessage = "DEVVAR_LONGSTRINGARRAY This format is not supported";
+                string errorMessInJson = StringProc::exceptionStringOut(err);
                 throw std::runtime_error(errorMessInJson);
             }
             break;
             case Tango::DEVVAR_DOUBLESTRINGARRAY:
             {
-                string errorMessInJson = StringProc::exceptionStringOut(ERROR_TYPE::NOT_SUPP, parsedInput.id, "DEVVAR_DOUBLESTRINGARRAY This format is not supported", parsedInput.type_req_str);
+                err.errorMessage = "DEVVAR_DOUBLESTRINGARRAY This format is not supported";
+                string errorMessInJson = StringProc::exceptionStringOut(err);
                 throw std::runtime_error(errorMessInJson);
             }
             break;
             case Tango::DEV_STATE:
             {
-                string errorMessInJson = StringProc::exceptionStringOut(ERROR_TYPE::NOT_SUPP, parsedInput.id, "DEV_STATE This format is not supported", parsedInput.type_req_str);
+                err.errorMessage = "DEV_STATE This format is not supported";
+                string errorMessInJson = StringProc::exceptionStringOut(err);
                 throw std::runtime_error(errorMessInJson);
             }
             break;
             case Tango::DEVVAR_BOOLEANARRAY:
             {
-                string errorMessInJson = StringProc::exceptionStringOut(ERROR_TYPE::NOT_SUPP, parsedInput.id, "DEVVAR_BOOLEANARRAY This format is not supported", parsedInput.type_req_str);
+                err.errorMessage = "DEVVAR_BOOLEANARRAY This format is not supported";
+                string errorMessInJson = StringProc::exceptionStringOut(err);
                 throw std::runtime_error(errorMessInJson);
             }
             break;
             case Tango::DEV_UCHAR:
             {
                 if (inpStr.size() != 1) {
-                    string errorMessInJson = StringProc::exceptionStringOut(ERROR_TYPE::CHECK_REQUEST, parsedInput.id, "DEV_UCHAR Must be 1 char", parsedInput.type_req_str);
+                    err.errorMessage = "DEV_UCHAR Must be 1 char";
+                    err.typeofError = ERROR_TYPE::CHECK_REQUEST;
+                    string errorMessInJson = StringProc::exceptionStringOut(err);
                     throw std::runtime_error(errorMessInJson);
                 }
                 Tango::DeviceData dOut;
@@ -1118,7 +1211,9 @@ namespace WebSocketDS_ns
             }
         }
         catch (const boost::bad_lexical_cast &lc) {
-            string errorMessInJson = StringProc::exceptionStringOut(ERROR_TYPE::IS_NOT_VALID, parsedInput.id, lc.what(), parsedInput.type_req_str);
+            err.errorMessage = lc.what();
+            err.typeofError = ERROR_TYPE::IS_NOT_VALID;
+            string errorMessInJson = StringProc::exceptionStringOut(err);
             throw std::runtime_error(errorMessInJson);
         }
         return deviceData;
@@ -1154,6 +1249,10 @@ namespace WebSocketDS_ns
         if (parsedInput.check_key("dimY") == TYPE_OF_VAL::VALUE) {
             dimY = stoi(parsedInput.otherInpStr.at("dimY"));
         }
+
+        ErrorInfo err;
+        err.typeofReq = parsedInput.type_req_str;
+        err.id = parsedInput.id;
 
         try {
             switch (data_type)
@@ -1227,7 +1326,9 @@ namespace WebSocketDS_ns
             break;
             case Tango::DEV_STATE:
             {
-                string errorMessInJson = StringProc::exceptionStringOut(ERROR_TYPE::NOT_SUPP, parsedInput.id, "DEV_STATE This format is not supported", parsedInput.type_req_str);
+                err.errorMessage = "DEV_STATE This format is not supported";
+                err.typeofError = ERROR_TYPE::NOT_SUPP;
+                string errorMessInJson = StringProc::exceptionStringOut(err);
                 throw std::runtime_error(errorMessInJson);
             }
             break;
@@ -1235,7 +1336,9 @@ namespace WebSocketDS_ns
             {
                 if (data_format == Tango::AttrDataFormat::SCALAR) {
                     if (argin.size() != 1) {
-                        string errorMessInJson = StringProc::exceptionStringOut(ERROR_TYPE::CHECK_REQUEST, parsedInput.id, "DEV_UCHAR Must be 1 char", parsedInput.type_req_str);
+                        err.errorMessage = "DEV_UCHAR Must be 1 char";
+                        err.typeofError = ERROR_TYPE::CHECK_REQUEST;
+                        string errorMessInJson = StringProc::exceptionStringOut(err);
                         throw std::runtime_error(errorMessInJson);
                     }
                         
@@ -1270,14 +1373,18 @@ namespace WebSocketDS_ns
 #endif
             default:
             {
-                string errorMessInJson = StringProc::exceptionStringOut(ERROR_TYPE::NOT_SUPP, parsedInput.id, "Unknown type of atrribute", parsedInput.type_req_str);
+                err.errorMessage = "Unknown type of atrribute";
+                err.typeofError = ERROR_TYPE::NOT_SUPP;
+                string errorMessInJson = StringProc::exceptionStringOut(err);
                 throw std::runtime_error(errorMessInJson);
             }
             break;
             }
         }
         catch (const boost::bad_lexical_cast &lc) {
-            string errorMessInJson = StringProc::exceptionStringOut(ERROR_TYPE::IS_NOT_VALID, parsedInput.id, lc.what(), parsedInput.type_req_str);
+            err.errorMessage = lc.what();
+            err.typeofError = ERROR_TYPE::IS_NOT_VALID;
+            string errorMessInJson = StringProc::exceptionStringOut(err);
             throw std::runtime_error(errorMessInJson);
         }
 

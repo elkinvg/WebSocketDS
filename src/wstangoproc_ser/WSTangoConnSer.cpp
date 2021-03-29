@@ -13,7 +13,7 @@
 #include "EventProcSer.h"
 
 #include "TangoProcessor.h"
-
+#include "ErrorInfo.h"
 
 
 namespace WebSocketDS_ns
@@ -68,14 +68,23 @@ namespace WebSocketDS_ns
     {
         TYPE_WS_REQ typeWsReq = parsedInput.type_req;
 
+        ErrorInfo err;
+        err.id = parsedInput.id;
+
         if (!_isInitDs) {
-            return StringProc::exceptionStringOut(ERROR_TYPE::INIT_FAILED, parsedInput.id, _errorMessage, parsedInput.type_req_str);
+            err.errorMessage = _errorMessage;
+            err.typeofReq = parsedInput.type_req_str;
+            err.typeofError = ERROR_TYPE::INIT_FAILED;
+            return StringProc::exceptionStringOut(err);
         }
 
         if (
             typeWsReq == TYPE_WS_REQ::UNKNOWN
             ) {
-            return StringProc::exceptionStringOut(ERROR_TYPE::UNKNOWN_REQ_TYPE, parsedInput.id, "This request type is not supported in the current mode", parsedInput.type_req_str);
+            err.typeofReq = parsedInput.type_req_str;
+            err.errorMessage = "This request type is not supported in the current mode";
+            err.typeofError = ERROR_TYPE::UNKNOWN_REQ_TYPE;
+            return StringProc::exceptionStringOut(err);
         }
 
         if (
@@ -85,16 +94,26 @@ namespace WebSocketDS_ns
         }
 
         // В обычном случае не возвращается никогда
-        return StringProc::exceptionStringOut(ERROR_TYPE::UNKNOWN_REQ_TYPE, parsedInput.id, "Unknown Request", "unknown");
+        err.typeofReq = parsedInput.type_req_str;
+        err.errorMessage = "Unknown Request";
+        err.typeofError = ERROR_TYPE::UNKNOWN_REQ_TYPE;
+        return StringProc::exceptionStringOut(err);
     }
 
     vector<pair<long, TaskInfo>> WSTangoConnSer::sendRequestAsync(const ParsedInputJson& parsedInput, ConnectionData *connData, vector<string>& errorsFromGroupReq)
     {
+        
         TYPE_WS_REQ typeWsReq = parsedInput.type_req;
         string deviceName;
 
+        ErrorInfo err;
+        err.id = parsedInput.id;
+
         if (!_isInitDs) {
-            string errorMessage = StringProc::exceptionStringOut(ERROR_TYPE::INIT_FAILED, parsedInput.id, _errorMessage, parsedInput.type_req_str);
+            err.errorMessage = _errorMessage;
+            err.typeofReq = parsedInput.type_req_str;
+            err.typeofError = ERROR_TYPE::INIT_FAILED;
+            string errorMessage = StringProc::exceptionStringOut(err);
             throw std::runtime_error(errorMessage);
         }
 
@@ -139,7 +158,10 @@ namespace WebSocketDS_ns
         }
 
         // В обычном случае не возвращается никогда
-        string errorMessage = StringProc::exceptionStringOut(ERROR_TYPE::UNKNOWN_REQ_TYPE, parsedInput.id, "Unknown Request", "unknown");
+        err.typeofReq = parsedInput.type_req_str;
+        err.errorMessage = "Unknown Request";
+        err.typeofError = ERROR_TYPE::UNKNOWN_REQ_TYPE;
+        string errorMessage = StringProc::exceptionStringOut(err);
         throw std::runtime_error(errorMessage);
     }
 
@@ -199,26 +221,39 @@ namespace WebSocketDS_ns
     string WSTangoConnSer::sendRequest_PipeComm(const ParsedInputJson & parsedInput, ConnectionData * connData)
     {
         TYPE_WS_REQ typeWsReq = parsedInput.type_req;
+        ErrorInfo err;
+        err.id = parsedInput.id;
+        err.typeofReq = parsedInput.type_req_str;
 
         // Для режима одного девайса read_pipe
         if (!_isGroup && parsedInput.type_req != TYPE_WS_REQ::PIPE_COMM) {
-            return StringProc::exceptionStringOut(ERROR_TYPE::IS_NOT_VALID, parsedInput.id, "type_req must be read_pipe", parsedInput.type_req_str);
+            err.typeofError = ERROR_TYPE::IS_NOT_VALID;
+            err.errorMessage = "type_req must be read_pipe";
+            return StringProc::exceptionStringOut(err);
         }
+
+        string deviceName;
+        if (parsedInput.check_key("device_name") == TYPE_OF_VAL::VALUE) {
+            deviceName = parsedInput.otherInpStr.at("device_name");
+            err.device_name = parsedInput.otherInpStr.at("device_name");
+        }
+
         try {
             if (_isGroup) {
                 if (
                     (typeWsReq == TYPE_WS_REQ::PIPE_COMM
                         || typeWsReq == TYPE_WS_REQ::PIPE_COMM_DEV)
-                    && parsedInput.check_key("device_name") == TYPE_OF_VAL::VALUE
+                    && deviceName.size()
                     ) {
-                    string deviceName = parsedInput.otherInpStr.at("device_name");
+
                     string pipeName = parsedInput.otherInpStr.at("pipe_name");
                     Tango::DeviceProxy *dp = groupForWs->get_device(deviceName);
 
                     if (dp == NULL) {
-                        string mess = "Device: " + deviceName + " not in group";
-                        string errorMessInJson = StringProc::exceptionStringOut(ERROR_TYPE::DEVICE_NOT_IN_GROUP, parsedInput.id, mess, parsedInput.type_req_str);
-                        return errorMessInJson;
+                        err.typeofError = ERROR_TYPE::DEVICE_NOT_IN_GROUP;
+                        err.errorMessage = "Device: " + deviceName + " not in group";
+                        err.typeofReq = parsedInput.type_req_str;
+                        return StringProc::exceptionStringOut(err);
                     }
                     Tango::DevicePipe pipe = dp->read_pipe(pipeName);
                     return TangoProcessor::processPipeRead(pipe, parsedInput);
@@ -227,6 +262,7 @@ namespace WebSocketDS_ns
                 return TangoProcessor::processPipeRead(groupForWs, parsedInput);
             }
             else {
+                deviceName = _wsds->deviceServer;
                 string pipeName = parsedInput.otherInpStr.at("pipe_name");
                 Tango::DevicePipe pipe = deviceForWs->read_pipe(pipeName);
                 return TangoProcessor::processPipeRead(pipe, parsedInput);
@@ -237,11 +273,15 @@ namespace WebSocketDS_ns
             for (int i = 0; i < e.errors.length(); i++) {
                 errors.push_back((string)e.errors[i].desc);
             }
-            return StringProc::exceptionStringOut(ERROR_TYPE::TANGO_EXCEPTION, errors, parsedInput.type_req_str);
+            err.typeofError = ERROR_TYPE::TANGO_EXCEPTION;
+            err.errorMessages = errors;
+            return StringProc::exceptionStringOut(err);
         }
 
         catch (...) {
-            return StringProc::exceptionStringOut(ERROR_TYPE::UNKNOWN_EXC, "Unknown exception", parsedInput.type_req_str);
+            err.typeofError = ERROR_TYPE::UNKNOWN_EXC;
+            err.errorMessage = "Unknown exception";
+            return StringProc::exceptionStringOut(err);
         }
     }
 
@@ -362,7 +402,12 @@ namespace WebSocketDS_ns
         }
         if (wasExc) {
             removeSymbolsForString(jsonStrOut);
-            jsonStrOut = StringProc::exceptionStringOut(et, jsonStrOut);
+            ErrorInfo err;
+            err.device_name = _wsds->deviceServer;
+            err.typeofReq = "attribute"; // TODO: update?
+            err.typeofError = et;
+            err.errorMessage = jsonStrOut;
+            jsonStrOut = StringProc::exceptionStringOut(err);
         }
         else {
             if (_wsds->get_status() != "The listening server is running")

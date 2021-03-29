@@ -137,5 +137,11 @@
     <ClInclude Include="..\src\wstangoproc_common\EnumConverter.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\wstangoproc_common\ErrorInfo.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\wstangoproc_cli\EventReqException.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

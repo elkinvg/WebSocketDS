@@ -13,11 +13,15 @@ As a default, compilation runs in OPTIMIZED (-O2) mode. For compilation in DEBUG
 
 ## server mode
 
+In this type of module, the listening device and attributes are written in the properties
+
 More about [server mode](./server_mode/README.md)
 
 Makefile is in the directory `./server_mode/`
 
 ## client mode
+
+In this type of module, the listening device and attributes are completely specified by the client. Actions require special client commands in JSON format
 
 More about [client mode](./client_mode/README.md)
 
@@ -166,6 +170,7 @@ Example output for 1476379200 (type double with precision by default)
 - **tango_exc** - TANGO exception
 - **unavailable_devs** - All device unavailable
 - **event_err** - Exception from TANGO events data
+- **event_dev_err** - Exception from listened device
 - **check_code** - This type of error should not be reported during normal operation.
 - **subscr_not_found** - No subscription found with the given id. May occur when unsubscribing from events
 - **commun_failed** - Tango::CommunicationFailed
