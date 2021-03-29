@@ -365,6 +365,7 @@ namespace WebSocketDS_ns
         try {
             if (!_isInitDs)
             {
+                et = ERROR_TYPE::INIT_FAILED;
                 jsonStrOut = _errorMessage;
                 wasExc = true;
             }
