@@ -19,7 +19,7 @@ namespace WebSocketDS_ns
     struct ResponseFromEventReq;
 
     struct TangoAttrEventType {
-        Tango::EventType eventType;
+        string eventTypeString;
         string deviceName;
         string attrName;
     };
@@ -35,8 +35,9 @@ namespace WebSocketDS_ns
 
     typedef unordered_map <string,  // device name
         unordered_map < string,     // attribute name 
+        unordered_map < string,     // event type
         UsedEventSubscr
-        >> event_sub_list;
+        >>> event_sub_list;
 
     typedef map< websocketpp::connection_hdl,
         unordered_map <string,  // device name
@@ -59,7 +60,7 @@ namespace WebSocketDS_ns
         string _checkEventReq(const ParsedInputJson & parsedInput, websocketpp::connection_hdl hdl);
         string _remDevReq(const ParsedInputJson & parsedInput, websocketpp::connection_hdl hdl);
 
-        int _getIdOfEventSubscription(websocketpp::connection_hdl hdl, const string& deviceName, const string& attribute, const Tango::EventType& eventType);
+        int _getIdOfEventSubscription(websocketpp::connection_hdl hdl, const string& deviceName, const string& attribute, const string& eventType);
 
         bool _delSubHdl(websocketpp::connection_hdl hdl, TangoAttrEventType& evInfo);
         void _clearSubscrInfoMaps(const TangoAttrEventType& evInfo);
