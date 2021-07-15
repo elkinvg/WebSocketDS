@@ -39,7 +39,6 @@ string WebSocketDS_ns::UserControl::check_permission(const ParsedInputJson& pars
         if (_isLogActive)
             sendLog(authProxy, permission_data, parsedInput.inputJson, isGroup, isAuth);
 
-
         if (_toi != TYPE_OF_IDENT::PERMISSION_WWW) {
             std::stringstream ss;
             ss << "User " << permission_data[3] << " tried to run the command " << permission_data[1] << ". Access status is " << std::boolalpha << isAuth;
@@ -50,7 +49,6 @@ string WebSocketDS_ns::UserControl::check_permission(const ParsedInputJson& pars
             ss << "User " << permission_data[0] << " tried to run the command " << permission_data[3] << ". Access status is " << std::boolalpha << isAuth;
             mess = ss.str();
         }
-
         delete authProxy;
     }
     catch (Tango::DevFailed &e) {
@@ -61,12 +59,11 @@ string WebSocketDS_ns::UserControl::check_permission(const ParsedInputJson& pars
         for (unsigned int i = 0; i < e.errors.length(); i++)
             errMess.push_back(string(e.errors[i].desc));
 
-        if (authProxy!=nullptr)
+        if (authProxy != nullptr) {
+            if (_toi == TYPE_OF_IDENT::PERMISSION_WWW && _isLogActive) {
+                sendLog(authProxy, permission_data, parsedInput.inputJson, isAuth, isGroup);
+            }
             delete authProxy;
-
-        // TODO: CHECK
-        if (_toi == TYPE_OF_IDENT::PERMISSION_WWW && _isLogActive) {
-            sendLog(authProxy, permission_data, parsedInput.inputJson, isAuth, isGroup);
         }
 
         throw std::runtime_error(
