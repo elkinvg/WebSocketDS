@@ -3,9 +3,12 @@
 #ifdef SERVER_MODE
 #include "WSTangoConnSer.h"
 #endif
+
 #ifdef CLIENT_MODE
 #include "WSTangoConnCli.h"
+#include "EventReqException.h"
 #endif
+
 #include "WSThread.h"
 
 #include <tango.h>
@@ -16,6 +19,7 @@
 #include "StringProc.h"
 #include "ParsingInputJson.h"
 
+#include "ErrorInfo.h"
 
 namespace WebSocketDS_ns
 {
@@ -45,9 +49,15 @@ namespace WebSocketDS_ns
             string errorMess;
             if (parsedInput.errMess.size())
                 errorMess = parsedInput.errMess;
-            else
-                // if (!parsedInput.isValid) Должен быть текст ошибки 
-                errorMess = StringProc::exceptionStringOut(ERROR_TYPE::IS_NOT_VALID, NONE, "Unknown message from parsing", parsedInput.type_req_str);
+            else {
+                // if (!parsedInput.isValid) Должен быть текст ошибки
+                ErrorInfo err;
+                err.typeofError = ERROR_TYPE::IS_NOT_VALID;
+                err.errorMessage = "Unknown message from parsing";
+                err.typeofReq = parsedInput.type_req_str;
+
+                errorMess = StringProc::exceptionStringOut(err);
+            }
             // Закрытие соединения со стороны сервера при возникновении ошибок
             try {
                 send(hdl, errorMess);
@@ -60,6 +70,9 @@ namespace WebSocketDS_ns
         }
 
         string resp;
+#ifdef CLIENT_MODE
+        string resp2;
+#endif
         // TODO: BUG Если девайс не активен. Поместить в try
         TYPE_WS_REQ typeWsReq = parsedInput.type_req;
 
@@ -127,10 +140,32 @@ namespace WebSocketDS_ns
             catch (std::runtime_error &re) {
                 resp = re.what();
             }
+#ifdef CLIENT_MODE
+            catch (EventReqException &e) {
+                // Было сделано как исключение, для подписки в клиентном режиме.
+                // Отдельно отправляется список успешных и список неудач
+                resp = e.getMessFromSuccResponses();
+                resp2 = e.getMessFromErrorResponses();
+            }
+#endif
         }
-        if (resp.size()) {
+        if (
+            resp.size()
+#ifdef CLIENT_MODE
+            || resp2.size()
+#endif
+            ) {
             try {
-                send(hdl, resp);
+#ifdef CLIENT_MODE
+                if (resp.size()) {
+#endif
+                    send(hdl, resp);
+#ifdef CLIENT_MODE
+                }
+                if (resp2.size()) {
+                    send(hdl, resp2);
+                }
+#endif
             }
             // Закрытие соединения со стороны сервера при возникновении ошибок
             catch (ConnectionClosedException& e) {
@@ -263,7 +298,13 @@ namespace WebSocketDS_ns
                 for (int i = 0; i < e.errors.length(); i++) {
                     errs.push_back((string)e.errors[i].desc);
                 }
-                string resp = StringProc::exceptionStringOut(ERROR_TYPE::TANGO_EXCEPTION, _idInfo.second.idReq, errs, _idInfo.second.typeReqStr);
+                ErrorInfo err;
+                err.typeofError = ERROR_TYPE::TANGO_EXCEPTION;
+                err.errorMessages = errs;
+                err.typeofReq = _idInfo.second.typeReqStr;
+                err.id = _idInfo.second.idReq;
+                err.device_name = _idInfo.second.deviceName; // TODO: CHECK
+                string resp = StringProc::exceptionStringOut(err);
                 send(hdl, resp);
                 _del.push_back(_id);
             }

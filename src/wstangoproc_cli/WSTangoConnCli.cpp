@@ -11,6 +11,7 @@
 #include "TangoProcessor.h"
 
 #include "EventProcCli.h"
+#include "ErrorInfo.h"
 
 
 namespace WebSocketDS_ns
@@ -46,7 +47,13 @@ namespace WebSocketDS_ns
             return sendRequest_PipeComm(parsedInput, connData);
         }
 
-        return StringProc::exceptionStringOut(ERROR_TYPE::UNKNOWN_REQ_TYPE, parsedInput.id, "This request type is not supported", parsedInput.type_req_str);
+        ErrorInfo err;
+        err.typeofError = ERROR_TYPE::UNKNOWN_REQ_TYPE;
+        err.errorMessage = "This request type is not supported";
+        err.typeofReq = parsedInput.type_req_str;
+        err.id = parsedInput.id;
+
+        return StringProc::exceptionStringOut(err);
     }
 
     string WSTangoConnCli::sendRequest_Event(websocketpp::connection_hdl hdl, const ParsedInputJson & parsedInput)
@@ -60,8 +67,15 @@ namespace WebSocketDS_ns
             &&
             (typeWsReq == TYPE_WS_REQ::EVENT_REQ_CHECK_DEV || typeWsReq == TYPE_WS_REQ::EVENT_REQ_OFF || typeWsReq == TYPE_WS_REQ::EVENT_REQ_REM_DEV)
             ) {
-            return StringProc::exceptionStringOut(ERROR_TYPE::NOT_SUBSCR_YET, "No subscribers yet", parsedInput.type_req_str
-            );
+            ErrorInfo err;
+            err.typeofError = ERROR_TYPE::NOT_SUBSCR_YET;
+            err.errorMessage = "No subscribers yet";
+            err.typeofReq = parsedInput.type_req_str;
+            if (parsedInput.check_key("device_name") == TYPE_OF_VAL::VALUE) {
+                err.device_name = parsedInput.otherInpStr.at("device_name");
+            }
+
+            return StringProc::exceptionStringOut(err);
         }
 
         if (eventProc == nullptr && typeWsReq == TYPE_WS_REQ::EVENT_REQ_ADD_DEV) {
@@ -122,8 +136,14 @@ namespace WebSocketDS_ns
             return _sendRequestAsyncDevOrGr(parsedInput, deviceName, isGroupReq, errorsFromGroupReq);
         }
 
+        ErrorInfo err;
+        err.typeofError = ERROR_TYPE::CHECK_CODE;
+        err.errorMessage = "Check code. WSTangoConnCli::sendRequestAsync";
+        err.typeofReq = parsedInput.type_req_str;
+        err.id = parsedInput.id;
+
         // В обычном случае не возвращается никогда
-        string errorMessage = StringProc::exceptionStringOut(ERROR_TYPE::UNKNOWN_REQ_TYPE, parsedInput.id, "Unknown Request", "unknown");
+        string errorMessage = StringProc::exceptionStringOut(err);
         throw std::runtime_error(errorMessage);
     }
 
@@ -194,9 +214,16 @@ namespace WebSocketDS_ns
             for (int i = 0; i < e.errors.length(); i++) {
                 errors.push_back((string)e.errors[i].desc);
             }
+
+            ErrorInfo err;
+            err.id = parsedInput.id;
+            err.typeofReq = parsedInput.type_req_str;
+            err.errorMessages = errors;
+            err.device_name = deviceName;
+            err.typeofError = ERROR_TYPE::TANGO_EXCEPTION;
+
             throw std::runtime_error(
-                StringProc::exceptionStringOut(ERROR_TYPE::TANGO_EXCEPTION, errors, parsedInput.type_req_str
-                )
+                StringProc::exceptionStringOut(err)
             );
         }
         return device;
@@ -213,9 +240,15 @@ namespace WebSocketDS_ns
             for (int i = 0; i < e.errors.length(); i++) {
                 errors.push_back((string)e.errors[i].desc);
             }
+            ErrorInfo err;
+            err.id = parsedInput.id;
+            err.typeofReq = parsedInput.type_req_str;
+            err.errorMessages = errors;
+            err.device_name = devicePatt;
+            err.typeofError = ERROR_TYPE::TANGO_EXCEPTION;
+
             throw std::runtime_error(
-                StringProc::exceptionStringOut(ERROR_TYPE::TANGO_EXCEPTION, errors, parsedInput.type_req_str
-                )
+                StringProc::exceptionStringOut(err)
             );
         }
         return group;

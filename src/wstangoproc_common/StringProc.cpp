@@ -4,13 +4,20 @@
 #include <algorithm>
 #include "ParsingInputJson.h"
 
+#ifdef CLIENT_MODE
 #include "ResponseFromEvent.h"
+#endif
+
 #include "EnumConverter.h"
+#include "ErrorInfo.h"
 
 using std::stringstream;
 
 namespace WebSocketDS_ns
 {
+    /**
+     * Вывод для запроса, в случае успеха
+     */
     string StringProc::successRespOut(const ParsedInputJson & parsedInput)
     {
         stringstream ss;
@@ -28,6 +35,9 @@ namespace WebSocketDS_ns
         return ss.str();
     }
 
+    /**
+     * Вывод для запроса, с указанием данных
+     */
     string StringProc::responseStringOut(const string& id, string& message, const string& type_req_str, bool isString)
     {
         if (isString)
@@ -35,6 +45,9 @@ namespace WebSocketDS_ns
         return generateRespMess(id,message,type_req_str);
     }
 
+    /**
+     * Вывод для запроса, с указанием данных
+     */
     std::string StringProc::responseStringOut(const string& id, const vector<std::string>& messages, const string& type_req_str)
     {
         string inpMess;
@@ -52,94 +65,68 @@ namespace WebSocketDS_ns
         return generateRespMess(id, inpMess, type_req_str);
     }
 
-    string StringProc::responseStringOutForEventSub(const string& id, const string& type_req_str, const vector<ResponseFromEventReq>& successResponses, const vector<ResponseFromEventReq>& errorResponses)
+#ifdef CLIENT_MODE
+    /**
+     * Вывод для запросов к подписке на события
+     */
+    string StringProc::responseStringOutForEventSub(const string& id, const string& type_req_str, const vector<ResponseFromEventReq>& successResponses)
     {
-        if (errorResponses.size()) {
-            return generateRespMess(
-                id
-                ,generateSuccessStringOutForEvent(successResponses)
-                ,generateExceptionStringOutForEvent(errorResponses)
-                , type_req_str
-            );
-        }
-
         return generateRespMess(
             id
             , generateSuccessStringOutForEvent(successResponses)
             , type_req_str
         );
     }
+#endif
 
-    string StringProc::exceptionStringOut(ERROR_TYPE errType, const string& id, const string& errorMessage, const string& type_req_str)
+    /**
+     * JSON - сообщение об ошибке
+     */
+    string StringProc::exceptionStringOut(const ErrorInfo & errorInfo)
     {
-        string tmpMess = "\"err_mess\": \"" + errorMessage + "\"";
-        return generateExceptionMess(errType, id, tmpMess, type_req_str);
-    }
-
-    string StringProc::exceptionStringOut(ERROR_TYPE errType, const string& id, const vector<std::string>& errorMessages, const string& type_req_str) {
-        string errMess = "\"err_mess\": [";
-        int it = 0;
-        for (auto& mess : errorMessages) {
-            if (it)
-                errMess += ", ";
-            errMess = errMess + "\"" + mess + "\"";
-            it++;
+        stringstream ss;
+        ss << "{\"event\": \"error\"";
+        if (errorInfo.typeofReq.size()) {
+            ss << " ,\"type_req\": \"" << errorInfo.typeofReq << "\"";
         }
-        errMess += "]";
-        return generateExceptionMess(errType, id, errMess, type_req_str);
-    }
 
-    string StringProc::exceptionStringOutForEvent(ERROR_TYPE errType, const vector<ResponseFromEventReq>& errorResponses)
-    {
-        string errMess = "\"errors\": " + generateExceptionStringOutForEvent(errorResponses);
-        return generateExceptionMess(errType, errMess, "from_event");
-    }
+        ss << " ,\"type_err\": \"" << EnumConverter::errorTypeToString(errorInfo.typeofError) << "\"";
 
-    string StringProc::exceptionStringOutForEvent(ERROR_TYPE errType, const vector<ResponseFromEventReq>& errorResponses, const string& id, const string& type_req_str)
-    {
-        string errMess = "\"errors\": " + generateExceptionStringOutForEvent(errorResponses);
-        return generateExceptionMess(errType, id, errMess, type_req_str);
-    }
-
-    string StringProc::exceptionStringOut(ERROR_TYPE errType, const string& errorMessage) {
-        stringstream ss;
-        ss << "{\"event\": \"error\", ";
-        ss << "\"type_err\": \"" << EnumConverter::errorTypeToString(errType) << "\", ";
-        ss << "\"type_req\": \"" << "attribute" << "\", ";
-        ss << "\"err_mess\": \"" << errorMessage << "\"";
-        ss << "}";
-
-        return ss.str();
-    }
-
-    string StringProc::exceptionStringOut(ERROR_TYPE errType, const string& errorMessage, const string& type_attr_resp) {
-        stringstream ss;
-        ss << "{\"event\": \"error\", ";
-        ss << "\"type_err\": \"" << EnumConverter::errorTypeToString(errType) << "\", ";
-        ss << "\"type_req\": \"" << type_attr_resp << "\", ";
-        ss << "\"err_mess\": \"" << errorMessage << "\"";
-        ss << "}";
-
-        return ss.str();
-    }
-
-    string StringProc::exceptionStringOut(ERROR_TYPE errType, const vector<string>& errorMessages, const string& type_attr_resp) {
-        stringstream ss;
-        ss << "{\"event\": \"error\", ";
-        ss << "\"type_err\": \"" << EnumConverter::errorTypeToString(errType) << "\", ";
-        ss << "\"type_req\": \"" << type_attr_resp << "\", ";
-        ss << "\"err_mess\": [";
-        bool nfst = false;
-        for (auto& err : errorMessages) {
-            if (nfst)
-                ss << ", ";
-            else
-                nfst = true;
-            ss << "\"" << err << "\"";
+        if (errorInfo.id.size()) {
+            try {
+                auto idTmp = stoi(errorInfo.id);
+                ss << " ,\"id_req\": " << idTmp;
+            }
+            catch (...) {}
         }
-        ss << "]";
-        ss << "}";
 
+        if (errorInfo.device_name.size()) {
+            ss << " ,\"device_name\": \"" << errorInfo.device_name << "\"";
+        }
+
+        // Имя атрибута указывается обычно при работе с событиями
+        if (errorInfo.attr_name.size()) {
+            ss << " ,\"attr_name\": \"" << errorInfo.attr_name << "\"";
+        }
+
+        if (errorInfo.event_type.size()) {
+            ss << " ,\"event_type\": \"" << errorInfo.event_type << "\"";
+        }
+#ifdef CLIENT_MODE
+        if (errorInfo.errorResponses.size()) {
+            ss << " ,\"errors\": " << generateSuccessStringOutForEvent(errorInfo.errorResponses);
+        }
+#endif
+
+        if (errorInfo.errorMessage.size() || errorInfo.errorMessages.size()) {
+            if (errorInfo.errorMessage.size()) {
+                generateErrorMess(ss, errorInfo.errorMessage);
+            }
+            else {
+                generateErrorMess(ss, errorInfo.errorMessages);
+            }
+        }
+        ss << "}";
         return ss.str();
     }
 
@@ -211,36 +198,6 @@ namespace WebSocketDS_ns
         return parsed;
     }
 
-    string StringProc::generateExceptionMess(ERROR_TYPE errType, const string& id, const string& inMessage, const string& type_req_str) {
-        stringstream ss;
-        ss << "{\"event\": \"error\", ";
-        ss << "\"type_err\": \"" << EnumConverter::errorTypeToString(errType) << "\", ";
-        ss << "\"type_req\": \"" << type_req_str << "\", ";
-        try {
-            auto idTmp = stoi(id);
-            ss << "\"id_req\": " << idTmp << ", ";
-        }
-        catch (...) {}
-
-        ss << inMessage;
-        //ss << "\"err_mess\": \"" << inMessage << "\"";
-        ss << "}";
-
-        return ss.str();
-    }
-
-    string StringProc::generateExceptionMess(ERROR_TYPE errType, const string & inMessage, const string& type_req_str)
-    {
-        stringstream ss;
-        ss << "{\"event\": \"error\", ";
-        ss << "\"type_req\" : \"" << type_req_str << "\", ";
-        ss << "\"type_err\": \"" << EnumConverter::errorTypeToString(errType) << "\", ";
-        ss << inMessage;
-        ss << "}";
-
-        return ss.str();
-    }
-
     std::string StringProc::generateRespMess(const string& id, const string &inMessage, const string& type_req_str)
     {
         stringstream ss;
@@ -276,55 +233,7 @@ namespace WebSocketDS_ns
         return ss.str();
     }
 
-    string StringProc::generateExceptionStringOutForEvent(const vector<ResponseFromEventReq>& errorResponses)
-    {
-        stringstream ss;
-        ss << "[";
-        for (int i = 0; i < errorResponses.size(); i++) {
-            if (i) {
-                ss << ", ";
-            }
-
-            ss << "{";
-
-            ss << "\"device\": \"" << errorResponses[i].deviceName;
-            ss << "\"";
-
-            if (errorResponses[i].eventTypeStr.size()) {
-                ss << ", \"event_type\": \"" << errorResponses[i].eventTypeStr << "\"";
-            }
-
-            ss << ", \"attribute\": \"" << errorResponses[i].attrName;
-            ss << "\",";
-
-            ss << "\"data\":";
-
-            if (errorResponses[i].errorMessages.size() == 1) {
-                ss << "\"";
-                ss << errorResponses[i].errorMessages[0];
-                ss << "\"";
-            }
-            else {
-                ss << "[";
-
-                for (int j = 0; j < errorResponses[i].errorMessages.size(); j++) {
-                    if (j) {
-                        ss << ", ";
-                    }
-                    ss << "\"";
-                    ss << errorResponses[i].errorMessages[j];
-                    ss << "\"";
-                }
-
-                ss << "]";
-            }
-
-            ss << "}";
-        }
-        ss << "]";
-        return ss.str();
-    }
-
+#ifdef CLIENT_MODE
     string StringProc::generateSuccessStringOutForEvent(const vector<ResponseFromEventReq>& successResponses)
     {
         stringstream ss;
@@ -345,6 +254,7 @@ namespace WebSocketDS_ns
         ss << "]";
         return ss.str();
     }
+#endif
 
     std::pair<string, string> StringProc::splitDeviceName(const string& deviceName)
     {
@@ -534,5 +444,24 @@ namespace WebSocketDS_ns
             catch (...) {}
         }
         return optStr;
+    }
+
+    void StringProc::generateErrorMess(stringstream & ss, const string & errorMessage)
+    {
+        ss << ", \"err_mess\": \"" << errorMessage << "\"";
+    }
+
+    void StringProc::generateErrorMess(stringstream & ss, const vector<string>& errorMessages)
+    {
+        ss << ", \"err_mess\": [";
+
+        int it = 0;
+        for (const auto& mess : errorMessages) {
+            if (it)
+                ss << ", ";
+            ss << "\"" << mess << "\"";
+            it++;
+        }
+        ss << "]";
     }
 }

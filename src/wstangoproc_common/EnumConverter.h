@@ -67,6 +67,7 @@ namespace WebSocketDS_ns
                 {ERROR_TYPE::TANGO_EXCEPTION, "tango_exc"},
                 {ERROR_TYPE::UNAVAILABLE_DEVS, "unavailable_devs"},
                 {ERROR_TYPE::EVENT_ERR, "event_err"},
+                {ERROR_TYPE::EXC_FROM_EVENT_DEV, "event_dev_err"},
                 {ERROR_TYPE::CHECK_CODE, "check_code"},
                 {ERROR_TYPE::SUBSCR_NOT_FOUND, "subscr_not_found"},
                 {ERROR_TYPE::COMMUNICATION_FAILED, "commun_failed"},

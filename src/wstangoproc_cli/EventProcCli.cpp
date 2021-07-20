@@ -8,6 +8,9 @@
 #include "ResponseFromEvent.h"
 #include "EnumConverter.h"
 
+#include "ErrorInfo.h"
+#include "EventReqException.h"
+
 namespace WebSocketDS_ns {
     EventProcCli::EventProcCli(WSThread* wsThread, bool isOldVersionOfJson)
         :_wsThread(wsThread), _isOldVersionOfJson(isOldVersionOfJson)
@@ -37,7 +40,14 @@ namespace WebSocketDS_ns {
             return _remDevReq(parsedInput, hdl);
         }
 
-        return StringProc::exceptionStringOut(ERROR_TYPE::CHECK_CODE, parsedInput.id, "Check code EventProcCli::request()", parsedInput.type_req_str);
+        ErrorInfo err;
+        err.typeofError = ERROR_TYPE::CHECK_CODE;
+        err.errorMessage = "Check code. EventProcCli::request()";
+        err.typeofReq = parsedInput.type_req_str;
+        err.id = parsedInput.id;
+
+        // В обычном случае не возвращается никогда
+        return StringProc::exceptionStringOut(err);
     }
 
     void EventProcCli::sendMessage(const string & deviceName, const string & attrName, Tango::EventData * dt)
@@ -117,21 +127,37 @@ namespace WebSocketDS_ns {
             );
         }
 
-        if (errorResponses.size() && !successResponses.size()) {
-            return StringProc::exceptionStringOutForEvent(
-                ERROR_TYPE::FROM_EVENT_SUBSCR
-                , errorResponses
-                , parsedInput.id
+        string messFromErrorResponses, messFromSuccResponses;
+
+        if (successResponses.size()) {
+            messFromSuccResponses = StringProc::responseStringOutForEventSub(
+                parsedInput.id
                 , parsedInput.type_req_str
+                , successResponses
             );
         }
 
-        return StringProc::responseStringOutForEventSub(
-            parsedInput.id
-            , parsedInput.type_req_str
-            , successResponses
-            , errorResponses
-        );
+        if (errorResponses.size()) {
+            ErrorInfo err;
+            err.typeofReq = parsedInput.type_req_str;
+            err.typeofError = ERROR_TYPE::FROM_EVENT_SUBSCR;
+            err.id = parsedInput.id;
+            err.errorResponses = errorResponses;
+            messFromErrorResponses = StringProc::exceptionStringOut(err);
+
+            throw EventReqException(messFromErrorResponses, messFromSuccResponses);
+        }
+
+        //if (errorResponses.size() && !successResponses.size()) {
+        //    return StringProc::exceptionStringOutForEvent(
+        //        ERROR_TYPE::FROM_EVENT_SUBSCR
+        //        , errorResponses
+        //        , parsedInput.id
+        //        , parsedInput.type_req_str
+        //    );
+        //}
+
+        return messFromSuccResponses;
     }
 
     string EventProcCli::_checkEventReq(const ParsedInputJson & parsedInput, websocketpp::connection_hdl hdl)
@@ -145,7 +171,13 @@ namespace WebSocketDS_ns {
             && event_type_str != "archive"
             )
         {
-            return StringProc::exceptionStringOut(ERROR_TYPE::IS_NOT_VALID, parsedInput.id, "Check type of event in request", parsedInput.type_req_str);
+            ErrorInfo err;
+            err.typeofError = ERROR_TYPE::IS_NOT_VALID;
+            err.errorMessage = "Check type of event in request";
+            err.typeofReq = parsedInput.type_req_str;
+            err.id = parsedInput.id;
+
+            return StringProc::exceptionStringOut(err);
         }
 
 
@@ -160,7 +192,14 @@ namespace WebSocketDS_ns {
             eventId = _getIdOfEventSubscription(hdl, deviceName, attribute, event_type_str);
         }
         catch (const std::out_of_range& oor) {
-            return StringProc::exceptionStringOut(ERROR_TYPE::SUBSCR_NOT_FOUND, parsedInput.id, "No subscription found with this id", parsedInput.type_req_str);
+            ErrorInfo err;
+            err.typeofError = ERROR_TYPE::SUBSCR_NOT_FOUND;
+            err.errorMessage = "No subscription found with this id";
+            err.typeofReq = parsedInput.type_req_str;
+            err.device_name = deviceName;
+            err.id = parsedInput.id;
+
+            return StringProc::exceptionStringOut(err);
         }
 
         string resp;
@@ -202,7 +241,13 @@ namespace WebSocketDS_ns {
             eventId = stoi(parsedInput.otherInpStr.at("event_sub_id"));
         }
         catch (...) {
-            return StringProc::exceptionStringOut(ERROR_TYPE::SUBSCR_NOT_FOUND, parsedInput.id, "Key event_sub_id must be a number", parsedInput.type_req_str);
+            ErrorInfo err;
+            err.typeofError = ERROR_TYPE::SUBSCR_NOT_FOUND;
+            err.errorMessage = "Key event_sub_id must be a number";
+            err.typeofReq = parsedInput.type_req_str;
+            err.id = parsedInput.id;
+
+            return StringProc::exceptionStringOut(err);
         }
 
         std::unique_lock<std::mutex> con_lock(m_eventproc_lock);
@@ -228,7 +273,13 @@ namespace WebSocketDS_ns {
         }
         catch (...)
         {
-            return StringProc::exceptionStringOut(ERROR_TYPE::SUBSCR_NOT_FOUND, parsedInput.id, "Event subscriber with this identifier not found", parsedInput.type_req_str);
+            ErrorInfo err;
+            err.typeofError = ERROR_TYPE::SUBSCR_NOT_FOUND;
+            err.errorMessage = "Event subscriber with this identifier not found";
+            err.typeofReq = parsedInput.type_req_str;
+            err.id = parsedInput.id;
+
+            return StringProc::exceptionStringOut(err);
         }
 
         return StringProc::successRespOut(parsedInput);

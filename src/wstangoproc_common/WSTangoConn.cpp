@@ -5,6 +5,8 @@
 #include "ConnectionData.h"
 #include "TangoProcessor.h"
 
+#include "ErrorInfo.h"
+
 namespace WebSocketDS_ns
 {
     WSTangoConn::WSTangoConn() {}
@@ -170,7 +172,12 @@ namespace WebSocketDS_ns
 #endif
         }
 
-        return StringProc::exceptionStringOut(ERROR_TYPE::CHECK_CODE, idInfo.second.idReq, "CHECK WSTangoConn::_forCheckResponse", "unknown");
+        ErrorInfo err;
+        err.id = idInfo.second.idReq;
+        err.typeofReq = "unknown";
+        err.typeofError = ERROR_TYPE::CHECK_CODE;
+        err.errorMessage = "CHECK WSTangoConn::_forCheckResponse";
+        return StringProc::exceptionStringOut(err);
     }
 
     string WSTangoConn::_forCheckResponse(const std::pair<long, TaskInfo>& idInfo, Tango::DeviceProxy * deviceForWs)
@@ -210,7 +217,12 @@ namespace WebSocketDS_ns
 #endif // CLIENT_MODE
         }
 
-        return StringProc::exceptionStringOut(ERROR_TYPE::CHECK_CODE, idInfo.second.idReq, "CHECK WSTangoConn::_forCheckResponse", "unknown");
+        ErrorInfo err;
+        err.id = idInfo.second.idReq;
+        err.typeofReq = "unknown";
+        err.typeofError = ERROR_TYPE::CHECK_CODE;
+        err.errorMessage = "CHECK WSTangoConn::_forCheckResponse";
+        return StringProc::exceptionStringOut(err);
     }
 
     string WSTangoConn::fromException(Tango::DevFailed &e, string func)
@@ -250,9 +262,14 @@ namespace WebSocketDS_ns
         if (!connData->userCheckStatus) {
             mess = "User " + connData->login + " has not been authenticated";
             INFO_STREAM << mess;
-
+            ErrorInfo err;
+            err.typeofReq = parsedInput.type_req_str;
+            err.typeofError = ERROR_TYPE::AUTH_PERM;
+            err.device_name = device_name;
+            err.id = parsedInput.id;
+            err.errorMessage = mess;
             throw std::runtime_error(
-                StringProc::exceptionStringOut(ERROR_TYPE::AUTH_PERM, parsedInput.id, mess, parsedInput.type_req_str)
+                StringProc::exceptionStringOut(err)
             );
         }
 
@@ -271,8 +288,13 @@ namespace WebSocketDS_ns
         string pass = parsedInput.otherInpStr.at("password");
 
         if (!login.size() || !pass.size()) {
-            return StringProc::exceptionStringOut(ERROR_TYPE::AUTH_CHECK
-, parsedInput.id, "keys login and password should not be empty", parsedInput.type_req_str);
+            ErrorInfo err;
+            err.typeofReq = parsedInput.type_req_str;
+            err.typeofError = ERROR_TYPE::AUTH_PERM;
+            err.id = parsedInput.id;
+            err.errorMessage = "keys login and password should not be empty" ;
+
+            return StringProc::exceptionStringOut(err);
         }
 
         if (connData->login.size())
