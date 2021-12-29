@@ -14,15 +14,13 @@ namespace WebSocketDS_ns
 #ifdef CLIENT_MODE
         WSThread_tls(WSTangoConnCli *tc, int portNumber, string cert, string key);
 #endif
-        // TODO: DELETE WSThread_tls(WSTangoConn *tc, int portNumber, string cert, string key);
-
         ~WSThread_tls();
         virtual void *run_undetached(void *) override;
 
         virtual  void stop() override;
         virtual void send_all(std::string msg) override;
         virtual void send(websocketpp::connection_hdl hdl, std::string msg) override;
-        // Для бинарных данных. Пока не используется.
+        // Р”Р»СЏ Р±РёРЅР°СЂРЅС‹С… РґР°РЅРЅС‹С…. РџРѕРєР° РЅРµ РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ.
         // TODO: NOT USED virtual void send(websocketpp::connection_hdl hdl, const void *data, size_t len) override;
         virtual bool on_validate(websocketpp::connection_hdl hdl) override;
     private:

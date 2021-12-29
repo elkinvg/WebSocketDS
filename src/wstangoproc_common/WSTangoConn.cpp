@@ -61,16 +61,13 @@ namespace WebSocketDS_ns
             if (opt == "uselog") {
                 uc->setLogActive();
             }
-            // TODO: ADD TO README
-            // TODO: Доделать и проверить useoldjson
+
             if (opt == "useoldjson") {
                 _isOldVersionOfJson = true;
             }
             if (opt.find("tident") != string::npos) {
                 auto gettedIdentOpt = StringProc::parseInputString(opt, "=", true);
                 if (gettedIdentOpt.size() > 1) {
-                    //if (gettedIdentOpt[1] == "rndid")
-                    //    typeOfIdent = TYPE_OF_IDENT::RANDIDENT;
                     if (gettedIdentOpt[1] == "smpl")
                         typeOfIdent = TYPE_OF_IDENT::SIMPLE;
                     // Для аутентификации в Егоровом AuthDS в check_permissions_www
@@ -83,7 +80,6 @@ namespace WebSocketDS_ns
                 }
             }
 
-            // TODO: ADD TO README
             if (opt.find("command_name_for_check_user") != string::npos) {
                 auto gettedIdentOpt = StringProc::parseInputString(opt, "=", true);
                 if (gettedIdentOpt.size() > 1) {
@@ -91,7 +87,6 @@ namespace WebSocketDS_ns
                 }
             }
 
-            // TODO: ADD TO README
             if (opt.find("command_name_for_check_permission") != string::npos) {
                 auto gettedIdentOpt = StringProc::parseInputString(opt, "=", true);
                 if (gettedIdentOpt.size() > 1) {
@@ -99,7 +94,6 @@ namespace WebSocketDS_ns
                 }
             }
 
-            // TODO: ADD TO README
             if (opt.find("command_name_for_log") != string::npos) {
                 auto gettedIdentOpt = StringProc::parseInputString(opt, "=", true);
                 if (gettedIdentOpt.size() > 1) {
@@ -107,7 +101,6 @@ namespace WebSocketDS_ns
                 }
             }
 
-            // TODO: ADD TO README
             if (opt.find("maxnconn") != string::npos) {
                 auto gettedIdentOpt = StringProc::parseInputString(opt, "=", true);
                 if (gettedIdentOpt.size() > 1) {
@@ -121,7 +114,6 @@ namespace WebSocketDS_ns
                 }
             }
 
-            // TODO: ADD TO README
             if (opt.find("maxbuffsize") != string::npos) {
                 auto gettedIdentOpt = StringProc::parseInputString(opt, "=", true);
                 if (gettedIdentOpt.size() > 1) {

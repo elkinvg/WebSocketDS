@@ -696,17 +696,6 @@ namespace WebSocketDS_ns
         json << "{";
         auto attBegin = devAttrList->begin();
         for (auto att = attBegin; att != devAttrList->end(); ++att) {
-            // Если задан niter для данного атрибута
-            // Вывод будет только если iterator кратно nIters
-            //Tango::DeviceAttribute att = attrList->at(i);
-
-            // TODO: FOR NITER Доделать, или убрать
-            //if (nIters.find(att.get_name()) != nIters.end()) {
-            //    if (nIters[att.get_name()].first != 0) {
-            //        if ((iterator + (nIters[att.get_name()].first - nIters[att.get_name()].second)) % nIters[att.get_name()].first != 0)
-            //            continue;
-            //    }
-            //}
             if (att != attBegin)
                 json << ", ";
 
@@ -929,7 +918,7 @@ namespace WebSocketDS_ns
             _extractFromPipeTmpl<string>(json, devPipe, precOpt, false);
         }
         break;
-        case Tango::DEVVAR_CHARARRAY: // ??? why not DEVVAR_CHARARRAY
+        case Tango::DEVVAR_CHARARRAY: // TODO: why not DEVVAR_CHARARRAY
         {
             json << NONE;
         }
@@ -983,7 +972,14 @@ namespace WebSocketDS_ns
         {
             Tango::DevState state;
             devPipe >> state;
-            json << "\"" << Tango::DevStateName[state] << "\"";
+            string stateStr;
+            if (state < Tango::DevState::ON || state > Tango::DevState::UNKNOWN) {
+                stateStr = Tango::DevStateName[Tango::DevState::UNKNOWN];
+            }
+            else {
+                stateStr = Tango::DevStateName[state];
+            }
+            json << "\"" << stateStr << "\"";
         }
         break;
         case Tango::DEVVAR_BOOLEANARRAY:
@@ -994,7 +990,7 @@ namespace WebSocketDS_ns
         case Tango::DEV_UCHAR:
         {
             json << NONE;
-            // ??? _extractFromPipeTmpl<Tango::DevUChar>(pipe, json, false);
+            // TODO: _extractFromPipeTmpl<Tango::DevUChar>(pipe, json, false);
         }
         break;
         case Tango::DEV_LONG64:
@@ -1054,7 +1050,7 @@ namespace WebSocketDS_ns
             {
             case Tango::DEV_VOID:
                 break;
-            case Tango::DEV_BOOLEAN: // ??? not boolean?
+            case Tango::DEV_BOOLEAN: // TODO: not boolean?
             {
                 deviceData = _getDeviceDataTmpl<Tango::DevBoolean>(inpStr);
             }
@@ -1094,10 +1090,10 @@ namespace WebSocketDS_ns
                 deviceData = _generateDeviceDataFromArgin(inpStr);
             }
             break;
-            case Tango::DEVVAR_CHARARRAY: // ??? why not DEVVAR_CHARARRAY
+            case Tango::DEVVAR_CHARARRAY: // TODO: why not DEVVAR_CHARARRAY
             {
-                // ??? !!! FOR DEVVAR_CHARARRAY
-                // ??? WHY unsigned char
+                // TODO: !!! FOR DEVVAR_CHARARRAY
+                // TODO: WHY unsigned char
                 deviceData = _getDeviceDataTmpl<unsigned char>(inpVecStr);
             }
             break;
@@ -1518,9 +1514,18 @@ namespace WebSocketDS_ns
             json << noneComm;
             break;
         case Tango::DEV_STATE:
+        {
             Tango::DevState stateIn;
+            string stateStr;
             deviceData >> stateIn;
-            json << " \"" << Tango::DevStateName[stateIn] << "\"";
+            if (stateIn < Tango::DevState::ON || stateIn > Tango::DevState::UNKNOWN) {
+                stateStr = Tango::DevStateName[Tango::DevState::UNKNOWN];
+            }
+            else {
+                stateStr = Tango::DevStateName[stateIn];
+            }
+            json << " \"" << stateStr << "\"";
+        }
             break;
         case Tango::DEVVAR_BOOLEANARRAY:
             //        {
