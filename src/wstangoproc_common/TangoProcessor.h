@@ -83,8 +83,6 @@ namespace WebSocketDS_ns
             int type = devAttr->get_type();
             std::vector<T> dataVector, dataVectorFromSet;
             T data;
-            Tango::DevState stateIn;
-            string stateStr;
 
             if (format == Tango::AttrDataFormat::SPECTRUM || format == Tango::AttrDataFormat::IMAGE)
                 json << "\"dimX\": " << devAttr->dim_x << ", ";
@@ -94,8 +92,15 @@ namespace WebSocketDS_ns
             json << "\"data\": ";
             if (format == Tango::AttrDataFormat::SCALAR) {
                 if (type == Tango::DEV_STATE) {
+                    Tango::DevState stateIn;
+                    string stateStr;
                     (*devAttr) >> stateIn;
-                    stateStr = Tango::DevStateName[stateIn];
+                    if (stateIn < Tango::DevState::ON || stateIn > Tango::DevState::UNKNOWN) {
+                        stateStr = Tango::DevStateName[Tango::DevState::UNKNOWN];
+                    }
+                    else {
+                        stateStr = Tango::DevStateName[stateIn];
+                    }
                     _dataValueToStr(json, stateStr, precOpt);
                 }
                 else {
@@ -152,7 +157,7 @@ namespace WebSocketDS_ns
                 // default streamsize.
                 std::streamsize srsz = std::stringstream().precision();
 
-                // Лямбда-функция для получения числа для std::setprecision
+                // Р›СЏРјР±РґР°-С„СѓРЅРєС†РёСЏ РґР»СЏ РїРѕР»СѓС‡РµРЅРёСЏ С‡РёСЃР»Р° РґР»СЏ std::setprecision
                 auto get_srsz = [=](string fromOptStr) {
                     std::streamsize tmpsz = srsz;
                     if (fromOptStr != "") {
@@ -258,7 +263,7 @@ namespace WebSocketDS_ns
         static Tango::DeviceData _getDeviceDataTmpl(const string& inputStr) {
             T inp;
             if (std::is_same<T, bool>::value) {
-                // если не то и не другое будет кинуто исключение
+                // РµСЃР»Рё РЅРµ С‚Рѕ Рё РЅРµ РґСЂСѓРіРѕРµ Р±СѓРґРµС‚ РєРёРЅСѓС‚Рѕ РёСЃРєР»СЋС‡РµРЅРёРµ
                 if (inputStr == "0" || inputStr == "false")
                     inp = false;
                 else if (inputStr == "1" || inputStr == "true")
@@ -277,7 +282,7 @@ namespace WebSocketDS_ns
             inpVec.reserve(inputVecStr.size());
             for (auto &val : inputVecStr) {
                 if (std::is_same<T, bool>::value) {
-                    // если не то и не другое будет кинуто исключение
+                    // РµСЃР»Рё РЅРµ С‚Рѕ Рё РЅРµ РґСЂСѓРіРѕРµ Р±СѓРґРµС‚ РєРёРЅСѓС‚Рѕ РёСЃРєР»СЋС‡РµРЅРёРµ
                     T inp;
                     if (val == "0" || val == "false") {
                         inp = false;
@@ -300,7 +305,7 @@ namespace WebSocketDS_ns
         static void _getDataForDeviceAttribute(Tango::DeviceAttribute& devAttr, const string& inputStr) {
             T inp;
             if (std::is_same<T, bool>::value) {
-                // если не то и не другое будет кинуто исключение
+                // РµСЃР»Рё РЅРµ С‚Рѕ Рё РЅРµ РґСЂСѓРіРѕРµ Р±СѓРґРµС‚ РєРёРЅСѓС‚Рѕ РёСЃРєР»СЋС‡РµРЅРёРµ
                 if (inputStr == "0" || inputStr == "false")
                     inp = false;
                 else if (inputStr == "1" || inputStr == "true")
@@ -319,7 +324,7 @@ namespace WebSocketDS_ns
             inpVec.reserve(inputVecStr.size());
             for (auto &val : inputVecStr) {
                 if (std::is_same<T, bool>::value) {
-                    // если не то и не другое будет кинуто исключение
+                    // РµСЃР»Рё РЅРµ С‚Рѕ Рё РЅРµ РґСЂСѓРіРѕРµ Р±СѓРґРµС‚ РєРёРЅСѓС‚Рѕ РёСЃРєР»СЋС‡РµРЅРёРµ
                     T inp;
                     if (val == "0" || val == "false") {
                         inp = false;

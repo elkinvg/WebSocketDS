@@ -11,7 +11,6 @@ namespace WebSocketDS_ns
     class UserControl
     {
     public:
-        // TODO: DELETE UserControl(string authDS, TYPE_OF_IDENT toi, bool isLogActive);
         UserControl(string authDS);
         ~UserControl(){};
 

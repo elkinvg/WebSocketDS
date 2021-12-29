@@ -386,9 +386,6 @@ namespace WebSocketDS_ns {
         return true;
     }
 
-    // TODO: Может давать в аргументах по ссылке вместо 
-    //      const string & deviceName, const string & attrName,
-    //      const string & precOpt, Tango::EventType eventType
     ResponseFromEventReq EventProcCli::_addCallback(websocketpp::connection_hdl hdl, const string & deviceName, const string & attrName, const string & precOpt, Tango::EventType eventType)
     {
         ResponseFromEventReq resp;

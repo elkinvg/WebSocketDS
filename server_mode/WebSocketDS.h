@@ -40,13 +40,6 @@
 
 #include <tango.h>
 
-// TODO: DELETE
-//#include <chrono>
-
-// TODO: WSTangoConn
-//#include "common.h"
-//#include "WSTangoConn.h"
-
 #include "WSTangoConnSer.h"
 
 /*----- PROTECTED REGION END -----*/	//	WebSocketDS.h
@@ -99,8 +92,6 @@ class WebSocketDS : public TANGO_BASE_CLASS
 private:
     WSTangoConnSer* wsTangoConn;
 
-    // TODO: DELETE
-    //std::chrono::seconds timeFromUpdateData;
     /*----- PROTECTED REGION END -----*/	//	WebSocketDS::Data Members
 
 //	Device property data members
