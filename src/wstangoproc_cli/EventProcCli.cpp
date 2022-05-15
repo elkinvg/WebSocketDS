@@ -60,8 +60,11 @@ namespace WebSocketDS_ns {
             vector<websocketpp::connection_hdl> _del_conn;
 
             for (pair<websocketpp::connection_hdl, string> hdlnopt : connAddrList) {
-                string precOpt = hdlnopt.second;
-                string message = TangoProcessor::processEvent(dt, precOpt);
+                UserOptions uo;
+                uo.isJsonString = false;
+                uo.precision = hdlnopt.second;
+
+                string message = TangoProcessor::processEvent(dt, uo);
                 try {
                     _wsThread->send(hdlnopt.first, message);
                 }

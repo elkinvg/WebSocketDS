@@ -10,6 +10,7 @@
 #include "TaskInfo.h"
 #include "CurrentMode.h"
 #include <boost/lexical_cast.hpp>
+#include "UserOptions.h"
 
 using std::string;
 using std::vector;
@@ -40,7 +41,7 @@ namespace WebSocketDS_ns
 
         static pair<long, TaskInfo> processAttrWrite(Tango::DeviceProxy* deviceForWs, const ParsedInputJson& parsedInput, const SINGLE_OR_GROUP& sog);
 
-        static string processEvent(Tango::EventData * dt, const std::string& precOpt);
+        static string processEvent(Tango::EventData * dt, const UserOptions& userOpt);
 
         static string processPipeRead(GroupForWs* groupForWs, const ParsedInputJson& parsedInput);
         static string processPipeRead(Tango::DevicePipe& pipe, const ParsedInputJson& parsedInput);
@@ -61,24 +62,24 @@ namespace WebSocketDS_ns
         static void _generateHeadForJson(std::stringstream& json, const TaskInfo& reqInfo, bool useOldVersion);
 
         static void _generateJsonForAttrList(std::stringstream & json, std::vector<Tango::DeviceAttribute>* devAttrList, const std::unordered_map<std::string, std::string>& precOpts);
-        static void _generateJsonForAttribute(std::stringstream & json, Tango::DeviceAttribute* devAttr, const std::string& precOpt);
-        static void _deviceAttributeToStr(std::stringstream & json, Tango::DeviceAttribute* devAttr, const std::string& precOpt);
+        static void _generateJsonForAttribute(std::stringstream & json, Tango::DeviceAttribute* devAttr, const UserOptions& userOpt);
+        static void _deviceAttributeToStr(std::stringstream & json, Tango::DeviceAttribute* devAttr, const UserOptions& userOpt);
 
         static void _generateJsonForPipe(std::stringstream& json, Tango::DevicePipe& devPipe, const std::unordered_map<std::string, std::string>& precOpts);
-        static void _extractFromPipe(std::stringstream& json, Tango::DevicePipe& devPipe, int dataType, const string& precOpt);
+        static void _extractFromPipe(std::stringstream& json, Tango::DevicePipe& devPipe, int dataType, const UserOptions& userOpt);
 
         static Tango::DeviceData _getDeviceDataFromParsedJson(const ParsedInputJson& parsedInput, int typeForDeviceData);
 
         static Tango::DeviceAttribute _getDeviceAttributeDataFromParsedJson(const ParsedInputJson& parsedInput, const Tango::AttributeInfoEx& attr_info);
 
-        static void _generateJsonFromDeviceData(std::stringstream& json, Tango::DeviceData& deviceData, const string& precOpt);
+        static void _generateJsonFromDeviceData(std::stringstream& json, Tango::DeviceData& deviceData, const UserOptions& userOpt);
 
         static bool isMassive(int inType);
 
     private:
 
         template <typename T>
-        static void _devAttrToStrTmpl(std::stringstream & json, Tango::DeviceAttribute* devAttr, const std::string& precOpt) {
+        static void _devAttrToStrTmpl(std::stringstream & json, Tango::DeviceAttribute* devAttr, const UserOptions& userOpt) {
             Tango::AttrDataFormat format = devAttr->get_data_format();
             int type = devAttr->get_type();
             std::vector<T> dataVector, dataVectorFromSet;
@@ -101,18 +102,18 @@ namespace WebSocketDS_ns
                     else {
                         stateStr = Tango::DevStateName[stateIn];
                     }
-                    _dataValueToStr(json, stateStr, precOpt);
+                    _dataValueToStr(json, stateStr, userOpt);
                 }
                 else {
                     (*devAttr) >> data;
-                    _dataValueToStr(json, data, precOpt);
+                    _dataValueToStr(json, data, userOpt);
 
                     try {
                         devAttr->extract_set(dataVectorFromSet);
 
                         if (dataVectorFromSet.size() == 1) {
                             json << ", \"set\": ";
-                            _dataValueToStr(json, dataVectorFromSet[0], precOpt);
+                            _dataValueToStr(json, dataVectorFromSet[0], userOpt);
                         }
                     }
                     catch (Tango::DevFailed &e) {}
@@ -135,7 +136,7 @@ namespace WebSocketDS_ns
                     }
 
                     json << "[";
-                    _dataArrayToStr(json, dataVector, precOpt);
+                    _dataArrayToStr(json, dataVector, userOpt);
                     json << "]";
 
                     try {
@@ -143,7 +144,7 @@ namespace WebSocketDS_ns
 
                         if (dataVectorFromSet.size()) {
                             json << ", \"set\": [";
-                            _dataArrayToStr(json, dataVectorFromSet, precOpt);
+                            _dataArrayToStr(json, dataVectorFromSet, userOpt);
                             json << "]";
                         }
                     }
@@ -152,7 +153,7 @@ namespace WebSocketDS_ns
         }
 
         template <typename T>
-        static void _dataValueToStr(std::stringstream & json, const T& data, const string& precOpt) {
+        static void _dataValueToStr(std::stringstream & json, const T& data, const UserOptions& userOpt) {
             if (is_floating_point<T>::value) {
                 // default streamsize.
                 std::streamsize srsz = std::stringstream().precision();
@@ -171,7 +172,7 @@ namespace WebSocketDS_ns
                     return tmpsz;
                 };
 
-                string _pos = precOpt;
+                string _pos = userOpt.precision;
                 vector<string> _po = StringProc::parseInputString(_pos, "=", true);
 
                 string _poName = (_po.size() ? _po[0]: "");
@@ -180,15 +181,15 @@ namespace WebSocketDS_ns
                 bool hasIosOpt = false;
                 TYPE_IOS_OPT ios_opt;
 
-                if (_poName == "prec") {
+                if (_poName == OPT_PREC) {
                     hasIosOpt = true;
                     ios_opt = TYPE_IOS_OPT::PREC;
                 }
-                else if (_poName == "precf") {
+                else if (_poName == OPT_PRECF) {
                     hasIosOpt = true;
                     ios_opt = TYPE_IOS_OPT::PRECF;
                 }
-                else if (_poName == "precs") {
+                else if (_poName == OPT_PRECS) {
                     hasIosOpt = true;
                     ios_opt = TYPE_IOS_OPT::PRECS;
                 }
@@ -204,18 +205,25 @@ namespace WebSocketDS_ns
                 return;
             }
             else if (std::is_same<T, bool>::value) json << std::boolalpha << data;
-            else if (std::is_same<T, const std::string>::value || std::is_same<T, std::string>::value) json << "\"" << data << "\"";
+            else if (std::is_same<T, const std::string>::value || std::is_same<T, std::string>::value) {
+                if (userOpt.isJsonString) {
+                    json << data;
+                }
+                else {
+                    json << "\"" << data << "\"";
+                }
+            }
             else json << data;
         }
 
         template <typename T>
-        static void _dataArrayToStr(std::stringstream & json, const std::vector<T>& dataVec, const string& precOpt) {
+        static void _dataArrayToStr(std::stringstream & json, const std::vector<T>& dataVec, const UserOptions& userOpt) {
             bool begin = true;
 
             for (const T& data : dataVec) {
                 if (!begin) json << ", ";
                 else begin = false;
-                _dataValueToStr(json, data, precOpt);
+                _dataValueToStr(json, data, userOpt);
             }
         }
 
@@ -237,7 +245,7 @@ namespace WebSocketDS_ns
         }
 
         template <typename T>
-        static void _extractFromPipeTmpl(std::stringstream& json, Tango::DevicePipe& devPipe, const string& precOpt, bool isArray) {
+        static void _extractFromPipeTmpl(std::stringstream& json, Tango::DevicePipe& devPipe, const UserOptions& userOpt, bool isArray) {
             vector<T> valueArray;
             T value;
 
@@ -245,12 +253,12 @@ namespace WebSocketDS_ns
                 if (isArray) {
                     devPipe >> valueArray;
                     json << "[";
-                    _dataArrayToStr(json, valueArray, precOpt);
+                    _dataArrayToStr(json, valueArray, userOpt);
                     json << "]";
                 }
                 else {
                     devPipe >> value;
-                    _dataValueToStr(json, value, precOpt);
+                    _dataValueToStr(json, value, userOpt);
                 }
             }
             catch (Tango::DevFailed &df) {
@@ -360,7 +368,7 @@ namespace WebSocketDS_ns
         }
 
         template <typename T>
-        static void _generateJsonFromDeviceDataTmpl(std::stringstream& json, Tango::DeviceData& deviceData, const string& precOpt) {
+        static void _generateJsonFromDeviceDataTmpl(std::stringstream& json, Tango::DeviceData& deviceData, const UserOptions& userOpt) {
             TYPE_OF_DEVICE_DATA type = typeOfData[deviceData.get_type()];
 
             std::vector<T> vecFromData;
@@ -378,11 +386,11 @@ namespace WebSocketDS_ns
 
             if (type == TYPE_OF_DEVICE_DATA::DATA) {
                 json << " ";
-                _dataValueToStr(json, data, precOpt);
+                _dataValueToStr(json, data, userOpt);
             }
             else if (type == TYPE_OF_DEVICE_DATA::ARRAY) {
                 json << " [";
-                _dataArrayToStr(json, vecFromData, precOpt);
+                _dataArrayToStr(json, vecFromData, userOpt);
                 json << " ]";
             }
         }

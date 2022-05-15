@@ -63,7 +63,7 @@ namespace WebSocketDS_ns
 
             StringProc::checkPrecisionOptions(attr, _precisionOptsOfAttrs);
 
-            // TODO: Опции
+            // TODO: РћРїС†РёРё
             //forNiterOpt(attr);
 
             string tmpAttrName = attr;
@@ -81,9 +81,9 @@ namespace WebSocketDS_ns
     {
         vector<string> all_attributes = getListOfAllAttributes();
 
-        // Если только __all_attrs__ список будет пуст
-        // Остальной список, например атрибуты с опциями
-        // Далее список читается. Это нужно, если указаны опции для атрибутов
+        // Р•СЃР»Рё С‚РѕР»СЊРєРѕ __all_attrs__ СЃРїРёСЃРѕРє Р±СѓРґРµС‚ РїСѓСЃС‚
+        // РћСЃС‚Р°Р»СЊРЅРѕР№ СЃРїРёСЃРѕРє, РЅР°РїСЂРёРјРµСЂ Р°С‚СЂРёР±СѓС‚С‹ СЃ РѕРїС†РёСЏРјРё
+        // Р”Р°Р»РµРµ СЃРїРёСЃРѕРє С‡РёС‚Р°РµС‚СЃСЏ. Р­С‚Рѕ РЅСѓР¶РЅРѕ, РµСЃР»Рё СѓРєР°Р·Р°РЅС‹ РѕРїС†РёРё РґР»СЏ Р°С‚СЂРёР±СѓС‚РѕРІ
         if (attributes.size()) {
             for (auto& attr : attributes) {
                 auto cp_attr = attr;

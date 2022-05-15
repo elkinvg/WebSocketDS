@@ -4,7 +4,6 @@
 #include "CurrentMode.h"
 #include <unordered_map>
 #include <vector>
-#include <iostream>
 #include "ErrorType.h"
 
 using std::string;

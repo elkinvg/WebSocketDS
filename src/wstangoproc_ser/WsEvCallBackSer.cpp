@@ -4,8 +4,8 @@
 
 namespace WebSocketDS_ns
 {
-    WsEvCallBackSer::WsEvCallBackSer(WSThread *wsThread, const string& precOpt)
-        :_wsThread(wsThread), _precOpt(precOpt)
+    WsEvCallBackSer::WsEvCallBackSer(WSThread *wsThread, const UserOptions& userOpt)
+        :_wsThread(wsThread), _userOpt(userOpt)
     {
     }
 
@@ -15,7 +15,7 @@ namespace WebSocketDS_ns
             return;
         }
 
-        string message = TangoProcessor::processEvent(dt, _precOpt);
+        string message = TangoProcessor::processEvent(dt, _userOpt);
         send_mess(message);
 
         if (!_wasException && dt->err) {

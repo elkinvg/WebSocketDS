@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>15.0</VCProjectVersion>
+    <ProjectGuid>{DEC2E9C5-EA73-42AD-A082-2304C05B21B6}</ProjectGuid>
+    <RootNamespace>servermodedll</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <OutDir>..\lib\win64\vc12_dll\ser\</OutDir>
+    <IntDir>..\obj\win64_dll\debug\ser\</IntDir>
+    <TargetName>WebSocketDSd</TargetName>
+    <IncludePath>$(ProjectDir)..\src;$(ProjectDir)..\server_mode;$(ProjectDir)..\src\wstangoproc_ser;$(ProjectDir)..\src\wstangoproc_common;$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level2</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>
+      </SDLCheck>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\src;$(ProjectDir)..\server_mode;$(ProjectDir)..\src\wstangoproc_ser;$(ProjectDir)..\src\wstangoproc_common;$(TANGO_ROOT)\win64\include\vc12;$(TANGO_ROOT)\classes\win64\include\vc12;TemplateAbstractPath;$(BOOST_INCLUDES_141);$(OPENSSL_ROOT_64)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_DEBUG;LOG4TANGO_HAS_DLL;TANGO_HAS_DLL;WIN32;_CONSOLE;CINTERFACE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>false</StringPooling>
+      <ProgramDataBaseFileName>$(TargetDir)$(TargetName).pdb</ProgramDataBaseFileName>
+    </ClCompile>
+    <Link>
+      <OutputFile>$(OutDir)$(SolutionName)d.dll</OutputFile>
+      <AdditionalLibraryDirectories>$(TANGO_ROOT)\win64\lib\vc12_dll;$(TANGO_ROOT)\classes\win64\lib\vc12_dll;$(BOOST_LIBS_12_64);$(OPENSSL_ROOT_64)\lib\VC;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>omniORB4_rtd.lib;omniDynamic4_rtd.lib;COS4_rtd.lib;omnithread_rtd.lib;tangod.lib;log4tangod.lib;zmqd.lib;comctl32.lib;ws2_32.lib;mswsock.lib;advapi32.lib;libboost_system-mt-gd.lib;ssleay32MTd.lib;libeay32MTd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Console</SubSystem>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\server_mode\WebSocketDS.cpp" />
+    <ClCompile Include="..\server_mode\WebSocketDSClass.cpp" />
+    <ClCompile Include="..\server_mode\WebSocketDSStateMachine.cpp" />
+    <ClCompile Include="..\src\wstangoproc_common\DeviceForWs.cpp" />
+    <ClCompile Include="..\src\wstangoproc_common\GroupForWs.cpp" />
+    <ClCompile Include="..\src\wstangoproc_common\GroupOrDeviceForWs.cpp" />
+    <ClCompile Include="..\src\wstangoproc_common\ParsingInputJson.cpp" />
+    <ClCompile Include="..\src\wstangoproc_common\StringProc.cpp" />
+    <ClCompile Include="..\src\wstangoproc_common\TangoProcessor.cpp" />
+    <ClCompile Include="..\src\wstangoproc_common\UserControl.cpp" />
+    <ClCompile Include="..\src\wstangoproc_common\WSTangoConn.cpp" />
+    <ClCompile Include="..\src\wstangoproc_common\WSThread.cpp" />
+    <ClCompile Include="..\src\wstangoproc_common\WSThread_plain.cpp" />
+    <ClCompile Include="..\src\wstangoproc_common\WSThread_tls.cpp" />
+    <ClCompile Include="..\src\wstangoproc_ser\EventProcSer.cpp" />
+    <ClCompile Include="..\src\wstangoproc_ser\WsEvCallBackSer.cpp" />
+    <ClCompile Include="..\src\wstangoproc_ser\WSTangoConnSer.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\server_mode\WebSocketDS.h" />
+    <ClInclude Include="..\server_mode\WebSocketDSClass.h" />
+    <ClInclude Include="..\src\wstangoproc_common\common.h" />
+    <ClInclude Include="..\src\wstangoproc_common\ConnectionData.h" />
+    <ClInclude Include="..\src\wstangoproc_common\DeviceForWs.h" />
+    <ClInclude Include="..\src\wstangoproc_common\EnumConverter.h" />
+    <ClInclude Include="..\src\wstangoproc_common\GroupForWs.h" />
+    <ClInclude Include="..\src\wstangoproc_common\GroupOrDeviceForWs.h" />
+    <ClInclude Include="..\src\wstangoproc_common\ParsingInputJson.h" />
+    <ClInclude Include="..\src\wstangoproc_common\ResponseFromEvent.h" />
+    <ClInclude Include="..\src\wstangoproc_common\StringProc.h" />
+    <ClInclude Include="..\src\wstangoproc_common\TangoProcessor.h" />
+    <ClInclude Include="..\src\wstangoproc_common\UserControl.h" />
+    <ClInclude Include="..\src\wstangoproc_common\UserOptions.h" />
+    <ClInclude Include="..\src\wstangoproc_common\WSTangoConn.h" />
+    <ClInclude Include="..\src\wstangoproc_common\WSThread.h" />
+    <ClInclude Include="..\src\wstangoproc_common\WSThread_plain.h" />
+    <ClInclude Include="..\src\wstangoproc_common\WSThread_tls.h" />
+    <ClInclude Include="..\src\wstangoproc_ser\CurrentMode.h" />
+    <ClInclude Include="..\src\wstangoproc_ser\EventProcSer.h" />
+    <ClInclude Include="..\src\wstangoproc_ser\EventSubscrSer.h" />
+    <ClInclude Include="..\src\wstangoproc_ser\WsEvCallBackSer.h" />
+    <ClInclude Include="..\src\wstangoproc_ser\WSTangoConnSer.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
