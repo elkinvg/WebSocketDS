@@ -143,5 +143,8 @@
     <ClInclude Include="..\src\wstangoproc_cli\EventReqException.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\wstangoproc_cli\MyEventData.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
