@@ -10,6 +10,7 @@
 
 #include "ErrorInfo.h"
 #include "EventReqException.h"
+#include "MyEventData.h"
 
 namespace WebSocketDS_ns {
     EventProcCli::EventProcCli(WSThread* wsThread, bool isOldVersionOfJson)
@@ -64,7 +65,20 @@ namespace WebSocketDS_ns {
                 uo.isJsonString = false;
                 uo.precision = hdlnopt.second;
 
-                string message = TangoProcessor::processEvent(dt, uo);
+
+                // DONE: ДЛя каждого соединения делается копия Tango::DeviceAttribute
+                // TODO: Не делать копию самого Tango::DeviceAttribute, а лишь необходимых данных?
+                MyEventData eventData;
+                eventData.attr_value.deep_copy(*(dt->attr_value));
+                eventData.err = dt->err;
+                eventData.eventType = dt->event;
+                eventData.errors = dt->errors;
+                eventData.tv_sec = dt->get_date().tv_sec;
+                eventData.attrName = dt->attr_name;
+                eventData.deviceName = dt->device->dev_name();
+
+                string message = TangoProcessor::processEvent(eventData, uo);
+
                 try {
                     _wsThread->send(hdlnopt.first, message);
                 }

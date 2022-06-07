@@ -43,6 +43,7 @@
     <ClInclude Include="..\src\wstangoproc_cli\CurrentMode.h" />
     <ClInclude Include="..\src\wstangoproc_cli\EventProcCli.h" />
     <ClInclude Include="..\src\wstangoproc_cli\EventReqException.h" />
+    <ClInclude Include="..\src\wstangoproc_cli\MyEventData.h" />
     <ClInclude Include="..\src\wstangoproc_cli\WsEvCallBackCli.h" />
     <ClInclude Include="..\src\wstangoproc_cli\WSTangoConnCli.h" />
     <ClInclude Include="..\src\wstangoproc_common\common.h" />

@@ -12,6 +12,10 @@
 #include <boost/lexical_cast.hpp>
 #include "UserOptions.h"
 
+#ifdef CLIENT_MODE
+#include "MyEventData.h"
+#endif
+
 using std::string;
 using std::vector;
 
@@ -41,7 +45,12 @@ namespace WebSocketDS_ns
 
         static pair<long, TaskInfo> processAttrWrite(Tango::DeviceProxy* deviceForWs, const ParsedInputJson& parsedInput, const SINGLE_OR_GROUP& sog);
 
+#ifdef CLIENT_MODE
+        static string processEvent(MyEventData &eventData, const UserOptions& userOpt);
+#endif
+#ifdef SERVER_MODE
         static string processEvent(Tango::EventData * dt, const UserOptions& userOpt);
+#endif
 
         static string processPipeRead(GroupForWs* groupForWs, const ParsedInputJson& parsedInput);
         static string processPipeRead(Tango::DevicePipe& pipe, const ParsedInputJson& parsedInput);
