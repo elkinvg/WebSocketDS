@@ -15,7 +15,14 @@ namespace WebSocketDS_ns
             return;
         }
 
-        string message = TangoProcessor::processEvent(dt, _userOpt);
+        MyEventData eventData(dt);
+        eventData.err = dt->err;
+        eventData.eventType = dt->event;
+        eventData.errors = dt->errors;
+        eventData.tv_sec = dt->get_date().tv_sec;
+        eventData.deviceName = dt->device->dev_name();
+
+        string message = TangoProcessor::processEvent(eventData, _userOpt);
         send_mess(message);
 
         if (!_wasException && dt->err) {

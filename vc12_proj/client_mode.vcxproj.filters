@@ -66,6 +66,12 @@
     <ClCompile Include="..\src\wstangoproc_cli\WsEvCallBackCli.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\wstangoproc_common\MyAttributeData.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\wstangoproc_common\MyEventData.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\client_mode\WebSocketDS_cli.h">
@@ -143,7 +149,10 @@
     <ClInclude Include="..\src\wstangoproc_cli\EventReqException.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\wstangoproc_cli\MyEventData.h">
+    <ClInclude Include="..\src\wstangoproc_common\MyAttributeData.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\wstangoproc_common\MyEventData.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
   </ItemGroup>

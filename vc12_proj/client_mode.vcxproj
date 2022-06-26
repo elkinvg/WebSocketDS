@@ -28,6 +28,8 @@
     <ClCompile Include="..\src\wstangoproc_common\DeviceForWs.cpp" />
     <ClCompile Include="..\src\wstangoproc_common\GroupForWs.cpp" />
     <ClCompile Include="..\src\wstangoproc_common\GroupOrDeviceForWs.cpp" />
+    <ClCompile Include="..\src\wstangoproc_common\MyAttributeData.cpp" />
+    <ClCompile Include="..\src\wstangoproc_common\MyEventData.cpp" />
     <ClCompile Include="..\src\wstangoproc_common\ParsingInputJson.cpp" />
     <ClCompile Include="..\src\wstangoproc_common\StringProc.cpp" />
     <ClCompile Include="..\src\wstangoproc_common\TangoProcessor.cpp" />
@@ -43,7 +45,6 @@
     <ClInclude Include="..\src\wstangoproc_cli\CurrentMode.h" />
     <ClInclude Include="..\src\wstangoproc_cli\EventProcCli.h" />
     <ClInclude Include="..\src\wstangoproc_cli\EventReqException.h" />
-    <ClInclude Include="..\src\wstangoproc_cli\MyEventData.h" />
     <ClInclude Include="..\src\wstangoproc_cli\WsEvCallBackCli.h" />
     <ClInclude Include="..\src\wstangoproc_cli\WSTangoConnCli.h" />
     <ClInclude Include="..\src\wstangoproc_common\common.h" />
@@ -54,6 +55,8 @@
     <ClInclude Include="..\src\wstangoproc_common\EventReqException.h" />
     <ClInclude Include="..\src\wstangoproc_common\GroupForWs.h" />
     <ClInclude Include="..\src\wstangoproc_common\GroupOrDeviceForWs.h" />
+    <ClInclude Include="..\src\wstangoproc_common\MyAttributeData.h" />
+    <ClInclude Include="..\src\wstangoproc_common\MyEventData.h" />
     <ClInclude Include="..\src\wstangoproc_common\ParsingInputJson.h" />
     <ClInclude Include="..\src\wstangoproc_common\ResponseFromEvent.h" />
     <ClInclude Include="..\src\wstangoproc_common\StringProc.h" />

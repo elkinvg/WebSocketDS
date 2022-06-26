@@ -12,9 +12,8 @@
 #include <boost/lexical_cast.hpp>
 #include "UserOptions.h"
 
-#ifdef CLIENT_MODE
 #include "MyEventData.h"
-#endif
+#include "MyAttributeData.h"
 
 using std::string;
 using std::vector;
@@ -45,12 +44,7 @@ namespace WebSocketDS_ns
 
         static pair<long, TaskInfo> processAttrWrite(Tango::DeviceProxy* deviceForWs, const ParsedInputJson& parsedInput, const SINGLE_OR_GROUP& sog);
 
-#ifdef CLIENT_MODE
         static string processEvent(MyEventData &eventData, const UserOptions& userOpt);
-#endif
-#ifdef SERVER_MODE
-        static string processEvent(Tango::EventData * dt, const UserOptions& userOpt);
-#endif
 
         static string processPipeRead(GroupForWs* groupForWs, const ParsedInputJson& parsedInput);
         static string processPipeRead(Tango::DevicePipe& pipe, const ParsedInputJson& parsedInput);
@@ -71,8 +65,8 @@ namespace WebSocketDS_ns
         static void _generateHeadForJson(std::stringstream& json, const TaskInfo& reqInfo, bool useOldVersion);
 
         static void _generateJsonForAttrList(std::stringstream & json, std::vector<Tango::DeviceAttribute>* devAttrList, const std::unordered_map<std::string, std::string>& precOpts);
-        static void _generateJsonForAttribute(std::stringstream & json, Tango::DeviceAttribute* devAttr, const UserOptions& userOpt);
-        static void _deviceAttributeToStr(std::stringstream & json, Tango::DeviceAttribute* devAttr, const UserOptions& userOpt);
+        static void _generateJsonForAttribute(std::stringstream & json, MyAttributeData* devAttr, const UserOptions& userOpt);
+        static void _deviceAttributeToStr(std::stringstream & json, MyAttributeData* devAttr, const UserOptions& userOpt);
 
         static void _generateJsonForPipe(std::stringstream& json, Tango::DevicePipe& devPipe, const std::unordered_map<std::string, std::string>& precOpts);
         static void _extractFromPipe(std::stringstream& json, Tango::DevicePipe& devPipe, int dataType, const UserOptions& userOpt);
@@ -88,9 +82,9 @@ namespace WebSocketDS_ns
     private:
 
         template <typename T>
-        static void _devAttrToStrTmpl(std::stringstream & json, Tango::DeviceAttribute* devAttr, const UserOptions& userOpt) {
-            Tango::AttrDataFormat format = devAttr->get_data_format();
-            int type = devAttr->get_type();
+        static void _devAttrToStrTmpl(std::stringstream & json, MyAttributeData* devAttr, const UserOptions& userOpt) {
+            Tango::AttrDataFormat format = devAttr->format;
+            int type = devAttr->type;
             std::vector<T> dataVector, dataVectorFromSet;
             T data;
 
@@ -104,7 +98,7 @@ namespace WebSocketDS_ns
                 if (type == Tango::DEV_STATE) {
                     Tango::DevState stateIn;
                     string stateStr;
-                    (*devAttr) >> stateIn;
+                    devAttr->getData(stateIn);
                     if (stateIn < Tango::DevState::ON || stateIn > Tango::DevState::UNKNOWN) {
                         stateStr = Tango::DevStateName[Tango::DevState::UNKNOWN];
                     }
@@ -114,23 +108,18 @@ namespace WebSocketDS_ns
                     _dataValueToStr(json, stateStr, userOpt);
                 }
                 else {
-                    (*devAttr) >> data;
+                    devAttr->getData(data, dataVectorFromSet);
                     _dataValueToStr(json, data, userOpt);
 
-                    try {
-                        devAttr->extract_set(dataVectorFromSet);
-
-                        if (dataVectorFromSet.size() == 1) {
-                            json << ", \"set\": ";
-                            _dataValueToStr(json, dataVectorFromSet[0], userOpt);
-                        }
+                    if (dataVectorFromSet.size() == 1) {
+                        json << ", \"set\": ";
+                        _dataValueToStr(json, dataVectorFromSet[0], userOpt);
                     }
-                    catch (Tango::DevFailed &e) {}
                 }
             }
             else
                 if (format == Tango::AttrDataFormat::SPECTRUM || format == Tango::AttrDataFormat::IMAGE) {
-                    (*devAttr) >> dataVector;
+                    devAttr->getData(dataVector, dataVectorFromSet);
 
                     int dim_x = devAttr->dim_x;
                     int dim_y = devAttr->dim_y;
@@ -148,16 +137,11 @@ namespace WebSocketDS_ns
                     _dataArrayToStr(json, dataVector, userOpt);
                     json << "]";
 
-                    try {
-                        devAttr->extract_set(dataVectorFromSet);
-
-                        if (dataVectorFromSet.size()) {
-                            json << ", \"set\": [";
-                            _dataArrayToStr(json, dataVectorFromSet, userOpt);
-                            json << "]";
-                        }
+                    if (dataVectorFromSet.size()) {
+                        json << ", \"set\": [";
+                        _dataArrayToStr(json, dataVectorFromSet, userOpt);
+                        json << "]";
                     }
-                    catch (Tango::DevFailed &e) {}
                 }
         }
 
@@ -405,7 +389,6 @@ namespace WebSocketDS_ns
         }
 
     private:
-        static const string attrQuality[];
         static const TYPE_OF_DEVICE_DATA typeOfData[];
     };
 }    //    End of namespace

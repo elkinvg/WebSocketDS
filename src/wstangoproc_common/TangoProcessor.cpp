@@ -420,7 +420,6 @@ namespace WebSocketDS_ns
         }
     }
 
-#ifdef CLIENT_MODE
     string TangoProcessor::processEvent(MyEventData &eventData, const UserOptions& userOpt)
     {
         ErrorInfo err;
@@ -465,18 +464,19 @@ namespace WebSocketDS_ns
             json << "\"event_type\": \"" << eventData.eventType << "\", ";
             json << "\"timestamp\": " << eventData.tv_sec << ", ";
             json << "\"attr\": \"" << eventData.attrName << "\", ";
+            json << "\"device_name\": \"" << eventData.deviceName << "\", ";
+            json << "\"attr_short\": \"" << eventData.attrData->attrName << "\", ";
 
             string tmpAttrName = eventData.attrName;
             std::transform(tmpAttrName.begin(), tmpAttrName.end(), tmpAttrName.begin(), ::tolower);
 
             if (tmpAttrName.find("json") != std::string::npos) {
-                Tango::DeviceAttribute *attr = &eventData.attr_value;
                 string data;
-                (*attr) >> data;
+                eventData.attrData->getData(data);
                 json << "\"data\":" << data;
             }
             else {
-                _deviceAttributeToStr(json, &eventData.attr_value, userOpt);
+                _deviceAttributeToStr(json, eventData.attrData, userOpt);
             }
 
             json << "}";
@@ -507,95 +507,6 @@ namespace WebSocketDS_ns
             return StringProc::exceptionStringOut(err);
         }
     }
-#endif
-
-#ifdef SERVER_MODE
-    string TangoProcessor::processEvent(Tango::EventData * dt, const UserOptions& userOpt) {
-        ErrorInfo err;
-        string attrName;
-        string deviceName;
-
-        try {
-            auto splt = StringProc::split(dt->attr_name, '/');
-
-            if (splt.size() == 7) {
-                attrName = splt[6];
-            }
-            else {
-                attrName = dt->attr_name;
-            }
-
-            deviceName = dt->device->dev_name();
-        }
-        catch (...) {}
-
-        try {
-            if (dt->err) {
-                vector<string> errors;
-
-                for (int i = 0; i < dt->errors.length(); i++) {
-                    errors.push_back((string)dt->errors[i].desc);
-                }
-
-                err.typeofError = ERROR_TYPE::EVENT_ERR;
-                err.device_name = deviceName;
-                err.errorMessages = errors;
-                err.attr_name = attrName;
-                err.event_type = dt->event;
-
-
-                return StringProc::exceptionStringOut(err);
-            }
-
-            stringstream json;
-            json << "{\"event\": \"read\", ";
-            json << "\"type_req\" : \"from_event\", ";
-            json << "\"event_type\": \"" << dt->event << "\", ";
-            json << "\"timestamp\": " << dt->get_date().tv_sec << ", ";
-            json << "\"attr\": \"" << dt->attr_name << "\", ";
-
-            string tmpAttrName = dt->attr_name;
-            std::transform(tmpAttrName.begin(), tmpAttrName.end(), tmpAttrName.begin(), ::tolower);
-
-            if (tmpAttrName.find("json") != std::string::npos) {
-                Tango::DeviceAttribute *attr = dt->attr_value;
-                string data;
-                (*attr) >> data;
-                json << "\"data\":" << data;
-            }
-            else {
-                _deviceAttributeToStr(json, dt->attr_value, userOpt);
-            }
-
-            json << "}";
-            return json.str();
-        }
-        catch (Tango::DevFailed &e) {
-            vector<string> errors;
-            for (int i = 0; i < e.errors.length(); i++) {
-                errors.push_back((string)e.errors[i].desc);
-            }
-
-            ErrorInfo err;
-            err.typeofReq = "from_event";
-            err.errorMessages = errors;
-            err.device_name = deviceName;
-            err.attr_name = attrName;
-            err.typeofError = ERROR_TYPE::EXC_FROM_EVENT_DEV;
-
-            return StringProc::exceptionStringOut(err);
-        }
-
-        catch (...) {
-            err.typeofError = ERROR_TYPE::EXC_FROM_EVENT_DEV;
-            err.errorMessage = "Unknown exception from event";
-            err.typeofReq = "from_event";
-            err.device_name = deviceName;
-            err.attr_name = attrName;
-            return StringProc::exceptionStringOut(err);
-        }
-    }
-#endif
 
     string TangoProcessor::processPipeRead(GroupForWs * groupForWs, const ParsedInputJson & parsedInput)
     {
@@ -811,13 +722,14 @@ namespace WebSocketDS_ns
             UserOptions uo;
             uo.precision = precOpt;
             uo.isJsonString = false;
-            _generateJsonForAttribute(json, &(*att), uo);
+            MyAttributeData attrData(&(*att));
+            _generateJsonForAttribute(json, &attrData, uo);
         }
         json << "}";
     }
 
     // Генерация JSON из DeviceAttribute
-    void TangoProcessor::_generateJsonForAttribute(std::stringstream & json, Tango::DeviceAttribute* devAttr, const UserOptions& userOpt)
+    void TangoProcessor::_generateJsonForAttribute(std::stringstream & json, MyAttributeData* devAttr, const UserOptions& userOpt)
     {
         /*
         "attribute_name_KEY" : {
@@ -825,8 +737,9 @@ namespace WebSocketDS_ns
             "set": "set data from attribute"
         }
         */
-        std::string quality = attrQuality[devAttr->get_quality()];
-        json << "\"" << devAttr->get_name() << "\": {";
+
+        std::string quality = devAttr->quality;
+        json << "\"" << devAttr->attrName << "\": {";
         if (quality != "VALID")
             json << "\"qual\": \"" << quality << "\", ";
 
@@ -838,10 +751,9 @@ namespace WebSocketDS_ns
         json << "}";
     }
 
-    void TangoProcessor::_deviceAttributeToStr(std::stringstream & json, Tango::DeviceAttribute* devAttr, const UserOptions& userOpt)
+    void TangoProcessor::_deviceAttributeToStr(std::stringstream & json, MyAttributeData* devAttr, const UserOptions& userOpt)
     {
-        int type = devAttr->get_type();
-        std::string out;
+        int type = devAttr->type;
         switch (type) {
         case Tango::DEV_BOOLEAN:
         {
@@ -875,8 +787,7 @@ namespace WebSocketDS_ns
         break;
         case Tango::DEV_UCHAR:
         {
-            Tango::AttrDataFormat format = devAttr->get_data_format();
-            string nameAttr = devAttr->get_name();
+            Tango::AttrDataFormat format = devAttr->format;
 
             int dim_x = devAttr->dim_x;
             int dim_y = devAttr->dim_y;
@@ -891,7 +802,7 @@ namespace WebSocketDS_ns
             vector<unsigned char> dataVector;
             vector<unsigned short> tmpVec;
             if (format == Tango::AttrDataFormat::SCALAR) {
-                (*devAttr) >> data;
+                devAttr->getData(data);
                 tmp = (unsigned short)data;
                 _dataValueToStr(json, tmp, userOpt);
             }
@@ -899,7 +810,7 @@ namespace WebSocketDS_ns
                 if (format == Tango::AttrDataFormat::SPECTRUM || format == Tango::AttrDataFormat::IMAGE) {
                     if (!dim_y)
                         dim_y = 1;
-                    (*devAttr) >> dataVector;
+                    devAttr->getData(dataVector);
 
                     int iter = 0;
                     for (auto& i : dataVector) {
@@ -1772,15 +1683,7 @@ namespace WebSocketDS_ns
         }
     }
 
-    const string TangoProcessor::attrQuality[] = {
-           "VALID",     // Tango::AttrQuality::ATTR_VALID
-           "INVALID",   // Tango::AttrQuality::ATTR_INVALID
-           "ALARM",     // Tango::AttrQuality::ATTR_ALARM
-           "CHANGING",  // Tango::AttrQuality::ATTR_CHANGING
-           "WARNING"    // Tango::AttrQuality::ATTR_WARNING
-    };
-
-    const /*TangoProcessor::*/TYPE_OF_DEVICE_DATA TangoProcessor::typeOfData[] = {
+    const TYPE_OF_DEVICE_DATA TangoProcessor::typeOfData[] = {
         TYPE_OF_DEVICE_DATA::VOID_D, // Tango::DEV_VOID
 
         TYPE_OF_DEVICE_DATA::DATA, // Tango::DEV_BOOLEAN
