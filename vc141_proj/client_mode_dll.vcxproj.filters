@@ -15,16 +15,31 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\server_mode\WebSocketDS.cpp">
+    <ClCompile Include="..\client_mode\WebSocketDS_cli.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="..\server_mode\WebSocketDSClass.cpp">
+    <ClCompile Include="..\client_mode\WebSocketDS_cliClass.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="..\server_mode\WebSocketDSStateMachine.cpp">
+    <ClCompile Include="..\client_mode\WebSocketDS_cliStateMachine.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\wstangoproc_common\DeviceForWs.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\wstangoproc_common\GroupForWs.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\wstangoproc_common\GroupOrDeviceForWs.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\wstangoproc_common\ParsingInputJson.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
     <ClCompile Include="..\src\wstangoproc_common\StringProc.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\wstangoproc_common\TangoProcessor.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
     <ClCompile Include="..\src\wstangoproc_common\UserControl.cpp">
@@ -42,81 +57,24 @@
     <ClCompile Include="..\src\wstangoproc_common\WSThread_tls.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\wstangoproc_ser\WSTangoConnSer.cpp">
+    <ClCompile Include="..\src\wstangoproc_cli\EventProcCli.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\wstangoproc_common\ParsingInputJson.cpp">
+    <ClCompile Include="..\src\wstangoproc_cli\WsEvCallBackCli.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\wstangoproc_common\DeviceForWs.cpp">
-      <Filter>Исходные файлы</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\wstangoproc_common\GroupForWs.cpp">
-      <Filter>Исходные файлы</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\wstangoproc_common\GroupOrDeviceForWs.cpp">
-      <Filter>Исходные файлы</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\wstangoproc_common\TangoProcessor.cpp">
-      <Filter>Исходные файлы</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\wstangoproc_ser\EventProcSer.cpp">
-      <Filter>Исходные файлы</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\wstangoproc_ser\WsEvCallBackSer.cpp">
-      <Filter>Исходные файлы</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\wstangoproc_common\MyAttributeData.cpp">
-      <Filter>Исходные файлы</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\wstangoproc_common\MyEventData.cpp">
+    <ClCompile Include="..\src\wstangoproc_cli\WSTangoConnCli.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\server_mode\WebSocketDS.h">
+    <ClInclude Include="..\client_mode\WebSocketDS_cli.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
-    <ClInclude Include="..\server_mode\WebSocketDSClass.h">
+    <ClInclude Include="..\client_mode\WebSocketDS_cliClass.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\wstangoproc_ser\WSTangoConnSer.h">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\wstangoproc_common\ParsingInputJson.h">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\wstangoproc_common\DeviceForWs.h">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\wstangoproc_common\GroupForWs.h">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\wstangoproc_common\GroupOrDeviceForWs.h">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\wstangoproc_common\TangoProcessor.h">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\wstangoproc_ser\EventProcSer.h">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\wstangoproc_common\WSThread_plain.h">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\wstangoproc_common\WSThread_tls.h">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\wstangoproc_common\WSThread.h">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\wstangoproc_common\WSTangoConn.h">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\wstangoproc_common\UserControl.h">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\wstangoproc_common\StringProc.h">
+    <ClInclude Include="..\src\wstangoproc_cli\CurrentMode.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
     <ClInclude Include="..\src\wstangoproc_common\common.h">
@@ -125,16 +83,52 @@
     <ClInclude Include="..\src\wstangoproc_common\ConnectionData.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\wstangoproc_ser\WsEvCallBackSer.h">
+    <ClInclude Include="..\src\wstangoproc_common\DeviceForWs.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\wstangoproc_ser\CurrentMode.h">
+    <ClInclude Include="..\src\wstangoproc_common\ErrorType.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\wstangoproc_common\GroupForWs.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\wstangoproc_common\GroupOrDeviceForWs.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\wstangoproc_common\ParsingInputJson.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\wstangoproc_common\StringProc.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\wstangoproc_common\TangoProcessor.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
     <ClInclude Include="..\src\wstangoproc_common\TaskInfo.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\wstangoproc_common\ErrorType.h">
+    <ClInclude Include="..\src\wstangoproc_common\UserControl.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\wstangoproc_common\WSTangoConn.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\wstangoproc_common\WSThread.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\wstangoproc_common\WSThread_plain.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\wstangoproc_common\WSThread_tls.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\wstangoproc_cli\EventProcCli.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\wstangoproc_cli\WsEvCallBackCli.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\wstangoproc_cli\WSTangoConnCli.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
     <ClInclude Include="..\src\wstangoproc_common\ResponseFromEvent.h">
@@ -143,16 +137,7 @@
     <ClInclude Include="..\src\wstangoproc_common\EnumConverter.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\wstangoproc_common\ErrorInfo.h">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\wstangoproc_common\UserOptions.h">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\wstangoproc_common\MyAttributeData.h">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\wstangoproc_common\MyEventData.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
   </ItemGroup>

@@ -49,14 +49,18 @@ namespace WebSocketDS_ns
                     vector<string> gotOptions = StringProc::parseInputString(attr, ";");
                     string optStr;
                     for (auto &opt : gotOptions) {
-                        auto iterator_attr = opt.find("prec");
+                        auto iterator_attr = opt.find(OPT_PREC);
                         if (iterator_attr != string::npos) {
                             optStr = opt;
                             break;
                         }
                     }
 
-                    WsEvCallBackSer* wsCallBack = new WsEvCallBackSer(_wsThread, optStr);
+                    UserOptions uo;
+                    uo.isJsonString = false;
+                    uo.precision = optStr;
+
+                    WsEvCallBackSer* wsCallBack = new WsEvCallBackSer(_wsThread, uo);
 
                     int ev = device->subscribe_event(attr, et, wsCallBack);
                     _eventSubscrs.push_back(make_pair(

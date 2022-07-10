@@ -173,7 +173,8 @@
   "id": "ID request",
   "device_name": "name of device",
   "command_name": "name of command",
-  "precision": "precf=10"
+  "precision": "precf=10",
+  "argin": "value or array if needed"
 }
 ```
 

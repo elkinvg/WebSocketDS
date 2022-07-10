@@ -348,7 +348,7 @@ namespace WebSocketDS_ns
 
         if (!optStr.size()) {
             for (auto &opt : gotOptions) {
-                auto iterator_attr = opt.find("prec");
+                auto iterator_attr = opt.find(OPT_PREC);
                 if (iterator_attr != string::npos) {
                     optStr = opt;
                     break;
@@ -397,7 +397,7 @@ namespace WebSocketDS_ns
         for (int i = 0; i < reqName.size(); i++) {
             vector<string> gotOptions = StringProc::parseInputString(reqName[i], ";");
             for (auto &opt : gotOptions) {
-                auto iterator_attr = opt.find("prec");
+                auto iterator_attr = opt.find(OPT_PREC);
                 if (iterator_attr != string::npos) {
                     optStr[reqName[i]] = opt;
                     break;
@@ -412,8 +412,7 @@ namespace WebSocketDS_ns
     {
         vector<string> gotOptions = StringProc::parseInputString(attrName, ";");
         for (auto &opt : gotOptions) {
-            //auto iterator_attr = std::find(opt.begin(), opt.end(), "prec");
-            auto iterator_attr = opt.find("prec");
+            auto iterator_attr = opt.find(OPT_PREC);
             if (iterator_attr != string::npos) {
                 _precisionOpts.insert(
                     make_pair(attrName, opt)

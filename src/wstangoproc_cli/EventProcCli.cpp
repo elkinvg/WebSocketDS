@@ -10,6 +10,7 @@
 
 #include "ErrorInfo.h"
 #include "EventReqException.h"
+#include "MyEventData.h"
 
 namespace WebSocketDS_ns {
     EventProcCli::EventProcCli(WSThread* wsThread, bool isOldVersionOfJson)
@@ -57,11 +58,23 @@ namespace WebSocketDS_ns {
         if (con_lock.try_lock()) {
             map < websocketpp::connection_hdl, string, std::owner_less < websocketpp::connection_hdl>> connAddrList = eventSubs[deviceName][attrName][dt->event].connList;
 
+            // DONE: Для использования данных каждым соединением делается копия Tango::DeviceAttribute
+            MyEventData eventData(dt);
+            eventData.err = dt->err;
+            eventData.eventType = dt->event;
+            eventData.errors = dt->errors;
+            eventData.tv_sec = dt->get_date().tv_sec;
+            eventData.deviceName = dt->device->dev_name();
+
             vector<websocketpp::connection_hdl> _del_conn;
 
             for (pair<websocketpp::connection_hdl, string> hdlnopt : connAddrList) {
-                string precOpt = hdlnopt.second;
-                string message = TangoProcessor::processEvent(dt, precOpt);
+                UserOptions uo;
+                uo.isJsonString = false;
+                uo.precision = hdlnopt.second;
+
+                string message = TangoProcessor::processEvent(eventData, uo);
+
                 try {
                     _wsThread->send(hdlnopt.first, message);
                 }

@@ -221,7 +221,8 @@ Input message:
   "device_name": "name of device",
   "command_name": "name of command",
   "precision": "precf=10",
-  "group_request": true
+  "group_request": true,
+  "argin": "value or array if needed"
 }
 ```
 

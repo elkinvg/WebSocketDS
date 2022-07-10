@@ -13,18 +13,17 @@ obj/*
 bin/*
 lib/*
 bck/*
-vc10_proj/*
-vc12_proj/*.user
-vc12_proj/*.sdf
-vc12_proj/.vs/*
-vc12_proj/*.suo
-vc12_proj/*.opensdf
+*/*.user
+*/*.sdf
+*/.vs/*
+*/*.suo
+*/*.opensdf
 .idea/*
 *.autosave
 
 #tmp
-vc141_proj
-vc141_proj/*
+#vc141_proj
+#vc141_proj/*
 
 #my
 my_sett.js
