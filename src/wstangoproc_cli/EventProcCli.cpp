@@ -58,23 +58,23 @@ namespace WebSocketDS_ns {
         if (con_lock.try_lock()) {
             map < websocketpp::connection_hdl, string, std::owner_less < websocketpp::connection_hdl>> connAddrList = eventSubs[deviceName][attrName][dt->event].connList;
 
+            // DONE: Для использования данных каждым соединением делается копия Tango::DeviceAttribute
+            MyEventData eventData(dt);
+            eventData.err = dt->err;
+            eventData.eventType = dt->event;
+            eventData.errors = dt->errors;
+            eventData.tv_sec = dt->get_date().tv_sec;
+            eventData.deviceName = dt->device->dev_name();
+
             vector<websocketpp::connection_hdl> _del_conn;
 
             for (pair<websocketpp::connection_hdl, string> hdlnopt : connAddrList) {
-                string precOpt = hdlnopt.second;
+                UserOptions uo;
+                uo.isJsonString = false;
+                uo.precision = hdlnopt.second;
 
-                // DONE: ДЛя каждого соединения делается копия Tango::DeviceAttribute
-                // TODO: Не делать копию самого Tango::DeviceAttribute, а лишь необходимых данных?
-                MyEventData eventData;
-                eventData.attr_value.deep_copy(*(dt->attr_value));
-                eventData.err = dt->err;
-                eventData.eventType = dt->event;
-                eventData.errors = dt->errors;
-                eventData.tv_sec = dt->get_date().tv_sec;
-                eventData.attrName = dt->attr_name;
-                eventData.deviceName = dt->device->dev_name();
+                string message = TangoProcessor::processEvent(eventData, uo);
 
-                string message = TangoProcessor::processEvent(eventData, precOpt);
                 try {
                     _wsThread->send(hdlnopt.first, message);
                 }

@@ -2,13 +2,14 @@
 #define WSEVCALLBACKSER_H
 #include <tango.h>
 #include "WSThread.h"
+#include "UserOptions.h"
 
 namespace WebSocketDS_ns
 {
     class WsEvCallBackSer : public Tango::CallBack
     {
     public:
-        WsEvCallBackSer(WSThread* wsThread, const string& precOpt);
+        WsEvCallBackSer(WSThread* wsThread, const UserOptions& userOpt);
         virtual ~WsEvCallBackSer();
         void push_event(Tango::EventData *dt) override;
     private:
@@ -17,7 +18,7 @@ namespace WebSocketDS_ns
     private:
         bool _wasException{ false };
         WSThread* _wsThread;
-        string _precOpt;
+        UserOptions _userOpt;
     };
 }
 

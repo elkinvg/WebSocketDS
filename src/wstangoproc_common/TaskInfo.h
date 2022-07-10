@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include "common.h"
 #include "CurrentMode.h"
+#include "UserOptions.h"
 
 using std::string;
 using std::vector;
@@ -16,16 +17,14 @@ namespace WebSocketDS_ns
     struct TaskInfo {
         string idReq;
         string deviceName;
+        UserOptions userOptions;
 #ifdef CLIENT_MODE
         string groupPattern;
 #endif
         string typeReqStr;
 
         string reqName;
-        string precision;
-
         vector<string> reqNames; // if attributes
-        unordered_map<string, string> precisions; // if attributes
 
         SINGLE_OR_GROUP singleOrGroup;
         TYPE_WS_REQ typeAsynqReq;

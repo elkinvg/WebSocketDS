@@ -18,7 +18,7 @@ namespace WebSocketDS_ns
     typedef unordered_map<string, string> json_val_map;
     typedef unordered_map<string, ptree> json_obj_map;
     // тип запроса. 
-    enum class TYPE_WS_REQ 
+    enum class TYPE_WS_REQ
     {
         ATTRIBUTE,
         ATTRIBUTE_WRITE,
@@ -29,7 +29,7 @@ namespace WebSocketDS_ns
         COMMAND_DEV,
         COMMAND_GR,
 
-        PIPE, 
+        PIPE,
         PIPE_COMM,
         PIPE_COMM_DEV,
         PIPE_COMM_GR,
@@ -53,21 +53,30 @@ namespace WebSocketDS_ns
         EVENT_REQ_OFF, // полностью отписаться от событий
         EVENT_REQ_CHECK_DEV, // проверить подписку, получить id
 
-        UNKNOWN};
-    // форматы для IOS
-    enum class TYPE_IOS_OPT { PREC, PRECF, PRECS };
+        UNKNOWN
+    };
+
     // тип 
     // OLD enum class OUTPUT_DATA_TYPE { JSON, BINARY };
 
     enum class TYPE_OF_IDENT { SIMPLE, PERMISSION_WWW };
     enum class TYPE_OF_VAL { VALUE, ARRAY, OBJECT, NONE };
 
-    enum class SINGLE_OR_GROUP { SINGLE, GROUP, SINGLE_FROM_GROUP};
+    enum class SINGLE_OR_GROUP { SINGLE, GROUP, SINGLE_FROM_GROUP };
 
     enum class TYPE_OF_DEVICE_DATA { VOID_D = 0, DATA = 1, ARRAY = 2, NOTSUPPORTED = 3 };
 
     const std::string NONE = "null";
 
+    // for precision options
+    const std::string OPT_PREC = "prec";
+    const std::string OPT_PRECF = "precf";
+    const std::string OPT_PRECS = "precs";
+    // форматы для IOS
+    enum class TYPE_IOS_OPT { PREC, PRECF, PRECS };
+
+    // Опция указывающая о запрете заключения вывода в кавычки
+    const std::string OPT_JSON_OUT = "jsonout";
 }
 
 #endif // COMMON_H
