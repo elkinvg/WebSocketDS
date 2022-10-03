@@ -10,15 +10,19 @@ namespace WebSocketDS_ns
 
     void MyAttributeData::extract(Tango::DeviceAttribute * devAttr)
     {
-        type = devAttr->data_type;
-        format = devAttr->data_format;
-        attrName = devAttr->name;
-        quality = attrQuality[devAttr->quality];
+        // DONE: Свойства атрибутов devAttr извлекаются через get,
+        // А не через прямое чтение.
+        // Для pytango девайсов отличались форматы type для SPECTRUM
+        // Вместо Tango::DEV_FLOAT или Tango::DEV_DOUBLE определялось Tango::DEV_SHORT
+        type = devAttr->get_type();
+        format = devAttr->get_data_format();
+        attrName = devAttr->get_name();
+        quality = attrQuality[devAttr->get_quality()];
 
         if (format == Tango::AttrDataFormat::SPECTRUM || format == Tango::AttrDataFormat::IMAGE)
-            dim_x = devAttr->dim_x;
+            dim_x = devAttr->get_dim_x();
         if (format == Tango::AttrDataFormat::IMAGE)
-            dim_y = devAttr->dim_y;
+            dim_y = devAttr->get_dim_y();
 
         switch (type) {
         case Tango::DEV_BOOLEAN:
