@@ -1,5 +1,7 @@
 # История изменений
 
+## 1.1.1 (19.10.2022)
+
 - Свойства атрибутов Tango::DeviceAttribute извлекаются через get, а не через прямое чтение. Для pytango девайсов отличались форматы type для SPECTRUM. Вместо Tango::DEV_FLOAT или Tango::DEV_DOUBLE определялось Tango::DEV_SHORT
 
 ## 1.1.0 (10.07.2022)
