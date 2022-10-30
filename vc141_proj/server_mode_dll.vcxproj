@@ -70,8 +70,8 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <OutDir>..\lib\win64\vc12_dll\ser\</OutDir>
-    <IntDir>..\obj\win64_dll\debug\ser\</IntDir>
+    <OutDir>..\lib\win64\vc141_dll\ser\</OutDir>
+    <IntDir>..\obj\win64\vc141_dll\debug\ser\</IntDir>
     <TargetName>WebSocketDSd</TargetName>
     <IncludePath>$(ProjectDir)..\src;$(ProjectDir)..\server_mode;$(ProjectDir)..\src\wstangoproc_ser;$(ProjectDir)..\src\wstangoproc_common;$(IncludePath)</IncludePath>
   </PropertyGroup>
@@ -82,14 +82,14 @@
       <SDLCheck>
       </SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\src;$(ProjectDir)..\server_mode;$(ProjectDir)..\src\wstangoproc_ser;$(ProjectDir)..\src\wstangoproc_common;$(TANGO_ROOT)\win64\include\vc12;$(TANGO_ROOT)\classes\win64\include\vc12;TemplateAbstractPath;$(BOOST_INCLUDES_141);$(OPENSSL_ROOT_64)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\src;$(ProjectDir)..\server_mode;$(ProjectDir)..\src\wstangoproc_ser;$(ProjectDir)..\src\wstangoproc_common;$(TANGO_ROOT)\win64\include\vc141;$(TANGO_ROOT)\classes\win64\include\vc141;TemplateAbstractPath;$(BOOST_INCLUDES_141);$(OPENSSL_ROOT_64)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_DEBUG;LOG4TANGO_HAS_DLL;TANGO_HAS_DLL;WIN32;_CONSOLE;CINTERFACE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>false</StringPooling>
       <ProgramDataBaseFileName>$(TargetDir)$(TargetName).pdb</ProgramDataBaseFileName>
     </ClCompile>
     <Link>
       <OutputFile>$(OutDir)$(SolutionName)d.dll</OutputFile>
-      <AdditionalLibraryDirectories>$(TANGO_ROOT)\win64\lib\vc12_dll;$(TANGO_ROOT)\classes\win64\lib\vc12_dll;$(BOOST_LIBS_12_64);$(OPENSSL_ROOT_64)\lib\VC;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(TANGO_ROOT)\win64\lib\vc141_dll;$(TANGO_ROOT)\classes\win64\lib\vc141_dll;$(BOOST_LIBS_141_64);$(OPENSSL_ROOT_64)\lib\VC;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>omniORB4_rtd.lib;omniDynamic4_rtd.lib;COS4_rtd.lib;omnithread_rtd.lib;tangod.lib;log4tangod.lib;zmqd.lib;comctl32.lib;ws2_32.lib;mswsock.lib;advapi32.lib;libboost_system-mt-gd.lib;ssleay32MTd.lib;libeay32MTd.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
@@ -138,6 +138,8 @@
     <ClCompile Include="..\src\wstangoproc_common\DeviceForWs.cpp" />
     <ClCompile Include="..\src\wstangoproc_common\GroupForWs.cpp" />
     <ClCompile Include="..\src\wstangoproc_common\GroupOrDeviceForWs.cpp" />
+    <ClCompile Include="..\src\wstangoproc_common\MyAttributeData.cpp" />
+    <ClCompile Include="..\src\wstangoproc_common\MyEventData.cpp" />
     <ClCompile Include="..\src\wstangoproc_common\ParsingInputJson.cpp" />
     <ClCompile Include="..\src\wstangoproc_common\StringProc.cpp" />
     <ClCompile Include="..\src\wstangoproc_common\TangoProcessor.cpp" />
@@ -157,12 +159,17 @@
     <ClInclude Include="..\src\wstangoproc_common\ConnectionData.h" />
     <ClInclude Include="..\src\wstangoproc_common\DeviceForWs.h" />
     <ClInclude Include="..\src\wstangoproc_common\EnumConverter.h" />
+    <ClInclude Include="..\src\wstangoproc_common\ErrorInfo.h" />
+    <ClInclude Include="..\src\wstangoproc_common\ErrorType.h" />
     <ClInclude Include="..\src\wstangoproc_common\GroupForWs.h" />
     <ClInclude Include="..\src\wstangoproc_common\GroupOrDeviceForWs.h" />
+    <ClInclude Include="..\src\wstangoproc_common\MyAttributeData.h" />
+    <ClInclude Include="..\src\wstangoproc_common\MyEventData.h" />
     <ClInclude Include="..\src\wstangoproc_common\ParsingInputJson.h" />
     <ClInclude Include="..\src\wstangoproc_common\ResponseFromEvent.h" />
     <ClInclude Include="..\src\wstangoproc_common\StringProc.h" />
     <ClInclude Include="..\src\wstangoproc_common\TangoProcessor.h" />
+    <ClInclude Include="..\src\wstangoproc_common\TaskInfo.h" />
     <ClInclude Include="..\src\wstangoproc_common\UserControl.h" />
     <ClInclude Include="..\src\wstangoproc_common\UserOptions.h" />
     <ClInclude Include="..\src\wstangoproc_common\WSTangoConn.h" />

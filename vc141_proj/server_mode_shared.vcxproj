@@ -70,7 +70,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <OutDir>..\bin\win64_shared\debug\ser\</OutDir>
+    <OutDir>..\bin\win64_shared\vc141\ser\debug\</OutDir>
     <IntDir>..\obj\win64_dll\debug\ser\</IntDir>
     <TargetName>WebSocketDS</TargetName>
     <IncludePath>$(ProjectDir)..\src;$(ProjectDir)..\server_mode;$(ProjectDir)..\src\wstangoproc_ser;$(ProjectDir)..\src\wstangoproc_common;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
@@ -82,14 +82,14 @@
       <SDLCheck>
       </SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\src;$(ProjectDir)..\server_mode;$(ProjectDir)..\src\wstangoproc_ser;$(ProjectDir)..\src\wstangoproc_common;$(BOOST_INCLUDES_141);$(OPENSSL_ROOT_64)\include;$(TANGO_ROOT)\win64\include\vc12;$(TANGO_ROOT)\classes\win64\include\vc12</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\src;$(ProjectDir)..\server_mode;$(ProjectDir)..\src\wstangoproc_ser;$(ProjectDir)..\src\wstangoproc_common;$(BOOST_INCLUDES_141);$(OPENSSL_ROOT_64)\include;$(TANGO_ROOT)\win64\include\vc141;$(TANGO_ROOT)\classes\win64\include\vc141</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_DEBUG;LOG4TANGO_HAS_DLL;TANGO_HAS_DLL;WIN32;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <ProgramDataBaseFileName>$(TargetDir)$(TargetName).pdb</ProgramDataBaseFileName>
     </ClCompile>
     <Link>
       <OutputFile>$(OutDir)WebSocketDS.exe</OutputFile>
-      <AdditionalLibraryDirectories>..\lib\win64\vc12_dll\ser;$(TANGO_ROOT)\win64\lib\vc12_dll;$(TANGO_ROOT)\classes\win64\lib\vc12_dll;$(BOOST_LIBS_12_64);$(OPENSSL_ROOT_64)\lib\VC;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\lib\win64\vc141_dll\ser;$(TANGO_ROOT)\win64\lib\vc141_dll;$(TANGO_ROOT)\classes\win64\lib\vc141_dll;$(BOOST_LIBS_141_64);$(OPENSSL_ROOT_64)\lib\VC;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>WebSocketDSd.lib;omniORB4_rtd.lib;omniDynamic4_rtd.lib;COS4_rtd.lib;omnithread_rtd.lib;tangod.lib;log4tangod.lib;zmqd.lib;comctl32.lib;ws2_32.lib;mswsock.lib;advapi32.lib;libboost_system-mt-gd.lib;ssleay32MTd.lib;libeay32MTd.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>

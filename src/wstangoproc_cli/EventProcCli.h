@@ -13,7 +13,7 @@ using std::mutex;
 
 namespace WebSocketDS_ns
 {
-    class ParsedInputJson;
+    struct ParsedInputJson;
     class WsEvCallBackCli;
     class WSThread;
     struct ResponseFromEventReq;

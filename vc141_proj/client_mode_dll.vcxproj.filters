@@ -66,6 +66,12 @@
     <ClCompile Include="..\src\wstangoproc_cli\WSTangoConnCli.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\wstangoproc_common\MyAttributeData.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\wstangoproc_common\MyEventData.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\client_mode\WebSocketDS_cli.h">
@@ -138,6 +144,15 @@
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
     <ClInclude Include="..\src\wstangoproc_common\UserOptions.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\wstangoproc_common\ErrorInfo.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\wstangoproc_common\MyAttributeData.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\wstangoproc_common\MyEventData.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
   </ItemGroup>
