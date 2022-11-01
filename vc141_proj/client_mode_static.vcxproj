@@ -92,7 +92,7 @@
     <Link>
       <OutputFile>$(OutDir)WebSocketDS_cli.exe</OutputFile>
       <AdditionalLibraryDirectories>..\lib\win64\vc141\cli;$(TANGO_ROOT)\win64\lib\vc141;$(TANGO_ROOT)\classes\win64\lib\vc141;$(BOOST_LIBS_141_64);$(OPENSSL_ROOT_64)\lib\VC;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>WebSocketDS_clid.lib;omniORB4d.lib;omniDynamic4d.lib;COS4d.lib;omnithreadd.lib;libtangod.lib;zmqd.lib;log4tango.lib;comctl32.lib;ws2_32.lib;mswsock.lib;advapi32.lib;Iphlpapi.lib;libboost_system-mt-sgd.lib;ssleay32MTd.lib;libeay32MTd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>WebSocketDS_clid.lib;omniORB4d.lib;omniDynamic4d.lib;COS4d.lib;omnithreadd.lib;libtangod.lib;zmqd.lib;log4tango.lib;comctl32.lib;ws2_32.lib;mswsock.lib;advapi32.lib;Iphlpapi.lib;libboost_system-mt-sgd-x64.lib;ssleay32MTd.lib;libeay32MTd.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
